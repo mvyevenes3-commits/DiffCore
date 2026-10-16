@@ -6050,8 +6050,16 @@ function renderTextDiff(diffResult) {
   containerR.style.minWidth = `${maxLineWidthPx}px`;
   if (gutter) gutter.style.height = `${totalHeight}px`;
 
+  // Always reset scroll positions to 0 for a perfectly aligned starting baseline
+  const sL = document.getElementById('textLeftScroll');
+  const sR = document.getElementById('textRightScroll');
+  const sG = document.getElementById('textGutterScroll');
+  if (sL) sL.scrollTop = 0;
+  if (sR) sR.scrollTop = 0;
+  if (sG) sG.scrollTop = 0;
+
   // Render initial visible window instantly (< 5ms)
-  renderVisibleTextWindow(true);
+  renderVisibleTextWindow(true, 0);
 
   // Render Overview Rail (Differences minimap strip beside line numbers)
   if (markersContainer) {
@@ -6124,11 +6132,14 @@ function renderVisibleTextWindow(force = false, customScrollTop = null) {
   let scrollTop;
   if (customScrollTop !== null && customScrollTop !== undefined) {
     scrollTop = Math.round(customScrollTop);
-  } else if (activeTextScrollSource === 'right' && scrollR) {
-    scrollTop = Math.round(scrollR.scrollTop);
   } else {
     scrollTop = Math.round(scrollL ? scrollL.scrollTop : (scrollR ? scrollR.scrollTop : 0));
   }
+
+  // Strict physical lockstep enforcement across all panels
+  if (Math.abs(scrollL.scrollTop - scrollTop) > 0.5) scrollL.scrollTop = scrollTop;
+  if (scrollR && Math.abs(scrollR.scrollTop - scrollTop) > 0.5) scrollR.scrollTop = scrollTop;
+  if (gutter && Math.abs(gutter.parentElement.scrollTop - scrollTop) > 0.5) gutter.parentElement.scrollTop = scrollTop;
 
   const viewportHeight = scrollL.clientHeight || 600;
   const totalRows = diffResult.totalRows;
@@ -6251,11 +6262,9 @@ function handleOverviewRailClick(event) {
   const targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
 
   textScrollDriver = 'programmatic';
-  activeTextScrollSource = 'programmatic';
   clearTimeout(textScrollTimer);
   textScrollTimer = setTimeout(() => {
     textScrollDriver = null;
-    activeTextScrollSource = null;
   }, 150);
 
   if (scrollL) scrollL.scrollTop = targetTop;
@@ -6280,11 +6289,9 @@ function jumpToSection(sectionIndex) {
   const targetTop = Math.max(0, sec.startRow * TEXT_ROW_HEIGHT - halfView + 30);
 
   textScrollDriver = 'programmatic';
-  activeTextScrollSource = 'programmatic';
   clearTimeout(textScrollTimer);
   textScrollTimer = setTimeout(() => {
     textScrollDriver = null;
-    activeTextScrollSource = null;
   }, 150);
 
   if (scrollL) scrollL.scrollTop = targetTop;
@@ -6318,7 +6325,7 @@ function updateOverviewViewport() {
   const totalHeight = diffResult.totalRows * TEXT_ROW_HEIGHT;
   if (totalHeight <= 0) return;
 
-  const activeScroll = (activeTextScrollSource === 'right' && scrollR) ? scrollR : (scrollL || scrollR);
+  const activeScroll = scrollL || scrollR;
   if (!activeScroll) return;
 
   const viewH = activeScroll.clientHeight || 400;
@@ -6334,47 +6341,23 @@ function updateOverviewViewport() {
 // Beyond Compare 5 Rock-Solid Synchronized Text Scrolling Controller
 let textScrollDriver = null;
 let textScrollTimer = null;
-let activeTextScrollSource = null;
+let isSyncingTextScroll = false;
 
 function setupTextSyncScroll() {
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
   const panes = document.querySelector('#textView .text-compare-panes') || document.querySelector('.text-compare-panes');
-  const wrapperL = document.getElementById('textLeftPaneWrapper');
-  const wrapperR = document.getElementById('textRightPaneWrapper');
   if (!scrollL || !scrollR) return;
-
-  // Track pointer interactions in capture phase to immediately designate the active driving pane
-  if (wrapperL) {
-    wrapperL.addEventListener('pointerdown', () => {
-      if (textScrollDriver !== 'wheel') {
-        activeTextScrollSource = 'left';
-        clearTimeout(textScrollTimer);
-        textScrollTimer = setTimeout(() => { activeTextScrollSource = null; }, 120);
-      }
-    }, true);
-  }
-  if (wrapperR) {
-    wrapperR.addEventListener('pointerdown', () => {
-      if (textScrollDriver !== 'wheel') {
-        activeTextScrollSource = 'right';
-        clearTimeout(textScrollTimer);
-        textScrollTimer = setTimeout(() => { activeTextScrollSource = null; }, 120);
-      }
-    }, true);
-  }
 
   // Zero-lag simultaneous wheel/trackpad scrolling across text compare panes
   if (panes) {
     panes.addEventListener('wheel', (e) => {
       e.preventDefault();
       textScrollDriver = 'wheel';
-      activeTextScrollSource = 'wheel';
       clearTimeout(textScrollTimer);
       textScrollTimer = setTimeout(() => {
         textScrollDriver = null;
-        activeTextScrollSource = null;
       }, 100);
 
       const maxScrollY = Math.max(
@@ -6409,35 +6392,31 @@ function setupTextSyncScroll() {
 }
 
 function syncTextScroll(source) {
-  // If wheel or programmatic scrolling is in control, ignore individual native scroll events
   if (textScrollDriver === 'wheel' || textScrollDriver === 'programmatic') return;
-
-  // Mutual exclusion: If one pane is currently driving the scroll, ignore echo events from the other pane
-  if (activeTextScrollSource && activeTextScrollSource !== source) return;
+  if (isSyncingTextScroll) return;
 
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
   if (!scrollL || !scrollR) return;
 
-  // Establish this side as the active driver and refresh debounce timeout
-  activeTextScrollSource = source;
-  clearTimeout(textScrollTimer);
-  textScrollTimer = setTimeout(() => {
-    activeTextScrollSource = null;
-  }, 120);
-
   const src = (source === 'left') ? scrollL : scrollR;
   const target = (source === 'left') ? scrollR : scrollL;
 
-  // 1. Synchronously mirror vertical and horizontal scroll positions (instant lockstep)
+  const diffY = Math.abs(target.scrollTop - src.scrollTop);
+  const diffX = Math.abs(target.scrollLeft - src.scrollLeft);
+
+  // If already synchronized to within subpixel, avoid redundant work
+  if (diffY < 0.5 && diffX < 0.5) return;
+
+  isSyncingTextScroll = true;
   target.scrollTop = src.scrollTop;
   target.scrollLeft = src.scrollLeft;
   if (scrollG) {
     scrollG.scrollTop = src.scrollTop;
   }
+  isSyncingTextScroll = false;
 
-  // 2. Batch virtual DOM update using requestAnimationFrame for buttery smooth 60/120 FPS
   requestVirtualTextRender(src.scrollTop);
 }
 
