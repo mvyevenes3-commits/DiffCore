@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -6,25 +6,50 @@ const { compareFolderTrees, compareFilesDeep, computeAlignedDiff, compareFolderM
 const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
 
+// Set application identity for Linux WM_CLASS window grouping
+app.name = 'diffcore';
+
 let mainWindow;
 
+function getAppIcon() {
+  try {
+    if (process.platform === 'win32') {
+      const icoPath = path.join(__dirname, '../../iconos/icon.ico');
+      if (fs.existsSync(icoPath)) {
+        return nativeImage.createFromPath(icoPath);
+      }
+    }
+    const pngPath = path.join(__dirname, '../../iconos/icon.png');
+    if (fs.existsSync(pngPath)) {
+      return nativeImage.createFromPath(pngPath);
+    }
+  } catch (e) {
+    console.warn('Error loading app icon:', e);
+  }
+  return undefined;
+}
+
 function createWindow() {
-  const iconPath = path.join(__dirname, '../../iconos/icon.png');
+  const appIcon = getAppIcon();
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 920,
     minWidth: 960,
     minHeight: 640,
     title: 'DiffCore - Beyond Compare Edition',
-    titleBarStyle: 'hiddenInset',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     backgroundColor: '#1e1e1e',
-    icon: iconPath,
+    icon: appIcon,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false
     }
   });
+
+  if (appIcon && process.platform !== 'darwin') {
+    mainWindow.setIcon(appIcon);
+  }
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
@@ -57,9 +82,19 @@ function sendLog(text) {
 }
 
 app.whenReady().then(() => {
-  if (process.platform === 'darwin' && app.dock) {
-    app.dock.setIcon(path.join(__dirname, '../../iconos/icon.png'));
+  // Set Windows taskbar AppUserModelID
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('com.miguelvergara.diffcore');
   }
+
+  // Set macOS dock icon
+  if (process.platform === 'darwin' && app.dock) {
+    const dockIconPath = path.join(__dirname, '../../iconos/icon.png');
+    if (fs.existsSync(dockIconPath)) {
+      app.dock.setIcon(dockIconPath);
+    }
+  }
+
   createWindow();
 
   app.on('activate', () => {

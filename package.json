@@ -1,6 +1,7 @@
 {
   "name": "diffcore",
   "productName": "DiffCore",
+  "desktopName": "diffcore.desktop",
   "version": "1.0.0",
   "description": "Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite",
   "author": {
@@ -38,14 +39,20 @@
       "gatekeeperAssess": false
     },
     "linux": {
-      "icon": "iconos/icon.png",
+      "icon": "iconos/icons",
       "target": [
         "deb",
         "AppImage"
       ],
       "maintainer": "Miguel Vergara <miguelvergara@diffcore.local>",
       "category": "Development",
-      "synopsis": "Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite"
+      "synopsis": "Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite",
+      "syncDesktopName": true,
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "diffcore"
+        }
+      }
     },
     "win": {
       "icon": "iconos/icon.ico",
