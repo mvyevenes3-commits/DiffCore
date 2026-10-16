@@ -3530,10 +3530,14 @@ function renderActiveTableSheet() {
   }
 }
 
-let isSyncingTable = false;
+let activeTableScrollSource = null;
+let tableScrollTimer = null;
 function syncTableScroll(side) {
-  if (isSyncingTable) return;
-  isSyncingTable = true;
+  if (activeTableScrollSource && activeTableScrollSource !== side) return;
+  activeTableScrollSource = side;
+  clearTimeout(tableScrollTimer);
+  tableScrollTimer = setTimeout(() => { activeTableScrollSource = null; }, 120);
+
   const sL = document.getElementById('tblLeftScroll');
   const sR = document.getElementById('tblRightScroll');
   const src = side === 'left' ? sL : sR;
@@ -3542,7 +3546,6 @@ function syncTableScroll(side) {
     target.scrollTop = src.scrollTop;
     target.scrollLeft = src.scrollLeft;
   }
-  setTimeout(() => { isSyncingTable = false; }, 20);
 }
 
 function navTableDiff(dir) {
@@ -4195,21 +4198,24 @@ function renderThreeWayPanes(rows) {
   if (dR) dR.innerHTML = rightHtml;
 }
 
-let isSyncingThreeWay = false;
+let activeThreeWayScrollSource = null;
+let threeWayScrollTimer = null;
 function syncThreeWayScroll(source) {
-  if (isSyncingThreeWay) return;
-  isSyncingThreeWay = true;
+  if (activeThreeWayScrollSource && activeThreeWayScrollSource !== source) return;
+  activeThreeWayScrollSource = source;
+  clearTimeout(threeWayScrollTimer);
+  threeWayScrollTimer = setTimeout(() => { activeThreeWayScrollSource = null; }, 120);
+
   const sL = document.getElementById('tMergeLeftScroll');
   const sB = document.getElementById('tMergeCenterScroll');
   const sR = document.getElementById('tMergeRightScroll');
 
   const src = source === 'left' ? sL : (source === 'base' ? sB : sR);
   if (src) {
-    if (sL && sL !== src) sL.scrollTop = src.scrollTop;
-    if (sB && sB !== src) sB.scrollTop = src.scrollTop;
-    if (sR && sR !== src) sR.scrollTop = src.scrollTop;
+    if (sL && sL !== src) { sL.scrollTop = src.scrollTop; sL.scrollLeft = src.scrollLeft; }
+    if (sB && sB !== src) { sB.scrollTop = src.scrollTop; sB.scrollLeft = src.scrollLeft; }
+    if (sR && sR !== src) { sR.scrollTop = src.scrollTop; sR.scrollLeft = src.scrollLeft; }
   }
-  setTimeout(() => { isSyncingThreeWay = false; }, 20);
 }
 
 function navMergeConflict(direction) {
@@ -4530,27 +4536,36 @@ function setupSyncScroll() {
     }, { passive: false });
   }
 
-  // Pointer interactions for dragging native scrollbars
-  leftPane.addEventListener('pointerdown', () => { if (folderScrollDriver !== 'wheel') folderScrollDriver = 'left'; });
-  rightPane.addEventListener('pointerdown', () => { if (folderScrollDriver !== 'wheel') folderScrollDriver = 'right'; });
+  let activeFolderScrollSide = null;
+  let folderScrollTimer = null;
+  let folderRenderRafId = null;
 
-  function syncScroll(source, target) {
-    if (folderScrollDriver === 'wheel') return;
-    if (isSyncingFolder) return;
-
-    isSyncingFolder = true;
-    target.scrollTop = source.scrollTop;
-    target.scrollLeft = source.scrollLeft;
-
-    renderVisibleWindow();
-
-    requestAnimationFrame(() => {
-      isSyncingFolder = false;
+  function requestFolderWindowRender() {
+    if (folderRenderRafId !== null) return;
+    folderRenderRafId = requestAnimationFrame(() => {
+      folderRenderRafId = null;
+      renderVisibleWindow();
     });
   }
 
-  leftPane.addEventListener('scroll', () => syncScroll(leftPane, rightPane), { passive: true });
-  rightPane.addEventListener('scroll', () => syncScroll(rightPane, leftPane), { passive: true });
+  function syncScroll(source, target, side) {
+    if (folderScrollDriver === 'wheel') return;
+    if (activeFolderScrollSide && activeFolderScrollSide !== side) return;
+
+    activeFolderScrollSide = side;
+    clearTimeout(folderScrollTimer);
+    folderScrollTimer = setTimeout(() => {
+      activeFolderScrollSide = null;
+    }, 120);
+
+    target.scrollTop = source.scrollTop;
+    target.scrollLeft = source.scrollLeft;
+
+    requestFolderWindowRender();
+  }
+
+  leftPane.addEventListener('scroll', () => syncScroll(leftPane, rightPane, 'left'), { passive: true });
+  rightPane.addEventListener('scroll', () => syncScroll(rightPane, leftPane, 'right'), { passive: true });
 }
 
 function setupTableEventDelegation() {
@@ -6070,7 +6085,32 @@ function renderTextDiff(diffResult) {
   }
 }
 
-function renderVisibleTextWindow(force = false) {
+// Render RAF manager for buttery-smooth 60/120fps virtual text rendering without lag
+let textRenderRafId = null;
+let pendingRenderScrollTop = null;
+
+function requestVirtualTextRender(scrollTop = null, force = false) {
+  if (scrollTop !== null && scrollTop !== undefined) {
+    pendingRenderScrollTop = scrollTop;
+  }
+  if (force) {
+    if (textRenderRafId !== null) {
+      cancelAnimationFrame(textRenderRafId);
+      textRenderRafId = null;
+    }
+    renderVisibleTextWindow(true, pendingRenderScrollTop);
+    updateOverviewViewport();
+    return;
+  }
+  if (textRenderRafId !== null) return;
+  textRenderRafId = requestAnimationFrame(() => {
+    textRenderRafId = null;
+    renderVisibleTextWindow(false, pendingRenderScrollTop);
+    updateOverviewViewport();
+  });
+}
+
+function renderVisibleTextWindow(force = false, customScrollTop = null) {
   const diffResult = virtualTextState.currentDiffResult;
   if (!diffResult || !diffResult.totalRows) return;
 
@@ -6081,7 +6121,15 @@ function renderVisibleTextWindow(force = false) {
   const gutter = document.getElementById('textCenterGutter');
   if (!scrollL || !containerL || !containerR) return;
 
-  const scrollTop = Math.round(scrollL ? scrollL.scrollTop : 0);
+  let scrollTop;
+  if (customScrollTop !== null && customScrollTop !== undefined) {
+    scrollTop = Math.round(customScrollTop);
+  } else if (activeTextScrollSource === 'right' && scrollR) {
+    scrollTop = Math.round(scrollR.scrollTop);
+  } else {
+    scrollTop = Math.round(scrollL ? scrollL.scrollTop : (scrollR ? scrollR.scrollTop : 0));
+  }
+
   const viewportHeight = scrollL.clientHeight || 600;
   const totalRows = diffResult.totalRows;
 
@@ -6203,15 +6251,17 @@ function handleOverviewRailClick(event) {
   const targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
 
   textScrollDriver = 'programmatic';
+  activeTextScrollSource = 'programmatic';
   clearTimeout(textScrollTimer);
   textScrollTimer = setTimeout(() => {
     textScrollDriver = null;
+    activeTextScrollSource = null;
   }, 150);
 
   if (scrollL) scrollL.scrollTop = targetTop;
   if (scrollR) scrollR.scrollTop = targetTop;
   if (scrollG) scrollG.scrollTop = targetTop;
-  renderVisibleTextWindow(true);
+  requestVirtualTextRender(targetTop, true);
   updateOverviewViewport();
 }
 
@@ -6230,15 +6280,17 @@ function jumpToSection(sectionIndex) {
   const targetTop = Math.max(0, sec.startRow * TEXT_ROW_HEIGHT - halfView + 30);
 
   textScrollDriver = 'programmatic';
+  activeTextScrollSource = 'programmatic';
   clearTimeout(textScrollTimer);
   textScrollTimer = setTimeout(() => {
     textScrollDriver = null;
+    activeTextScrollSource = null;
   }, 150);
 
   if (scrollL) scrollL.scrollTop = targetTop;
   if (scrollR) scrollR.scrollTop = targetTop;
   if (scrollG) scrollG.scrollTop = targetTop;
-  renderVisibleTextWindow(true);
+  requestVirtualTextRender(targetTop, true);
   updateOverviewViewport();
 }
 
@@ -6258,15 +6310,19 @@ function navDiff(direction) {
 
 function updateOverviewViewport() {
   const scrollL = document.getElementById('textLeftScroll');
+  const scrollR = document.getElementById('textRightScroll');
   const thumb = document.getElementById('overviewViewportThumb');
   const diffResult = appState.currentTextFile.diffResult;
-  if (!scrollL || !thumb || !diffResult || !diffResult.totalRows) return;
+  if (!thumb || !diffResult || !diffResult.totalRows) return;
 
   const totalHeight = diffResult.totalRows * TEXT_ROW_HEIGHT;
   if (totalHeight <= 0) return;
 
-  const viewH = scrollL.clientHeight || 400;
-  const scrollY = scrollL.scrollTop || 0;
+  const activeScroll = (activeTextScrollSource === 'right' && scrollR) ? scrollR : (scrollL || scrollR);
+  if (!activeScroll) return;
+
+  const viewH = activeScroll.clientHeight || 400;
+  const scrollY = activeScroll.scrollTop || 0;
 
   const topPct = (scrollY / totalHeight) * 100;
   const heightPct = Math.max(4, (viewH / totalHeight) * 100);
@@ -6278,7 +6334,6 @@ function updateOverviewViewport() {
 // Beyond Compare 5 Rock-Solid Synchronized Text Scrolling Controller
 let textScrollDriver = null;
 let textScrollTimer = null;
-let isSyncingText = false;
 let activeTextScrollSource = null;
 
 function setupTextSyncScroll() {
@@ -6286,18 +6341,41 @@ function setupTextSyncScroll() {
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
   const panes = document.querySelector('#textView .text-compare-panes') || document.querySelector('.text-compare-panes');
+  const wrapperL = document.getElementById('textLeftPaneWrapper');
+  const wrapperR = document.getElementById('textRightPaneWrapper');
   if (!scrollL || !scrollR) return;
+
+  // Track pointer interactions in capture phase to immediately designate the active driving pane
+  if (wrapperL) {
+    wrapperL.addEventListener('pointerdown', () => {
+      if (textScrollDriver !== 'wheel') {
+        activeTextScrollSource = 'left';
+        clearTimeout(textScrollTimer);
+        textScrollTimer = setTimeout(() => { activeTextScrollSource = null; }, 120);
+      }
+    }, true);
+  }
+  if (wrapperR) {
+    wrapperR.addEventListener('pointerdown', () => {
+      if (textScrollDriver !== 'wheel') {
+        activeTextScrollSource = 'right';
+        clearTimeout(textScrollTimer);
+        textScrollTimer = setTimeout(() => { activeTextScrollSource = null; }, 120);
+      }
+    }, true);
+  }
 
   // Zero-lag simultaneous wheel/trackpad scrolling across text compare panes
   if (panes) {
     panes.addEventListener('wheel', (e) => {
       e.preventDefault();
       textScrollDriver = 'wheel';
+      activeTextScrollSource = 'wheel';
       clearTimeout(textScrollTimer);
       textScrollTimer = setTimeout(() => {
         textScrollDriver = null;
         activeTextScrollSource = null;
-      }, 80);
+      }, 100);
 
       const maxScrollY = Math.max(
         0,
@@ -6320,53 +6398,47 @@ function setupTextSyncScroll() {
       scrollL.scrollLeft = newLeft;
       scrollR.scrollLeft = newLeft;
 
-      renderVisibleTextWindow();
-      updateOverviewViewport();
+      requestVirtualTextRender(newTop);
     }, { passive: false });
   }
 
-  // Pointer interactions for dragging native scrollbars
-  scrollL.addEventListener('pointerdown', () => { if (textScrollDriver !== 'wheel') activeTextScrollSource = 'left'; });
-  scrollR.addEventListener('pointerdown', () => { if (textScrollDriver !== 'wheel') activeTextScrollSource = 'right'; });
-
   window.addEventListener('resize', () => {
     syncHorizontalScrollWidths();
-    renderVisibleTextWindow(true);
+    requestVirtualTextRender(null, true);
   });
 }
 
 function syncTextScroll(source) {
+  // If wheel or programmatic scrolling is in control, ignore individual native scroll events
   if (textScrollDriver === 'wheel' || textScrollDriver === 'programmatic') return;
-  if (isSyncingText && activeTextScrollSource !== source) return;
+
+  // Mutual exclusion: If one pane is currently driving the scroll, ignore echo events from the other pane
+  if (activeTextScrollSource && activeTextScrollSource !== source) return;
 
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
   if (!scrollL || !scrollR) return;
 
+  // Establish this side as the active driver and refresh debounce timeout
+  activeTextScrollSource = source;
+  clearTimeout(textScrollTimer);
+  textScrollTimer = setTimeout(() => {
+    activeTextScrollSource = null;
+  }, 120);
+
   const src = (source === 'left') ? scrollL : scrollR;
   const target = (source === 'left') ? scrollR : scrollL;
 
-  if (Math.abs(target.scrollTop - src.scrollTop) <= 0.5 && Math.abs(target.scrollLeft - src.scrollLeft) <= 0.5) {
-    return;
-  }
-
-  isSyncingText = true;
-  activeTextScrollSource = source;
-
+  // 1. Synchronously mirror vertical and horizontal scroll positions (instant lockstep)
   target.scrollTop = src.scrollTop;
   target.scrollLeft = src.scrollLeft;
   if (scrollG) {
     scrollG.scrollTop = src.scrollTop;
   }
 
-  renderVisibleTextWindow();
-  updateOverviewViewport();
-
-  requestAnimationFrame(() => {
-    isSyncingText = false;
-    activeTextScrollSource = null;
-  });
+  // 2. Batch virtual DOM update using requestAnimationFrame for buttery smooth 60/120 FPS
+  requestVirtualTextRender(src.scrollTop);
 }
 
 function syncHorizontalScrollWidths() {
