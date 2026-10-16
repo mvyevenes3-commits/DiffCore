@@ -1,0 +1,76 @@
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
+
+contextBridge.exposeInMainWorld('api', {
+  // Cross-Platform Drag and Drop file resolver (macOS, Windows, Linux)
+  getPathForFile: (file) => {
+    try {
+      if (webUtils && typeof webUtils.getPathForFile === 'function') {
+        return webUtils.getPathForFile(file);
+      }
+    } catch (e) {
+      console.warn('webUtils.getPathForFile error:', e);
+    }
+    return file ? (file.path || '') : '';
+  },
+
+  // Folder & File Selection
+  selectFolder: (defaultPath) => ipcRenderer.invoke('dialog:selectFolder', defaultPath),
+  selectFile: (defaultPath) => ipcRenderer.invoke('dialog:selectFile', defaultPath),
+  
+  // Folder Comparison
+  compareFolders: (leftPath, rightPath) => ipcRenderer.invoke('diff:compareFolders', { leftPath, rightPath }),
+  
+  // Deep Compare Modal Action (=?)
+  compareSelectionDeep: (leftPath, rightPath, items, method, skipBinary) => 
+    ipcRenderer.invoke('diff:compareSelectionDeep', { leftPath, rightPath, items, method, skipBinary }),
+
+  // Beyond Compare 5 Myers Diff Alignment
+  computeAlignedDiff: (leftText, rightText) => 
+    ipcRenderer.invoke('diff:computeAlignedDiff', { leftText, rightText }),
+  
+  // Sessions Management (Dynamic BC5 + DiffCore)
+  loadSessions: () => ipcRenderer.invoke('sessions:load'),
+  saveSession: (sessionData) => ipcRenderer.invoke('sessions:save', sessionData),
+  deleteSession: (sessionId) => ipcRenderer.invoke('sessions:delete', sessionId),
+  
+  // File Operations (Copy, Delete, Move, Rename, Reveal, Touch, Attributes)
+  copyItem: (src, dest) => ipcRenderer.invoke('fs:copyItem', { src, dest }),
+  moveItem: (src, dest) => ipcRenderer.invoke('fs:moveItem', { src, dest }),
+  deleteItem: (targetPath) => ipcRenderer.invoke('fs:deleteItem', targetPath),
+  renameItem: (oldPath, newPath) => ipcRenderer.invoke('fs:renameItem', { oldPath, newPath }),
+  createFolder: (folderPath) => ipcRenderer.invoke('fs:createFolder', folderPath),
+  touchItem: (targetPath) => ipcRenderer.invoke('fs:touchItem', targetPath),
+  getAttributes: (targetPath) => ipcRenderer.invoke('fs:getAttributes', targetPath),
+  openDefaultApp: (targetPath) => ipcRenderer.invoke('fs:openDefaultApp', targetPath),
+  openTerminal: (targetPath) => ipcRenderer.invoke('fs:openTerminal', targetPath),
+  revealInFinder: (targetPath) => ipcRenderer.invoke('fs:reveal', targetPath),
+  
+  // Text Compare Operations
+  readTextFile: (filePath) => ipcRenderer.invoke('fs:readText', filePath),
+  writeTextFile: (filePath, content) => ipcRenderer.invoke('fs:writeText', { filePath, content }),
+  
+  // Hex Compare Operations
+  readHexDump: (filePath, offset, length) => ipcRenderer.invoke('fs:readHex', { filePath, offset, length }),
+
+  // Table Compare Operations (Excel, CSV, TSV, HTML)
+  readTableFile: (filePath) => ipcRenderer.invoke('table:read', filePath),
+
+  // Media Compare Operations (ID3, MP3, FLAC, M4A, WAV)
+  readMediaMetadata: (filePath) => ipcRenderer.invoke('media:readTags', filePath),
+
+  // Folder Sync Operations
+  executeFolderSync: (tasks) => ipcRenderer.invoke('sync:execute', tasks),
+
+  // 3-Way Folder Merge Operations
+  compareFolderMergeTrees: (left, base, right) => ipcRenderer.invoke('merge:folderMerge', { left, base, right }),
+
+  // 3-Way Text Merge Operations
+  computeThreeWayTextMerge: (left, base, right) => ipcRenderer.invoke('merge:textMerge', { left, base, right }),
+
+  // System Info
+  getSystemInfo: () => ipcRenderer.invoke('system:getInfo'),
+  
+  // Listeners
+  onLogMessage: (callback) => ipcRenderer.on('log:message', (_event, msg) => callback(msg)),
+  onCliLaunch: (callback) => ipcRenderer.on('cli:launch', (_event, data) => callback(data))
+});

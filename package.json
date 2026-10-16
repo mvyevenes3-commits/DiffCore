@@ -1,0 +1,66 @@
+{
+  "name": "diffcore",
+  "productName": "DiffCore",
+  "version": "1.0.0",
+  "description": "Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite",
+  "author": {
+    "name": "Miguel Vergara",
+    "email": "miguelvergara@diffcore.local"
+  },
+  "homepage": "https://github.com/miguelvergara/diffcore",
+  "main": "fuentes/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "electron-builder --mac dmg",
+    "build:dir": "electron-builder --dir",
+    "build:linux": "electron-builder --linux deb",
+    "build:win": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.miguelvergara.diffcore",
+    "productName": "DiffCore",
+    "directories": {
+      "output": "empaquetado/dist"
+    },
+    "files": [
+      "fuentes/**/*",
+      "iconos/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "iconos/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dir",
+        "dmg"
+      ],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "linux": {
+      "icon": "iconos/icon.png",
+      "target": [
+        "deb",
+        "AppImage"
+      ],
+      "maintainer": "Miguel Vergara <miguelvergara@diffcore.local>",
+      "category": "Development",
+      "synopsis": "Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite"
+    },
+    "win": {
+      "icon": "iconos/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^40.8.0",
+    "electron-builder": "^26.7.0"
+  },
+  "dependencies": {
+    "diff": "^9.0.0",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,283 @@
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const { compareFolderTrees, compareFilesDeep, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
+const sessionManager = require('./sessionManager');
+const fileOps = require('./fileOps');
+
+let mainWindow;
+
+function createWindow() {
+  const iconPath = path.join(__dirname, '../../iconos/icon.png');
+  mainWindow = new BrowserWindow({
+    width: 1440,
+    height: 920,
+    minWidth: 960,
+    minHeight: 640,
+    title: 'DiffCore - Beyond Compare Edition',
+    titleBarStyle: 'hiddenInset',
+    backgroundColor: '#1e1e1e',
+    icon: iconPath,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    sendLog(`DiffCore started. Username: ${os.userInfo().username}`);
+
+    // Check CLI arguments for direct compare
+    const args = process.argv.slice(app.isPackaged ? 1 : 2);
+    const validPaths = args.filter(a => !a.startsWith('-') && fs.existsSync(a));
+    if (validPaths.length >= 2) {
+      const left = validPaths[0];
+      const right = validPaths[1];
+      const isFile = fs.statSync(left).isFile() && fs.statSync(right).isFile();
+      mainWindow.webContents.send('cli:launch', {
+        left,
+        right,
+        type: isFile ? 'text_compare' : 'folder_compare'
+      });
+      sendLog(`Launched via CLI: ${left} ⇄ ${right}`);
+    }
+  });
+}
+
+function sendLog(text) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const now = new Date();
+    const timeStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getFullYear()).slice(-2)} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    mainWindow.webContents.send('log:message', `[${timeStr}] ${text}`);
+  }
+}
+
+app.whenReady().then(() => {
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(path.join(__dirname, '../../iconos/icon.png'));
+  }
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('open-file', (event, filePath) => {
+  event.preventDefault();
+  if (mainWindow && mainWindow.webContents) {
+    try {
+      const stat = fs.statSync(filePath);
+      mainWindow.webContents.send('cli:launch', {
+        left: filePath,
+        right: '',
+        type: stat.isDirectory() ? 'folder_compare' : 'text_compare'
+      });
+    } catch {}
+  }
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+// --- IPC HANDLERS ---
+
+// Folder Picker Dialog
+ipcMain.handle('dialog:selectFolder', async (_event, defaultPath) => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory'],
+    defaultPath: defaultPath && fs.existsSync(defaultPath) ? defaultPath : os.homedir()
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+  return null;
+});
+
+// File Picker Dialog (for Text / Hex Compare)
+ipcMain.handle('dialog:selectFile', async (_event, defaultPath) => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    defaultPath: defaultPath && fs.existsSync(defaultPath) ? defaultPath : os.homedir()
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+  return null;
+});
+
+// Compare Folders (Fast Tree Walk)
+ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath }) => {
+  sendLog(`Load comparison: ${leftPath || '(none)'} <-> ${rightPath || '(none)'}`);
+  try {
+    const items = compareFolderTrees(leftPath, rightPath);
+    return { success: true, items };
+  } catch (err) {
+    sendLog(`Error comparing folders: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+});
+
+// Compare Selection Deep (Modal =?)
+ipcMain.handle('diff:compareSelectionDeep', async (_event, { leftPath, rightPath, items, method, skipBinary = true }) => {
+  sendLog(`Starting ${method.toUpperCase()} comparison on ${items.length} item(s)...`);
+  const results = [];
+  let matchCount = 0;
+  let diffCount = 0;
+
+  for (const item of items) {
+    const fullLeft = path.join(leftPath, item.relativePath);
+    const fullRight = path.join(rightPath, item.relativePath);
+
+    const comp = compareFilesDeep(fullLeft, fullRight, method, skipBinary);
+    if (comp.match) matchCount++;
+    else diffCount++;
+
+    results.push({
+      relativePath: item.relativePath,
+      ...comp
+    });
+  }
+
+  sendLog(`Comparison finished. Matches: ${matchCount}, Differences: ${diffCount}`);
+  return {
+    success: true,
+    method,
+    matchCount,
+    diffCount,
+    results
+  };
+});
+
+// Beyond Compare 5 Myers Diff Alignment
+ipcMain.handle('diff:computeAlignedDiff', async (_event, { leftText, rightText }) => {
+  return computeAlignedDiff(leftText, rightText);
+});
+
+// Session Management (Dynamic BC5 + DiffCore)
+ipcMain.handle('sessions:load', async () => {
+  return sessionManager.getAllSessions();
+});
+
+ipcMain.handle('sessions:save', async (_event, sessionData) => {
+  const res = sessionManager.saveSession(sessionData);
+  if (res.success) {
+    sendLog(`Saved session: ${sessionData.name}`);
+  }
+  return res;
+});
+
+ipcMain.handle('sessions:delete', async (_event, sessionId) => {
+  const res = sessionManager.deleteSession(sessionId);
+  if (res.success) {
+    sendLog(`Deleted session: ${sessionId}`);
+  }
+  return res;
+});
+
+// File Operations (Copy, Delete, Reveal)
+ipcMain.handle('fs:copyItem', async (_event, { src, dest }) => {
+  sendLog(`Copying: ${src} -> ${dest}`);
+  return fileOps.copyItem(src, dest);
+});
+
+ipcMain.handle('fs:deleteItem', async (_event, targetPath) => {
+  sendLog(`Deleting: ${targetPath}`);
+  return fileOps.deleteItem(targetPath);
+});
+
+ipcMain.handle('fs:renameItem', async (_event, { oldPath, newPath }) => {
+  sendLog(`Renaming: ${oldPath} -> ${newPath}`);
+  return fileOps.renameItem(oldPath, newPath);
+});
+
+ipcMain.handle('fs:moveItem', async (_event, { src, dest }) => {
+  sendLog(`Moving: ${src} -> ${dest}`);
+  return fileOps.moveItem(src, dest);
+});
+
+ipcMain.handle('fs:createFolder', async (_event, folderPath) => {
+  sendLog(`Creating folder: ${folderPath}`);
+  return fileOps.createFolder(folderPath);
+});
+
+ipcMain.handle('fs:touchItem', async (_event, targetPath) => {
+  sendLog(`Touching: ${targetPath}`);
+  return fileOps.touchItem(targetPath);
+});
+
+ipcMain.handle('fs:getAttributes', async (_event, targetPath) => {
+  return fileOps.getItemAttributes(targetPath);
+});
+
+ipcMain.handle('fs:openDefaultApp', async (_event, targetPath) => {
+  return fileOps.openInDefaultApp(targetPath);
+});
+
+ipcMain.handle('fs:openTerminal', async (_event, targetPath) => {
+  return fileOps.openTerminal(targetPath);
+});
+
+ipcMain.handle('fs:reveal', async (_event, targetPath) => {
+  return fileOps.revealInFinder(targetPath);
+});
+
+// Text Compare Operations
+ipcMain.handle('fs:readText', async (_event, filePath) => {
+  return fileOps.readTextFile(filePath);
+});
+
+ipcMain.handle('fs:writeText', async (_event, { filePath, content }) => {
+  sendLog(`Saved file: ${filePath}`);
+  return fileOps.writeTextFile(filePath, content);
+});
+
+// Hex Compare Operations
+ipcMain.handle('fs:readHex', async (_event, { filePath, offset, length }) => {
+  return fileOps.readHexDump(filePath, offset, length);
+});
+
+// Table Compare Operations (Excel, CSV, TSV, HTML)
+ipcMain.handle('table:read', async (_event, filePath) => {
+  sendLog(`Reading table: ${filePath}`);
+  return fileOps.readTableFile(filePath);
+});
+
+// Media Compare Operations (ID3, MP3, FLAC, M4A, WAV)
+ipcMain.handle('media:readTags', async (_event, filePath) => {
+  sendLog(`Reading media metadata: ${filePath}`);
+  return fileOps.readMediaMetadata(filePath);
+});
+
+// Folder Sync Operations
+ipcMain.handle('sync:execute', async (_event, tasks) => {
+  sendLog(`Executing folder sync with ${tasks.length} operations...`);
+  return fileOps.executeFolderSync(tasks);
+});
+
+// 3-Way Folder Merge Operations
+ipcMain.handle('merge:folderMerge', async (_event, { left, base, right }) => {
+  sendLog(`3-Way Folder Merge: Left: ${left || '(none)'}, Base: ${base || '(none)'}, Right: ${right || '(none)'}`);
+  return compareFolderMergeTrees(left, base, right);
+});
+
+// 3-Way Text Merge Operations
+ipcMain.handle('merge:textMerge', async (_event, { left, base, right }) => {
+  return computeThreeWayTextMerge(left, base, right);
+});
+
+// System Info
+ipcMain.handle('system:getInfo', async () => {
+  return {
+    username: os.userInfo().username,
+    platform: process.platform,
+    arch: process.arch,
+    freeMem: Math.round(os.freemem() / (1024 * 1024 * 1024)) + ' GB free'
+  };
+});
+
