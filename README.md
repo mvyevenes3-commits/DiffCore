@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Suite profesional de comparación visual, sincronización y fusión de archivos y carpetas de alto rendimiento.</b><br>
-  Inspirada en el flujo de trabajo y la estética oficial de <b>Beyond Compare 5</b>, 100% multiplataforma para <b>macOS</b>, <b>Linux</b> y <b>Windows</b>.
+  100% multiplataforma para <b>macOS</b>, <b>Linux</b> y <b>Windows</b>.
 </p>
 
 ---
