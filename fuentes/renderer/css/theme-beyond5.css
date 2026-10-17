@@ -682,6 +682,16 @@ body.theme-light .tab-add-btn:hover {
   min-height: 0;
 }
 
+.dual-pane-wrapper {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
 .dual-pane,
 .tree-pane {
   flex: 1 !important;
@@ -2108,38 +2118,110 @@ body.theme-light .tab-add-btn:hover {
 }
 
 /* Custom Scrollbars (High Visibility for Horizontal & Vertical) */
-.text-pane-scroll::-webkit-scrollbar {
+.text-pane-scroll::-webkit-scrollbar,
+.dual-pane::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
-.text-pane-scroll::-webkit-scrollbar-track {
+.text-pane-scroll::-webkit-scrollbar-track,
+.dual-pane::-webkit-scrollbar-track {
   background: #1e1e1e;
 }
-.text-pane-scroll::-webkit-scrollbar-thumb {
+.text-pane-scroll::-webkit-scrollbar-thumb,
+.dual-pane::-webkit-scrollbar-thumb {
   background: #3e3e42;
   border: 2px solid #1e1e1e;
   border-radius: 6px;
 }
-.text-pane-scroll::-webkit-scrollbar-thumb:hover {
+.text-pane-scroll::-webkit-scrollbar-thumb:hover,
+.dual-pane::-webkit-scrollbar-thumb:hover {
   background: #505054;
 }
-.text-pane-scroll::-webkit-scrollbar-corner {
+.text-pane-scroll::-webkit-scrollbar-corner,
+.dual-pane::-webkit-scrollbar-corner {
   background: #1e1e1e;
 }
 
-body.theme-light .text-pane-scroll::-webkit-scrollbar-track {
+body.theme-light .text-pane-scroll::-webkit-scrollbar-track,
+body.theme-light .dual-pane::-webkit-scrollbar-track {
   background: #f0f0f0;
 }
-body.theme-light .text-pane-scroll::-webkit-scrollbar-thumb {
+body.theme-light .text-pane-scroll::-webkit-scrollbar-thumb,
+body.theme-light .dual-pane::-webkit-scrollbar-thumb {
   background: #c2c2c2;
   border: 2px solid #f0f0f0;
   border-radius: 6px;
 }
-body.theme-light .text-pane-scroll::-webkit-scrollbar-thumb:hover {
+body.theme-light .text-pane-scroll::-webkit-scrollbar-thumb:hover,
+body.theme-light .dual-pane::-webkit-scrollbar-thumb:hover {
   background: #a0a0a0;
 }
-body.theme-light .text-pane-scroll::-webkit-scrollbar-corner {
+body.theme-light .text-pane-scroll::-webkit-scrollbar-corner,
+body.theme-light .dual-pane::-webkit-scrollbar-corner {
   background: #f0f0f0;
+}
+
+/* Hide native vertical scrollbar on synchronized panes while preserving horizontal scrollbars */
+.text-pane-scroll::-webkit-scrollbar:vertical,
+.dual-pane::-webkit-scrollbar:vertical {
+  width: 0 !important;
+  display: none !important;
+}
+
+/* Synchronized Custom Vertical Scrollbars (Zero-Lag Dual-Scroll System) */
+.sync-vscrollbar {
+  width: 12px;
+  background: #1e1e1e;
+  position: relative;
+  flex-shrink: 0;
+  user-select: none;
+  cursor: default;
+  height: 100%;
+  box-sizing: border-box;
+  border-left: 1px solid #282828;
+  z-index: 5;
+}
+
+.sync-vscrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: 2px;
+  right: 2px;
+  min-height: 22px;
+  background: #3e3e42;
+  border: 1px solid #1e1e1e;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.08s ease;
+  box-sizing: border-box;
+  will-change: transform;
+}
+
+.sync-vscrollbar-thumb:hover {
+  background: #505054;
+}
+
+.sync-vscrollbar-thumb.active {
+  background: #68686e;
+}
+
+/* Light Theme Styling for Sync Scrollbars */
+body.theme-light .sync-vscrollbar {
+  background: #f0f0f0;
+  border-left: 1px solid #e0e0e0;
+}
+
+body.theme-light .sync-vscrollbar-thumb {
+  background: #c2c2c2;
+  border: 1px solid #f0f0f0;
+}
+
+body.theme-light .sync-vscrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+body.theme-light .sync-vscrollbar-thumb.active {
+  background: #888888;
 }
 
 #textLeftLines,

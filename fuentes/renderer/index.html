@@ -471,40 +471,50 @@
     <!-- Dual Symmetric Tree Table (Folder Compare Core Matching Image 1) -->
     <div class="folder-dual-container" id="folderDualContainer" oncontextmenu="handleTableContextMenu(event)">
       <!-- Left Table View -->
-      <div class="dual-pane" id="leftPaneScroll">
-        <table class="diff-table" id="leftDiffTable">
-          <thead>
-            <tr>
-              <th style="width: 58%;">Name <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
-              <th style="width: 17%; text-align: right;">Size</th>
-              <th style="width: 22%;">Modified</th>
-              <th style="width: 18px; padding: 0;"></th>
-            </tr>
-          </thead>
-          <tbody id="leftTableBody">
-            <!-- Rendered dynamically -->
-          </tbody>
-        </table>
+      <div class="dual-pane-wrapper" id="folderLeftPaneWrapper">
+        <div class="dual-pane" id="leftPaneScroll">
+          <table class="diff-table" id="leftDiffTable">
+            <thead>
+              <tr>
+                <th style="width: 58%;">Name <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
+                <th style="width: 17%; text-align: right;">Size</th>
+                <th style="width: 22%;">Modified</th>
+                <th style="width: 18px; padding: 0;"></th>
+              </tr>
+            </thead>
+            <tbody id="leftTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div class="sync-vscrollbar" id="folderLeftVScroll" title="Scroll left / right folders together">
+          <div class="sync-vscrollbar-thumb" id="folderLeftVThumb"></div>
+        </div>
       </div>
 
       <!-- Center Sizing/Divider Bar -->
       <div class="center-divider"></div>
 
       <!-- Right Table View -->
-      <div class="dual-pane" id="rightPaneScroll">
-        <table class="diff-table" id="rightDiffTable">
-          <thead>
-            <tr>
-              <th style="width: 58%;">Name <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
-              <th style="width: 17%; text-align: right;">Size</th>
-              <th style="width: 22%;">Modified</th>
-              <th style="width: 18px; padding: 0;"></th>
-            </tr>
-          </thead>
-          <tbody id="rightTableBody">
-            <!-- Rendered dynamically -->
-          </tbody>
-        </table>
+      <div class="dual-pane-wrapper" id="folderRightPaneWrapper">
+        <div class="dual-pane" id="rightPaneScroll">
+          <table class="diff-table" id="rightDiffTable">
+            <thead>
+              <tr>
+                <th style="width: 58%;">Name <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
+                <th style="width: 17%; text-align: right;">Size</th>
+                <th style="width: 22%;">Modified</th>
+                <th style="width: 18px; padding: 0;"></th>
+              </tr>
+            </thead>
+            <tbody id="rightTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div class="sync-vscrollbar" id="folderRightVScroll" title="Scroll left / right folders together">
+          <div class="sync-vscrollbar-thumb" id="folderRightVThumb"></div>
+        </div>
       </div>
     </div>
 
@@ -630,6 +640,9 @@
           <div class="text-pane-scroll" id="textLeftScroll" onscroll="syncTextScroll('left')">
             <div id="textLeftLines"></div>
           </div>
+          <div class="sync-vscrollbar" id="textLeftVScroll" title="Scroll left / right files together">
+            <div class="sync-vscrollbar-thumb" id="textLeftVThumb"></div>
+          </div>
         </div>
       </div>
 
@@ -656,6 +669,9 @@
         <div class="text-pane-body">
           <div class="text-pane-scroll" id="textRightScroll" onscroll="syncTextScroll('right')">
             <div id="textRightLines"></div>
+          </div>
+          <div class="sync-vscrollbar" id="textRightVScroll" title="Scroll left / right files together">
+            <div class="sync-vscrollbar-thumb" id="textRightVThumb"></div>
           </div>
         </div>
       </div>
