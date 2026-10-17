@@ -1447,8 +1447,11 @@ async function runFolderComparison() {
   appState.lastComparedLeft = left;
   appState.lastComparedRight = right;
 
-  // Clear folder open state so folders appear collapsed by default
+  // Clear folder open state and selection so comparison starts clean
   appState.folderOpenState.clear();
+  appState.selectedIndices.clear();
+  appState.selectedIndex = -1;
+  appState.lastClickedIndex = -1;
 
   appendLog(`Running comparison: ${left} <=> ${right}`);
   const result = await window.api.compareFolders(left, right);
@@ -7168,70 +7171,77 @@ async function saveTextFile(side) {
 
 // --- HELPER: RESOLVE SELECTED COMPARISON ITEMS (EXPANDS DIRECTORIES RECURSIVELY) ---
 function getSelectedOrAllComparisonItems() {
-  if (appState.selectedIndices && appState.selectedIndices.size > 0) {
-    const selectedFilteredItems = Array.from(appState.selectedIndices)
-      .map(idx => appState.filteredItems[idx])
-      .filter(Boolean);
+  const filter = appState.currentFilter || 'diffs';
+  const query = appState.tableSearchQuery;
 
-    if (selectedFilteredItems.length > 0) {
-      const targetExact = new Set();
-      const targetPrefixes = [];
+  let baseItems;
 
-      selectedFilteredItems.forEach(item => {
-        targetExact.add(item.relativePath);
-        if (item.isDirectory) {
-          targetPrefixes.push(item.relativePath.endsWith('/') ? item.relativePath : item.relativePath + '/');
+  const hasSelection = appState.selectedIndices && appState.selectedIndices.size > 0;
+  const selectedFilteredItems = hasSelection
+    ? Array.from(appState.selectedIndices).map(idx => appState.filteredItems[idx]).filter(Boolean)
+    : [];
+
+  if (selectedFilteredItems.length > 0) {
+    const targetExact = new Set();
+    const targetPrefixes = [];
+
+    selectedFilteredItems.forEach(item => {
+      targetExact.add(item.relativePath);
+      if (item.isDirectory) {
+        targetPrefixes.push(item.relativePath.endsWith('/') ? item.relativePath : item.relativePath + '/');
+      }
+    });
+
+    baseItems = appState.comparisonItems.filter(it => {
+      if (targetExact.has(it.relativePath)) return true;
+      for (let p = 0; p < targetPrefixes.length; p++) {
+        if (it.relativePath.startsWith(targetPrefixes[p])) return true;
+      }
+      return false;
+    });
+  } else {
+    baseItems = appState.comparisonItems;
+  }
+
+  // Filter-aware scope matching Beyond Compare 5:
+  // If user explicitly picked individual files only (not folders), respect that explicit file pick.
+  // Otherwise (whole folder selected, or no rows selected), respect the active view filter.
+  const hasDirectoryInSelection = selectedFilteredItems.some(it => it.isDirectory);
+  const isExplicitFilePick = selectedFilteredItems.length > 0 && !hasDirectoryInSelection;
+
+  if (!isExplicitFilePick) {
+    if (filter === 'diffs') {
+      baseItems = baseItems.filter(it => {
+        if (it.isDirectory) {
+          const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
+          return node ? node.hasDiff : (it.hasDiff || it.status === 'different');
         }
+        return it.status === 'different' || it.status === 'orphan_left' || it.status === 'orphan_right';
       });
-
-      return appState.comparisonItems.filter(it => {
-        if (targetExact.has(it.relativePath)) return true;
-        for (let p = 0; p < targetPrefixes.length; p++) {
-          if (it.relativePath.startsWith(targetPrefixes[p])) return true;
+    } else if (filter === 'same') {
+      baseItems = baseItems.filter(it => {
+        if (it.isDirectory) {
+          const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
+          return node ? node.hasSame : (it.hasSame || it.status === 'identical');
         }
-        return false;
+        return it.status === 'identical';
+      });
+    } else if (filter === 'orphans') {
+      baseItems = baseItems.filter(it => {
+        if (it.isDirectory) {
+          const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
+          return node ? node.hasOrphan : (it.hasOrphan || it.status === 'orphan_left' || it.status === 'orphan_right');
+        }
+        return it.status === 'orphan_left' || it.status === 'orphan_right';
       });
     }
   }
 
-  // When no rows are explicitly selected, align comparison scope with Beyond Compare 5:
-  // evaluate the items matching the active filter and search query
-  const filter = appState.currentFilter || 'diffs';
-  const query = appState.tableSearchQuery;
-
-  let items = appState.comparisonItems;
-
-  if (filter === 'diffs') {
-    items = items.filter(it => {
-      if (it.isDirectory) {
-        const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
-        return node ? node.hasDiff : (it.hasDiff || it.status === 'different');
-      }
-      return it.status === 'different' || it.status === 'orphan_left' || it.status === 'orphan_right';
-    });
-  } else if (filter === 'same') {
-    items = items.filter(it => {
-      if (it.isDirectory) {
-        const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
-        return node ? node.hasSame : (it.hasSame || it.status === 'identical');
-      }
-      return it.status === 'identical';
-    });
-  } else if (filter === 'orphans') {
-    items = items.filter(it => {
-      if (it.isDirectory) {
-        const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
-        return node ? node.hasOrphan : (it.hasOrphan || it.status === 'orphan_left' || it.status === 'orphan_right');
-      }
-      return it.status === 'orphan_left' || it.status === 'orphan_right';
-    });
-  }
-
   if (query) {
-    items = items.filter(it => it.relativePath.toLowerCase().includes(query) || it.name.toLowerCase().includes(query));
+    baseItems = baseItems.filter(it => it.relativePath.toLowerCase().includes(query) || it.name.toLowerCase().includes(query));
   }
 
-  return items;
+  return baseItems;
 }
 
 // --- MODAL: DEEP COMPARE [=? Compare] ---
@@ -7263,18 +7273,18 @@ function openDeepCompareModal() {
 
   const legend = document.querySelector('#deepCompareModal legend');
   if (legend) {
+    const fileCount = items.filter(it => !it.isDirectory).length;
     if (isSelectionActive) {
-      legend.textContent = `Selection (${appState.selectedIndices.size} item${appState.selectedIndices.size > 1 ? 's' : ''} selected)`;
+      legend.textContent = `Selection (${fileCount.toLocaleString('es-ES')} files)`;
     } else if (appState.currentFilter && appState.currentFilter !== 'all') {
       const filterLabel = {
         'diffs': 'Show Differences',
         'same': 'Show Same',
         'orphans': 'Show Orphans'
       }[appState.currentFilter] || appState.currentFilter;
-      const fileCount = items.filter(it => !it.isDirectory).length;
       legend.textContent = `Filtered View (${fileCount.toLocaleString('es-ES')} files - ${filterLabel})`;
     } else {
-      legend.textContent = 'Session Selection (All items)';
+      legend.textContent = `Session Selection (${fileCount.toLocaleString('es-ES')} files)`;
     }
   }
 
