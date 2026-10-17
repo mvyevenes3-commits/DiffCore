@@ -6906,6 +6906,7 @@ function renderTextDiff(diffResult) {
     markersContainer.innerHTML = '';
     if (totalRows > 0 && !diffResult.isSingleSide) {
       for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+        const sec = sections[sIdx];
         const rawTopPct = (sec.startRow / totalRows) * 100;
         const rowSpan = Math.max(1, sec.endRow - sec.startRow + 1);
         const heightPct = Math.max(2.2, (rowSpan / totalRows) * 100);
@@ -6918,6 +6919,10 @@ function renderTextDiff(diffResult) {
         marker.className = sec.isWhitespaceDiff ? 'overview-marker marker-whitespace' : 'overview-marker';
         marker.style.top = `${safeTopPct}%`;
         marker.style.height = `${heightPct}%`;
+        if (sec.endRow >= totalRows - 2) {
+          marker.style.top = 'auto';
+          marker.style.bottom = '1px';
+        }
         marker.title = `Difference section ${sec.index + 1} (${rowSpan} lines) - Click to jump directly`;
         marker.onclick = (e) => {
           e.stopPropagation();
@@ -7082,8 +7087,15 @@ function handleOverviewRailClick(event) {
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
   
-  const halfView = (scrollL ? scrollL.clientHeight : 400) / 2;
-  const targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
+  const clientH = scrollL ? scrollL.clientHeight : 400;
+  const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
+  const halfView = clientH / 2;
+  let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
+  if (pct >= 0.95 || targetRow >= diffResult.totalRows - 12) {
+    targetTop = maxScroll;
+  } else {
+    targetTop = Math.min(maxScroll, targetTop);
+  }
 
   textScrollDriver = 'programmatic';
   clearTimeout(textScrollTimer);
@@ -7117,8 +7129,15 @@ function setupOverviewRailDrag() {
     const scrollR = document.getElementById('textRightScroll');
     const scrollG = document.getElementById('textGutterScroll');
 
-    const halfView = (scrollL ? scrollL.clientHeight : 400) / 2;
-    const targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
+    const clientH = scrollL ? scrollL.clientHeight : 400;
+    const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
+    const halfView = clientH / 2;
+    let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
+    if (pct >= 0.95 || targetRow >= diffResult.totalRows - 12) {
+      targetTop = maxScroll;
+    } else {
+      targetTop = Math.min(maxScroll, targetTop);
+    }
 
     textScrollDriver = 'custom_vscroll';
 
@@ -7172,8 +7191,18 @@ function jumpToSection(sectionIndex) {
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
 
-  const halfView = (scrollL ? scrollL.clientHeight : 400) / 2;
-  const targetTop = Math.max(0, sec.startRow * TEXT_ROW_HEIGHT - halfView + 30);
+  const clientH = scrollL ? scrollL.clientHeight : 400;
+  const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
+  const halfView = clientH / 2;
+
+  let targetTop = Math.max(0, sec.startRow * TEXT_ROW_HEIGHT - halfView + 30);
+  // If the section is near or at the end of the file, clamp directly to maxScroll
+  // so the file ends cleanly on top of the horizontal scrollbar without requiring extra scrolling
+  if (sec.endRow >= (diffResult.totalRows - 12) || (sec.startRow * TEXT_ROW_HEIGHT + clientH >= diffResult.totalRows * TEXT_ROW_HEIGHT)) {
+    targetTop = maxScroll;
+  } else {
+    targetTop = Math.min(maxScroll, targetTop);
+  }
 
   textScrollDriver = 'programmatic';
   clearTimeout(textScrollTimer);
@@ -7192,16 +7221,19 @@ function jumpToSection(sectionIndex) {
 // --- BEYOND COMPARE OPTIONS (NEXT DIFFERENCE) CONTROLLER ---
 const DEFAULT_DIFF_OPTIONS = {
   goToFirstDiffOnLoad: false,
-  nextDiffAfterCopy: true,
+  nextDiffAfterCopy: false,
   limitNextDiffToFolder: false,
-  wrapAroundDiffs: true,
+  wrapAroundDiffs: false,
   showMessagePanel: true
 };
 
 function loadDiffOptions() {
   try {
-    const raw = localStorage.getItem('diffcore_diff_options');
-    if (!raw) return { ...DEFAULT_DIFF_OPTIONS };
+    const raw = localStorage.getItem('diffcore_diff_options_v2');
+    if (!raw) {
+      localStorage.setItem('diffcore_diff_options_v2', JSON.stringify(DEFAULT_DIFF_OPTIONS));
+      return { ...DEFAULT_DIFF_OPTIONS };
+    }
     const parsed = JSON.parse(raw);
     return { ...DEFAULT_DIFF_OPTIONS, ...parsed };
   } catch (e) {
@@ -7211,6 +7243,7 @@ function loadDiffOptions() {
 
 function saveDiffOptionsConfig() {
   try {
+    localStorage.setItem('diffcore_diff_options_v2', JSON.stringify(appState.diffOptions || DEFAULT_DIFF_OPTIONS));
     localStorage.setItem('diffcore_diff_options', JSON.stringify(appState.diffOptions || DEFAULT_DIFF_OPTIONS));
   } catch (e) {
     console.warn('Failed to save diff options:', e);
@@ -7271,9 +7304,9 @@ function saveNextDiffOptionsFromModal() {
 
   appState.diffOptions = {
     goToFirstDiffOnLoad: chkFirst ? chkFirst.checked : false,
-    nextDiffAfterCopy: chkNext ? chkNext.checked : true,
+    nextDiffAfterCopy: chkNext ? chkNext.checked : false,
     limitNextDiffToFolder: chkLimit ? chkLimit.checked : false,
-    wrapAroundDiffs: chkWrap ? chkWrap.checked : true,
+    wrapAroundDiffs: chkWrap ? chkWrap.checked : false,
     showMessagePanel: chkMsg ? chkMsg.checked : true
   };
 
@@ -7307,6 +7340,7 @@ function navDiff(direction) {
     } else {
       next = 0;
       if (opts.showMessagePanel) showToast('Reached the first difference', 'info');
+      jumpToSection(0);
       return;
     }
   } else if (next >= diffResult.sections.length) {
@@ -7316,6 +7350,7 @@ function navDiff(direction) {
     } else {
       next = diffResult.sections.length - 1;
       if (opts.showMessagePanel) showToast('Reached the last difference', 'info');
+      jumpToSection(diffResult.sections.length - 1);
       return;
     }
   }

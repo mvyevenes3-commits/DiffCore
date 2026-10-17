@@ -2083,10 +2083,10 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
 
 #overviewMarkersContainer {
   position: absolute;
-  top: 4px;
+  top: 2px;
   left: 0;
   right: 0;
-  bottom: 26px; /* Avoid clipping by bottom horizontal scrollbar */
+  bottom: 12px; /* Aligns exactly above the 12px horizontal scrollbar */
   pointer-events: none;
 }
 
