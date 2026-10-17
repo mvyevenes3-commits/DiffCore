@@ -146,11 +146,21 @@ window.addEventListener('DOMContentLoaded', async () => {
   setFilter(appState.currentFilter);
   updateFilterToolbarButton();
 
+  appState.diffOptions = loadDiffOptions();
+
   const btnFilters = document.getElementById('btnNameFilters');
   if (btnFilters) {
     btnFilters.addEventListener('click', (e) => {
       e.preventDefault();
       openNameFiltersModal();
+    });
+  }
+
+  const btnOptions = document.getElementById('btnNextDiffOptions');
+  if (btnOptions) {
+    btnOptions.addEventListener('click', (e) => {
+      e.preventDefault();
+      openNextDiffOptionsModal();
     });
   }
 
@@ -5769,6 +5779,11 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   // Render side-by-side aligned diff
   renderTextDiff(diffResult);
 
+  const opts = appState.diffOptions || DEFAULT_DIFF_OPTIONS;
+  if (opts.goToFirstDiffOnLoad && diffResult.sections && diffResult.sections.length > 0) {
+    setTimeout(() => jumpToSection(0), 60);
+  }
+
   // Auto-save session ONLY if this is a direct standalone text comparison
   // (Do not save child file comparisons triggered from within a Folder Compare session)
   if (!isChildCompare && leftFullPath && rightFullPath) {
@@ -6891,14 +6906,17 @@ function renderTextDiff(diffResult) {
     markersContainer.innerHTML = '';
     if (totalRows > 0 && !diffResult.isSingleSide) {
       for (let sIdx = 0; sIdx < sections.length; sIdx++) {
-        const sec = sections[sIdx];
-        const topPct = (sec.startRow / totalRows) * 100;
+        const rawTopPct = (sec.startRow / totalRows) * 100;
         const rowSpan = Math.max(1, sec.endRow - sec.startRow + 1);
-        const heightPct = Math.max(1.8, (rowSpan / totalRows) * 100);
+        const heightPct = Math.max(2.2, (rowSpan / totalRows) * 100);
+        let safeTopPct = rawTopPct;
+        if (safeTopPct + heightPct > 100) {
+          safeTopPct = Math.max(0, 100 - heightPct);
+        }
 
         const marker = document.createElement('div');
         marker.className = sec.isWhitespaceDiff ? 'overview-marker marker-whitespace' : 'overview-marker';
-        marker.style.top = `${topPct}%`;
+        marker.style.top = `${safeTopPct}%`;
         marker.style.height = `${heightPct}%`;
         marker.title = `Difference section ${sec.index + 1} (${rowSpan} lines) - Click to jump directly`;
         marker.onclick = (e) => {
@@ -7171,16 +7189,136 @@ function jumpToSection(sectionIndex) {
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
 }
 
+// --- BEYOND COMPARE OPTIONS (NEXT DIFFERENCE) CONTROLLER ---
+const DEFAULT_DIFF_OPTIONS = {
+  goToFirstDiffOnLoad: false,
+  nextDiffAfterCopy: true,
+  limitNextDiffToFolder: false,
+  wrapAroundDiffs: true,
+  showMessagePanel: true
+};
+
+function loadDiffOptions() {
+  try {
+    const raw = localStorage.getItem('diffcore_diff_options');
+    if (!raw) return { ...DEFAULT_DIFF_OPTIONS };
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_DIFF_OPTIONS, ...parsed };
+  } catch (e) {
+    return { ...DEFAULT_DIFF_OPTIONS };
+  }
+}
+
+function saveDiffOptionsConfig() {
+  try {
+    localStorage.setItem('diffcore_diff_options', JSON.stringify(appState.diffOptions || DEFAULT_DIFF_OPTIONS));
+  } catch (e) {
+    console.warn('Failed to save diff options:', e);
+  }
+}
+
+function openNextDiffOptionsModal() {
+  const opts = appState.diffOptions || loadDiffOptions();
+  appState.diffOptions = opts;
+
+  const chkFirst = document.getElementById('chkGoToFirstDiffOnLoad');
+  const chkNext = document.getElementById('chkNextDiffAfterCopy');
+  const chkLimit = document.getElementById('chkLimitNextDiffToFolder');
+  const chkWrap = document.getElementById('chkWrapAroundDiffs');
+  const chkMsg = document.getElementById('chkShowMessagePanel');
+
+  if (chkFirst) chkFirst.checked = !!opts.goToFirstDiffOnLoad;
+  if (chkNext) chkNext.checked = !!opts.nextDiffAfterCopy;
+  if (chkLimit) chkLimit.checked = !!opts.limitNextDiffToFolder;
+  if (chkWrap) chkWrap.checked = !!opts.wrapAroundDiffs;
+  if (chkMsg) chkMsg.checked = !!opts.showMessagePanel;
+
+  const modal = document.getElementById('nextDiffOptionsModal');
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
+}
+
+function closeNextDiffOptionsModal() {
+  const modal = document.getElementById('nextDiffOptionsModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+
+function resetNextDiffOptionsToDefaults() {
+  const chkFirst = document.getElementById('chkGoToFirstDiffOnLoad');
+  const chkNext = document.getElementById('chkNextDiffAfterCopy');
+  const chkLimit = document.getElementById('chkLimitNextDiffToFolder');
+  const chkWrap = document.getElementById('chkWrapAroundDiffs');
+  const chkMsg = document.getElementById('chkShowMessagePanel');
+
+  if (chkFirst) chkFirst.checked = DEFAULT_DIFF_OPTIONS.goToFirstDiffOnLoad;
+  if (chkNext) chkNext.checked = DEFAULT_DIFF_OPTIONS.nextDiffAfterCopy;
+  if (chkLimit) chkLimit.checked = DEFAULT_DIFF_OPTIONS.limitNextDiffToFolder;
+  if (chkWrap) chkWrap.checked = DEFAULT_DIFF_OPTIONS.wrapAroundDiffs;
+  if (chkMsg) chkMsg.checked = DEFAULT_DIFF_OPTIONS.showMessagePanel;
+}
+
+function saveNextDiffOptionsFromModal() {
+  const chkFirst = document.getElementById('chkGoToFirstDiffOnLoad');
+  const chkNext = document.getElementById('chkNextDiffAfterCopy');
+  const chkLimit = document.getElementById('chkLimitNextDiffToFolder');
+  const chkWrap = document.getElementById('chkWrapAroundDiffs');
+  const chkMsg = document.getElementById('chkShowMessagePanel');
+
+  appState.diffOptions = {
+    goToFirstDiffOnLoad: chkFirst ? chkFirst.checked : false,
+    nextDiffAfterCopy: chkNext ? chkNext.checked : true,
+    limitNextDiffToFolder: chkLimit ? chkLimit.checked : false,
+    wrapAroundDiffs: chkWrap ? chkWrap.checked : true,
+    showMessagePanel: chkMsg ? chkMsg.checked : true
+  };
+
+  saveDiffOptionsConfig();
+  closeNextDiffOptionsModal();
+  showToast('Next Difference options updated', 'info');
+}
+
+window.openNextDiffOptionsModal = openNextDiffOptionsModal;
+window.closeNextDiffOptionsModal = closeNextDiffOptionsModal;
+window.resetNextDiffOptionsToDefaults = resetNextDiffOptionsToDefaults;
+window.saveNextDiffOptionsFromModal = saveNextDiffOptionsFromModal;
+
 function navDiff(direction) {
   const diffResult = appState.currentTextFile.diffResult;
+  const opts = appState.diffOptions || DEFAULT_DIFF_OPTIONS;
+
   if (!diffResult || !diffResult.sections || diffResult.sections.length === 0) {
-    showToast('No difference sections in this file', 'info');
+    if (opts.showMessagePanel) {
+      showToast('No difference sections in this file', 'info');
+    }
     return;
   }
 
   let next = appState.currentTextFile.currentSectionIndex + direction;
-  if (next < 0) next = diffResult.sections.length - 1;
-  if (next >= diffResult.sections.length) next = 0;
+
+  if (next < 0) {
+    if (opts.wrapAroundDiffs) {
+      next = diffResult.sections.length - 1;
+      if (opts.showMessagePanel) showToast('Wrapped to last difference', 'info');
+    } else {
+      next = 0;
+      if (opts.showMessagePanel) showToast('Reached the first difference', 'info');
+      return;
+    }
+  } else if (next >= diffResult.sections.length) {
+    if (opts.wrapAroundDiffs) {
+      next = 0;
+      if (opts.showMessagePanel) showToast('Wrapped to first difference', 'info');
+    } else {
+      next = diffResult.sections.length - 1;
+      if (opts.showMessagePanel) showToast('Reached the last difference', 'info');
+      return;
+    }
+  }
 
   jumpToSection(next);
 }
@@ -7556,6 +7694,15 @@ async function copyDiffSection(sectionIndex, direction) {
   appState.currentTextFile.diffResult = updatedDiff;
   renderTextDiff(updatedDiff);
   updateUndoRedoButtons();
+
+  const opts = appState.diffOptions || DEFAULT_DIFF_OPTIONS;
+  if (opts.nextDiffAfterCopy && updatedDiff && updatedDiff.sections && updatedDiff.sections.length > 0) {
+    let nextIdx = sectionIndex;
+    if (nextIdx >= updatedDiff.sections.length) {
+      nextIdx = opts.wrapAroundDiffs ? 0 : updatedDiff.sections.length - 1;
+    }
+    setTimeout(() => jumpToSection(nextIdx), 60);
+  }
 }
 
 function copyCurrentSectionToLeft() {

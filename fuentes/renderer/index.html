@@ -580,6 +580,10 @@
           <span class="icon">⬇</span>
           <span class="label">Next</span>
         </button>
+        <button class="tb-btn" id="btnNextDiffOptions" title="Next Difference Options (Beyond Compare)" onclick="openNextDiffOptionsModal()">
+          <span class="icon">⚙️</span>
+          <span class="label">Options</span>
+        </button>
         <button class="tb-btn" id="btnTextUndo" title="Deshacer cambio (Ctrl+Z / ⌘Z)" onclick="undoTextChange()" disabled>
           <span class="icon"><span class="dc-icon dc-icon-undo"></span></span>
           <span class="label">Undo</span>
@@ -1551,6 +1555,80 @@
         <div style="display: flex; gap: 8px;">
           <button class="btn-secondary" onclick="closeNameFiltersModal()">Cancel</button>
           <button class="btn-primary" onclick="saveNameFiltersFromModal()">Save & Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BEYOND COMPARE OPTIONS (NEXT DIFFERENCE) -->
+  <div class="modal-backdrop" id="nextDiffOptionsModal">
+    <div class="modal-window bc-options-window" style="width: 700px; max-width: 92vw;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>Options</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeNextDiffOptionsModal()">✕</button>
+      </div>
+
+      <div class="bc-options-layout">
+        <!-- Left Categories Sidebar matching Beyond Compare 5 (Image 1) -->
+        <aside class="bc-options-sidebar">
+          <div class="bc-options-search">
+            <input type="text" placeholder="🔍 Search" class="tb-filter-input" style="width: 100%; font-size: 11px;">
+          </div>
+          <div class="bc-options-cat-list">
+            <div class="bc-opt-cat"><span class="cat-icon">⏻</span> Startup</div>
+            <div class="bc-opt-cat"><span class="cat-icon">📁</span> Tabs</div>
+            <div class="bc-opt-cat"><span class="cat-icon">🎨</span> Appearance</div>
+            <div class="bc-opt-cat"><span class="cat-icon">📝</span> Text Editing</div>
+            <div class="bc-opt-cat active"><span class="cat-icon">⬇</span> Next Difference</div>
+            <div class="bc-opt-cat"><span class="cat-icon">💾</span> Backups</div>
+            <div class="bc-opt-cat"><span class="cat-icon">⚠️</span> File Operations</div>
+            <div class="bc-opt-cat"><span class="cat-icon">📦</span> Archive Types</div>
+            <div class="bc-opt-cat"><span class="cat-icon">⌨️</span> Commands</div>
+            <div class="bc-opt-cat"><span class="cat-icon">🗂️</span> Open With</div>
+            <div class="bc-opt-cat"><span class="cat-icon">⚙️</span> Tweaks</div>
+          </div>
+        </aside>
+
+        <!-- Right Settings Panel (Next Difference) -->
+        <main class="bc-options-content">
+          <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;">Next Difference</h3>
+
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;">
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkGoToFirstDiffOnLoad">
+              <span>When <u>l</u>oading new files, go to first difference</span>
+            </label>
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkNextDiffAfterCopy">
+              <span><u>G</u>o to next difference in files after <u>c</u>opying to other side</span>
+            </label>
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkLimitNextDiffToFolder">
+              <span>Limit "Next Difference Files" to current fol<u>d</u>er</span>
+            </label>
+          </div>
+
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 12px; color: #ddd;">When no more differences:</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 12px;">
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkWrapAroundDiffs">
+              <span><u>W</u>rap around to first difference</span>
+            </label>
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkShowMessagePanel">
+              <span>Show <u>m</u>essage panel</span>
+            </label>
+          </div>
+        </main>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn-secondary" onclick="resetNextDiffOptionsToDefaults()">Reset Defaults</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="closeNextDiffOptionsModal()">Cancel</button>
+          <button class="btn-primary" onclick="saveNextDiffOptionsFromModal()">OK</button>
         </div>
       </div>
     </div>
