@@ -207,6 +207,10 @@ ipcMain.handle('sessions:save', async (_event, sessionData) => {
   return res;
 });
 
+ipcMain.handle('sessions:autoSave', async (_event, sessionData) => {
+  return sessionManager.recordAutoSavedSession(sessionData);
+});
+
 ipcMain.handle('sessions:delete', async (_event, sessionId) => {
   const res = sessionManager.deleteSession(sessionId);
   if (res.success) {

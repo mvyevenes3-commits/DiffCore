@@ -77,14 +77,8 @@
           <div class="session-item" onclick="promptNewSession()">
             <span>➕</span> <span>New</span>
           </div>
-          <div class="session-item" id="autoSavedFolderItem" onclick="toggleAutoSavedGroup()">
-            <span>💾</span> <span>Auto-saved</span> <span class="session-sub" id="autoSavedCountBadge">0</span>
-          </div>
-          
-          <!-- Dynamic Groups Container (Populated via JS) -->
-          <div id="dynamicSessionsTree">
-            <!-- Will be rendered dynamically from Beyond Compare & DiffCore -->
-          </div>
+          <!-- Dynamic Groups Container (Populated via JS: Auto-saved with relative dates & Saved sessions) -->
+          <div id="dynamicSessionsTree"></div>
         </div>
 
         <div style="display: flex; gap: 4px; padding: 6px 10px; border-top: 1px solid var(--border-color); background: #1c1c1c;">

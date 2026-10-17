@@ -145,7 +145,7 @@ async function reloadSessions() {
 
 function updateAutoSavedBadge() {
   const badge = document.getElementById('autoSavedCountBadge');
-  if (badge) badge.textContent = appState.autoSaved.length;
+  if (badge) badge.textContent = (appState.autoSaved || []).length;
 }
 
 function renderSessionsTree() {
@@ -155,48 +155,124 @@ function renderSessionsTree() {
 
   const query = (appState.sessionSearchQuery || '').toLowerCase();
 
-  // Group sessions by their 'group' field (e.g. Today, Yesterday, 2 days ago, Last week, Older)
-  const groupsMap = new Map();
+  // Initialize expanded groups set if not yet present
+  if (!appState.expandedSessionGroups) {
+    appState.expandedSessionGroups = new Set(['auto-saved', 'Today', 'Yesterday']);
+  }
 
-  appState.sessions.forEach(sess => {
-    if (query && !sess.name.toLowerCase().includes(query) && 
-        !sess.leftPath.toLowerCase().includes(query) && 
-        !sess.rightPath.toLowerCase().includes(query)) {
-      return;
-    }
-    const gName = sess.group || 'Sessions';
-    if (!groupsMap.has(gName)) groupsMap.set(gName, []);
-    groupsMap.get(gName).push(sess);
+  const iconMap = {
+    folder_compare: '<span class="dc-icon dc-icon-folder"></span>',
+    folder_sync: '<span class="dc-icon dc-icon-sync"></span>',
+    folder_merge: '<span class="dc-icon dc-icon-merge"></span>',
+    text_compare: '<span class="dc-icon dc-icon-file-text"></span>',
+    text_merge: '<span class="dc-icon dc-icon-merge"></span>',
+    text_edit: '<span class="dc-icon dc-icon-edit"></span>',
+    hex_compare: '<span class="dc-icon dc-icon-hex"></span>',
+    picture_compare: '<span class="dc-icon dc-icon-picture"></span>',
+    table_compare: '<span class="dc-icon dc-icon-table"></span>',
+    media_compare: '<span class="dc-icon dc-icon-music"></span>'
+  };
+
+  // 1. AUTO-SAVED GROUP
+  const autoSavedList = appState.autoSaved || [];
+  const filteredAutoSaved = autoSavedList.filter(sess => {
+    if (!query) return true;
+    return (sess.name && sess.name.toLowerCase().includes(query)) ||
+           (sess.leftPath && sess.leftPath.toLowerCase().includes(query)) ||
+           (sess.rightPath && sess.rightPath.toLowerCase().includes(query));
   });
 
-  // Render priority order for groups
-  const groupOrder = ['Today', 'Yesterday', '2 days ago', 'Last week', 'Earlier this month', 'Older'];
-  const allGroups = Array.from(groupsMap.keys());
-  allGroups.sort((a, b) => {
-    const idxA = groupOrder.indexOf(a);
-    const idxB = groupOrder.indexOf(b);
+  // Group auto-saved sessions by their relative date group
+  const dateGroupsMap = new Map();
+  const dateGroupOrder = [
+    'Today',
+    'Yesterday',
+    '2 days ago',
+    '3 days ago',
+    '4 days ago',
+    '5 days ago',
+    '6 days ago',
+    'More than 6 days ago',
+    'Other'
+  ];
+
+  filteredAutoSaved.forEach(sess => {
+    const gName = sess.group || 'More than 6 days ago';
+    if (!dateGroupsMap.has(gName)) dateGroupsMap.set(gName, []);
+    dateGroupsMap.get(gName).push(sess);
+  });
+
+  // If query is present, auto-expand all groups
+  if (query) {
+    appState.expandedSessionGroups.add('auto-saved');
+    dateGroupsMap.forEach((_, gName) => appState.expandedSessionGroups.add(gName));
+  } else {
+    // If Today and Yesterday are both empty, expand the first available date group
+    const hasRecent = dateGroupsMap.has('Today') || dateGroupsMap.has('Yesterday');
+    if (!hasRecent && dateGroupsMap.size > 0) {
+      const firstAvailable = Array.from(dateGroupsMap.keys())[0];
+      appState.expandedSessionGroups.add(firstAvailable);
+    }
+  }
+
+  const isAutoRootExpanded = appState.expandedSessionGroups.has('auto-saved');
+  const autoSavedRoot = document.createElement('div');
+  autoSavedRoot.className = 'session-group';
+
+  const autoRootHeader = document.createElement('div');
+  autoRootHeader.className = `session-group-header ${isAutoRootExpanded ? '' : 'collapsed'}`;
+  autoRootHeader.innerHTML = `
+    <span><span class="group-arrow">▼</span> <span>💾</span> Auto-saved</span>
+    <span class="session-sub" id="autoSavedCountBadge">${filteredAutoSaved.length}</span>
+  `;
+  autoRootHeader.onclick = (e) => {
+    e.stopPropagation();
+    if (appState.expandedSessionGroups.has('auto-saved')) {
+      appState.expandedSessionGroups.delete('auto-saved');
+    } else {
+      appState.expandedSessionGroups.add('auto-saved');
+    }
+    renderSessionsTree();
+  };
+
+  const autoRootItems = document.createElement('div');
+  autoRootItems.className = `session-group-items ${isAutoRootExpanded ? '' : 'collapsed'}`;
+
+  // Sort available date groups by predefined order
+  const availableGroups = Array.from(dateGroupsMap.keys()).sort((a, b) => {
+    const idxA = dateGroupOrder.indexOf(a);
+    const idxB = dateGroupOrder.indexOf(b);
     if (idxA !== -1 && idxB !== -1) return idxA - idxB;
     if (idxA !== -1) return -1;
     if (idxB !== -1) return 1;
     return a.localeCompare(b);
   });
 
-  allGroups.forEach(gName => {
-    const list = groupsMap.get(gName);
-    const groupEl = document.createElement('div');
-    groupEl.className = 'session-group';
+  availableGroups.forEach(gName => {
+    const list = dateGroupsMap.get(gName);
+    const isGroupExpanded = appState.expandedSessionGroups.has(gName);
 
-    const header = document.createElement('div');
-    header.className = 'session-group-header';
-    header.innerHTML = `<span><span class="group-arrow">▼</span> ${escapeHtml(gName)}</span> <span style="font-size:10px; opacity:0.6;">${list.length}</span>`;
-    header.onclick = (e) => {
+    const subGroup = document.createElement('div');
+    subGroup.className = 'session-subgroup';
+
+    const subHeader = document.createElement('div');
+    subHeader.className = `session-subgroup-header ${isGroupExpanded ? '' : 'collapsed'}`;
+    subHeader.innerHTML = `
+      <span><span class="group-arrow">▼</span> 📁 ${escapeHtml(gName)}</span>
+      <span class="session-sub">${list.length}</span>
+    `;
+    subHeader.onclick = (e) => {
       e.stopPropagation();
-      header.classList.toggle('collapsed');
-      itemsContainer.classList.toggle('collapsed');
+      if (appState.expandedSessionGroups.has(gName)) {
+        appState.expandedSessionGroups.delete(gName);
+      } else {
+        appState.expandedSessionGroups.add(gName);
+      }
+      renderSessionsTree();
     };
 
-    const itemsContainer = document.createElement('div');
-    itemsContainer.className = 'session-group-items';
+    const subItems = document.createElement('div');
+    subItems.className = `session-subgroup-items ${isGroupExpanded ? '' : 'collapsed'}`;
 
     list.forEach(sess => {
       const itemEl = document.createElement('div');
@@ -205,37 +281,93 @@ function renderSessionsTree() {
         itemEl.classList.add('selected');
       }
       itemEl.id = `sess-${sess.id}`;
-      const iconMap = {
-        folder_compare: '<span class="dc-icon dc-icon-folder"></span>',
-        folder_sync: '<span class="dc-icon dc-icon-sync"></span>',
-        folder_merge: '<span class="dc-icon dc-icon-merge"></span>',
-        text_compare: '<span class="dc-icon dc-icon-file-text"></span>',
-        text_merge: '<span class="dc-icon dc-icon-merge"></span>',
-        text_edit: '<span class="dc-icon dc-icon-edit"></span>',
-        hex_compare: '<span class="dc-icon dc-icon-hex"></span>',
-        picture_compare: '<span class="dc-icon dc-icon-picture"></span>',
-        table_compare: '<span class="dc-icon dc-icon-table"></span>',
-        media_compare: '<span class="dc-icon dc-icon-music"></span>'
-      };
       const icon = iconMap[sess.type] || '<span class="dc-icon dc-icon-folder"></span>';
       itemEl.innerHTML = `
         <span>${icon}</span>
-        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${escapeHtml(sess.name)}</span>
-        <span class="session-sub">${sess.source === 'Beyond Compare 5' ? 'BC5' : ''}</span>
+        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="${escapeHtml(sess.name)}">${escapeHtml(sess.name)}</span>
       `;
-      itemEl.onclick = () => selectSession(sess.id);
-      itemEl.ondblclick = () => {
+      itemEl.onclick = (e) => {
+        e.stopPropagation();
+        selectSession(sess.id);
+      };
+      itemEl.ondblclick = (e) => {
+        e.stopPropagation();
         selectSession(sess.id);
         launchSelectedSession();
       };
 
-      itemsContainer.appendChild(itemEl);
+      subItems.appendChild(itemEl);
     });
 
-    groupEl.appendChild(header);
-    groupEl.appendChild(itemsContainer);
-    container.appendChild(groupEl);
+    subGroup.appendChild(subHeader);
+    subGroup.appendChild(subItems);
+    autoRootItems.appendChild(subGroup);
   });
+
+  autoSavedRoot.appendChild(autoRootHeader);
+  autoSavedRoot.appendChild(autoRootItems);
+  container.appendChild(autoSavedRoot);
+
+  // 2. SAVED SESSIONS GROUP (DiffCore custom saved sessions if any)
+  const savedList = (appState.sessions || []).filter(sess => {
+    if (!query) return true;
+    return (sess.name && sess.name.toLowerCase().includes(query)) ||
+           (sess.leftPath && sess.leftPath.toLowerCase().includes(query)) ||
+           (sess.rightPath && sess.rightPath.toLowerCase().includes(query));
+  });
+
+  if (savedList.length > 0) {
+    const isSavedExpanded = appState.expandedSessionGroups.has('saved-sessions');
+    const savedRoot = document.createElement('div');
+    savedRoot.className = 'session-group';
+
+    const savedHeader = document.createElement('div');
+    savedHeader.className = `session-group-header ${isSavedExpanded ? '' : 'collapsed'}`;
+    savedHeader.innerHTML = `
+      <span><span class="group-arrow">▼</span> 📁 Saved Sessions</span>
+      <span class="session-sub">${savedList.length}</span>
+    `;
+    savedHeader.onclick = (e) => {
+      e.stopPropagation();
+      if (appState.expandedSessionGroups.has('saved-sessions')) {
+        appState.expandedSessionGroups.delete('saved-sessions');
+      } else {
+        appState.expandedSessionGroups.add('saved-sessions');
+      }
+      renderSessionsTree();
+    };
+
+    const savedItems = document.createElement('div');
+    savedItems.className = `session-group-items ${isSavedExpanded ? '' : 'collapsed'}`;
+
+    savedList.forEach(sess => {
+      const itemEl = document.createElement('div');
+      itemEl.className = 'session-item';
+      if (appState.selectedSession && appState.selectedSession.id === sess.id) {
+        itemEl.classList.add('selected');
+      }
+      itemEl.id = `sess-${sess.id}`;
+      const icon = iconMap[sess.type] || '<span class="dc-icon dc-icon-folder"></span>';
+      itemEl.innerHTML = `
+        <span>${icon}</span>
+        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="${escapeHtml(sess.name)}">${escapeHtml(sess.name)}</span>
+      `;
+      itemEl.onclick = (e) => {
+        e.stopPropagation();
+        selectSession(sess.id);
+      };
+      itemEl.ondblclick = (e) => {
+        e.stopPropagation();
+        selectSession(sess.id);
+        launchSelectedSession();
+      };
+      savedItems.appendChild(itemEl);
+    });
+
+    savedRoot.appendChild(savedHeader);
+    savedRoot.appendChild(savedItems);
+    container.appendChild(savedRoot);
+  }
 }
 
 function selectSession(sessionId) {
@@ -498,12 +630,15 @@ async function runSingleSideFolder(loadedSide) {
 }
 
 function toggleAutoSavedGroup() {
-  // If auto-saved sessions exist, toggle view or load first
-  if (appState.autoSaved.length > 0) {
-    selectSession(appState.autoSaved[0].id);
-  } else {
-    appendLog('No auto-saved sessions found in Beyond Compare history.');
+  if (!appState.expandedSessionGroups) {
+    appState.expandedSessionGroups = new Set(['auto-saved', 'Today', 'Yesterday']);
   }
+  if (appState.expandedSessionGroups.has('auto-saved')) {
+    appState.expandedSessionGroups.delete('auto-saved');
+  } else {
+    appState.expandedSessionGroups.add('auto-saved');
+  }
+  renderSessionsTree();
 }
 
 function filterSessionsList() {
@@ -650,6 +785,7 @@ function switchView(viewName) {
     if (vEl) vEl.classList.add('active');
 
     updateAppHeader();
+    reloadSessions();
 
     const targetSession = appState.activeFolderSession || appState.selectedSession;
     if (targetSession && targetSession.id) {
@@ -1146,6 +1282,15 @@ async function runFolderComparison() {
     appState.treeRoot = buildComparisonTree(result.items);
     applyFilterAndRender();
     updateStatusBar();
+
+    // Auto-save folder comparison session to history
+    if (left && right) {
+      window.api.recordAutoSavedSession({
+        type: 'folder_compare',
+        leftPath: left,
+        rightPath: right
+      }).then(() => reloadSessions()).catch(err => console.warn('AutoSave error:', err));
+    }
   } else {
     appendLog(`Comparison failed: ${result.error}`);
     alert(`Comparison error: ${result.error}`);
@@ -2696,6 +2841,15 @@ function openHexCompare(left = '', right = '', title = 'Hex Compare') {
     return;
   }
 
+  if (left && right) {
+    window.api.recordAutoSavedSession({
+      type: 'hex_compare',
+      name: title !== 'Hex Compare' ? title : undefined,
+      leftPath: left,
+      rightPath: right
+    }).then(() => reloadSessions()).catch(() => {});
+  }
+
   if (left) loadHexFileForSide('left', left);
   if (right) loadHexFileForSide('right', right);
 }
@@ -2957,6 +3111,15 @@ function openPictureCompare(left = '', right = '', title = 'Picture Compare') {
     renderEmptyPictureCompare();
     setTimeout(() => { if (inL) inL.focus(); }, 50);
     return;
+  }
+
+  if (left && right) {
+    window.api.recordAutoSavedSession({
+      type: 'picture_compare',
+      name: title !== 'Picture Compare' ? title : undefined,
+      leftPath: left,
+      rightPath: right
+    }).then(() => reloadSessions()).catch(() => {});
   }
 
   if (left) loadPicFileForSide('left', left);
@@ -3269,6 +3432,14 @@ async function openMediaCompare(left = '', right = '', title = 'Media Compare') 
   switchView('media');
 
   if (left || right) {
+    if (left && right) {
+      window.api.recordAutoSavedSession({
+        type: 'media_compare',
+        name: title !== 'Media Compare' ? title : undefined,
+        leftPath: left,
+        rightPath: right
+      }).then(() => reloadSessions()).catch(() => {});
+    }
     loadMediaCompare(left, right);
   } else {
     renderEmptyMediaCompare();
@@ -3425,6 +3596,14 @@ async function openTableCompare(left = '', right = '', title = 'Table Compare') 
   switchView('table');
 
   if (left || right) {
+    if (left && right) {
+      window.api.recordAutoSavedSession({
+        type: 'table_compare',
+        name: title !== 'Table Compare' ? title : undefined,
+        leftPath: left,
+        rightPath: right
+      }).then(() => reloadSessions()).catch(() => {});
+    }
     loadTableCompare(left, right);
   } else {
     renderEmptyTableCompare();
@@ -3660,6 +3839,12 @@ function openFolderSync(left = '', right = '', title = 'Folder Sync') {
   switchView('foldersync');
 
   if (left && right) {
+    window.api.recordAutoSavedSession({
+      type: 'folder_sync',
+      name: title !== 'Folder Sync' ? title : undefined,
+      leftPath: left,
+      rightPath: right
+    }).then(() => reloadSessions()).catch(() => {});
     computeFolderSyncPlan();
   } else {
     renderEmptyFolderSync();
@@ -3930,6 +4115,12 @@ function openFolderMerge(left = '', base = '', right = '', title = 'Folder Merge
   switchView('foldermerge');
 
   if (left && right) {
+    window.api.recordAutoSavedSession({
+      type: 'folder_merge',
+      name: title !== 'Folder Merge' ? title : undefined,
+      leftPath: left,
+      rightPath: right
+    }).then(() => reloadSessions()).catch(() => {});
     runFolderMergeComparison();
   } else {
     renderEmptyFolderMerge();
@@ -4100,6 +4291,12 @@ function openTextMerge(left = '', base = '', right = '', title = 'Text Merge') {
   switchView('textmerge');
 
   if (left && right) {
+    window.api.recordAutoSavedSession({
+      type: 'text_merge',
+      name: title !== 'Text Merge' ? title : undefined,
+      leftPath: left,
+      rightPath: right
+    }).then(() => reloadSessions()).catch(() => {});
     runThreeWayTextMerge();
   } else {
     renderEmptyTextMerge();
@@ -5132,6 +5329,18 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
 
   // Render side-by-side aligned diff
   renderTextDiff(diffResult);
+
+  // Auto-save session ONLY if this is a direct standalone text comparison
+  // (Do not save child file comparisons triggered from within a Folder Compare session)
+  if (!isChildCompare && leftFullPath && rightFullPath) {
+    const sessName = (label && label !== 'Text Compare') ? label : undefined;
+    window.api.recordAutoSavedSession({
+      type: 'text_compare',
+      name: sessName,
+      leftPath: leftFullPath,
+      rightPath: rightFullPath
+    }).then(() => reloadSessions()).catch(err => console.warn('AutoSave text error:', err));
+  }
 }
 
 function updateTextTabTitle() {

@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('api', {
   // Sessions Management (Dynamic BC5 + DiffCore)
   loadSessions: () => ipcRenderer.invoke('sessions:load'),
   saveSession: (sessionData) => ipcRenderer.invoke('sessions:save', sessionData),
+  recordAutoSavedSession: (sessionData) => ipcRenderer.invoke('sessions:autoSave', sessionData),
   deleteSession: (sessionId) => ipcRenderer.invoke('sessions:delete', sessionId),
   
   // File Operations (Copy, Delete, Move, Rename, Reveal, Touch, Attributes)
