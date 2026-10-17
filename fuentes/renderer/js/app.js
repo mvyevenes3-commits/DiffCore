@@ -155,9 +155,9 @@ function renderSessionsTree() {
 
   const query = (appState.sessionSearchQuery || '').toLowerCase();
 
-  // Initialize expanded groups set if not yet present
+  // Initialize expanded groups set: by default only auto-saved root and Today are open
   if (!appState.expandedSessionGroups) {
-    appState.expandedSessionGroups = new Set(['auto-saved', 'Today', 'Yesterday']);
+    appState.expandedSessionGroups = new Set(['auto-saved', 'Today']);
   }
 
   const iconMap = {
@@ -207,9 +207,8 @@ function renderSessionsTree() {
     appState.expandedSessionGroups.add('auto-saved');
     dateGroupsMap.forEach((_, gName) => appState.expandedSessionGroups.add(gName));
   } else {
-    // If Today and Yesterday are both empty, expand the first available date group
-    const hasRecent = dateGroupsMap.has('Today') || dateGroupsMap.has('Yesterday');
-    if (!hasRecent && dateGroupsMap.size > 0) {
+    // If Today has no items, expand the first available date group as fallback
+    if (!dateGroupsMap.has('Today') && dateGroupsMap.size > 0) {
       const firstAvailable = Array.from(dateGroupsMap.keys())[0];
       appState.expandedSessionGroups.add(firstAvailable);
     }
@@ -785,6 +784,7 @@ function switchView(viewName) {
     if (vEl) vEl.classList.add('active');
 
     updateAppHeader();
+    appState.expandedSessionGroups = new Set(['auto-saved', 'Today']);
     reloadSessions();
 
     const targetSession = appState.activeFolderSession || appState.selectedSession;
