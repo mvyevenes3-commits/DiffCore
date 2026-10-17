@@ -545,6 +545,13 @@ body.theme-light .tab-add-btn:hover {
   font-weight: 600;
 }
 
+.tb-btn:disabled,
+.tb-btn[disabled] {
+  opacity: 0.35 !important;
+  cursor: default !important;
+  pointer-events: none !important;
+}
+
 #filterDiffsBtn.active {
   background: #3a2222 !important;
   border-color: #883333 !important;

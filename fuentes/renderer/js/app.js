@@ -139,6 +139,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupTextDragAndDrop();
   setupTableEventDelegation();
   setupFolderKeyboardNavigation();
+  setupTextKeyboardNavigation();
   setupWindowClickHandlers();
 
   // Apply persisted or default filter ('diffs')
@@ -5697,6 +5698,9 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
 
   updateTextTabTitle();
 
+  appState.textHistory = { undoStack: [], redoStack: [] };
+  updateUndoRedoButtons();
+
   const tabTextBtn = document.getElementById('tabTextBtn');
   if (tabTextBtn) tabTextBtn.style.display = 'flex';
 
@@ -5978,6 +5982,8 @@ async function reloadTextCompare() {
   const left = appState.currentTextFile.leftFullPath;
   const right = appState.currentTextFile.rightFullPath;
   if (!left && !right) return;
+  appState.textHistory = { undoStack: [], redoStack: [] };
+  updateUndoRedoButtons();
   if (left) await loadTextFileForSide('left', left);
   if (right) await loadTextFileForSide('right', right);
 }
@@ -7326,11 +7332,191 @@ function syncHorizontalScrollWidths() {
   if (textSyncScrollbar) textSyncScrollbar.update();
 }
 
+// --- TEXT COMPARE UNDO / REDO HISTORY CONTROLLER ---
+function pushTextHistoryState(description = '') {
+  if (!appState.textHistory) {
+    appState.textHistory = { undoStack: [], redoStack: [] };
+  }
+  appState.textHistory.undoStack.push({
+    leftContent: appState.currentTextFile.leftContent,
+    rightContent: appState.currentTextFile.rightContent,
+    description: description
+  });
+  if (appState.textHistory.undoStack.length > 50) {
+    appState.textHistory.undoStack.shift();
+  }
+  // Clear redo stack on new action
+  appState.textHistory.redoStack = [];
+  updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+  const btnUndo = document.getElementById('btnTextUndo');
+  const btnRedo = document.getElementById('btnTextRedo');
+  const canUndo = !!(appState.textHistory && appState.textHistory.undoStack.length > 0);
+  const canRedo = !!(appState.textHistory && appState.textHistory.redoStack.length > 0);
+
+  if (btnUndo) {
+    btnUndo.disabled = !canUndo;
+    if (canUndo) {
+      const last = appState.textHistory.undoStack[appState.textHistory.undoStack.length - 1];
+      btnUndo.title = `Deshacer: ${last.description || 'último cambio'} (Ctrl+Z / ⌘Z)`;
+    } else {
+      btnUndo.title = 'Deshacer (Ctrl+Z / ⌘Z)';
+    }
+  }
+
+  if (btnRedo) {
+    btnRedo.disabled = !canRedo;
+    if (canRedo) {
+      const next = appState.textHistory.redoStack[appState.textHistory.redoStack.length - 1];
+      btnRedo.title = `Rehacer: ${next.description || 'cambio'} (Ctrl+Y / ⌘⇧Z)`;
+    } else {
+      btnRedo.title = 'Rehacer (Ctrl+Y / ⌘⇧Z)';
+    }
+  }
+}
+
+function updateSaveButtonStatusAfterHistory() {
+  const saveBtnL = document.getElementById('btnSaveLeft');
+  const saveBtnR = document.getElementById('btnSaveRight');
+  const file = appState.currentTextFile;
+  if (!file) return;
+
+  if (saveBtnL) {
+    if (file.leftContent !== file.originalLeftContent) {
+      saveBtnL.style.boxShadow = '0 0 10px #388bfd';
+    } else {
+      saveBtnL.style.boxShadow = '';
+    }
+  }
+
+  if (saveBtnR) {
+    if (file.rightContent !== file.originalRightContent) {
+      saveBtnR.style.boxShadow = '0 0 10px #388bfd';
+    } else {
+      saveBtnR.style.boxShadow = '';
+    }
+  }
+}
+
+async function undoTextChange() {
+  if (appState.activeView !== 'text') return;
+  if (!appState.textHistory || appState.textHistory.undoStack.length === 0) {
+    showToast('No hay más cambios para deshacer', 'info');
+    return;
+  }
+
+  const prevState = appState.textHistory.undoStack.pop();
+  appState.textHistory.redoStack.push({
+    leftContent: appState.currentTextFile.leftContent,
+    rightContent: appState.currentTextFile.rightContent,
+    description: prevState.description
+  });
+
+  appState.currentTextFile.leftContent = prevState.leftContent;
+  appState.currentTextFile.rightContent = prevState.rightContent;
+
+  updateSaveButtonStatusAfterHistory();
+
+  const updatedDiff = await window.api.computeAlignedDiff(
+    appState.currentTextFile.leftContent,
+    appState.currentTextFile.rightContent
+  );
+  appState.currentTextFile.diffResult = updatedDiff;
+  renderTextDiff(updatedDiff);
+
+  updateUndoRedoButtons();
+  showToast(`Deshecho: ${prevState.description || 'cambio revertido'}`, 'info');
+}
+
+async function redoTextChange() {
+  if (appState.activeView !== 'text') return;
+  if (!appState.textHistory || appState.textHistory.redoStack.length === 0) {
+    showToast('No hay cambios para rehacer', 'info');
+    return;
+  }
+
+  const nextState = appState.textHistory.redoStack.pop();
+  appState.textHistory.undoStack.push({
+    leftContent: appState.currentTextFile.leftContent,
+    rightContent: appState.currentTextFile.rightContent,
+    description: nextState.description
+  });
+
+  appState.currentTextFile.leftContent = nextState.leftContent;
+  appState.currentTextFile.rightContent = nextState.rightContent;
+
+  updateSaveButtonStatusAfterHistory();
+
+  const updatedDiff = await window.api.computeAlignedDiff(
+    appState.currentTextFile.leftContent,
+    appState.currentTextFile.rightContent
+  );
+  appState.currentTextFile.diffResult = updatedDiff;
+  renderTextDiff(updatedDiff);
+
+  updateUndoRedoButtons();
+  showToast(`Rehecho: ${nextState.description || 'cambio aplicado'}`, 'info');
+}
+
+function setupTextKeyboardNavigation() {
+  window.addEventListener('keydown', (event) => {
+    if (appState.activeView !== 'text') return;
+
+    // Do not capture if user is typing in input or textarea
+    const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea') return;
+
+    // Do not capture if modal is open
+    if (document.querySelector('.modal-backdrop.active')) return;
+
+    const isMod = event.ctrlKey || event.metaKey;
+
+    // Undo: Ctrl+Z (Win/Linux) or Cmd+Z (Mac)
+    if (isMod && !event.shiftKey && (event.key === 'z' || event.key === 'Z')) {
+      event.preventDefault();
+      undoTextChange();
+      return;
+    }
+
+    // Redo: Ctrl+Y / Ctrl+Shift+Z (Win/Linux) or Cmd+Shift+Z / Cmd+Y (Mac)
+    if (isMod && (
+      (event.shiftKey && (event.key === 'z' || event.key === 'Z')) ||
+      (!event.shiftKey && (event.key === 'y' || event.key === 'Y'))
+    )) {
+      event.preventDefault();
+      redoTextChange();
+      return;
+    }
+
+    // Prev diff section: Ctrl+Up / Alt+Up
+    if ((isMod || event.altKey) && event.key === 'ArrowUp') {
+      event.preventDefault();
+      navDiff(-1);
+      return;
+    }
+
+    // Next diff section: Ctrl+Down / Alt+Down
+    if ((isMod || event.altKey) && event.key === 'ArrowDown') {
+      event.preventDefault();
+      navDiff(1);
+      return;
+    }
+  });
+}
+
+// Global window exposure
+window.undoTextChange = undoTextChange;
+window.redoTextChange = redoTextChange;
+
 async function copyDiffSection(sectionIndex, direction) {
   const diffResult = appState.currentTextFile.diffResult;
   if (!diffResult || !diffResult.sections || !diffResult.sections[sectionIndex]) return;
 
   const sec = diffResult.sections[sectionIndex];
+
+  pushTextHistoryState(`Copiar sección ${sectionIndex + 1} a ${direction === 'to_left' ? 'Izquierda' : 'Derecha'}`);
 
   if (direction === 'to_left') {
     let leftLines = appState.currentTextFile.leftContent ? appState.currentTextFile.leftContent.split(/\r\n|\r|\n/) : [];
@@ -7367,6 +7553,7 @@ async function copyDiffSection(sectionIndex, direction) {
   );
   appState.currentTextFile.diffResult = updatedDiff;
   renderTextDiff(updatedDiff);
+  updateUndoRedoButtons();
 }
 
 function copyCurrentSectionToLeft() {

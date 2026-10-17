@@ -580,6 +580,14 @@
           <span class="icon">⬇</span>
           <span class="label">Next</span>
         </button>
+        <button class="tb-btn" id="btnTextUndo" title="Deshacer cambio (Ctrl+Z / ⌘Z)" onclick="undoTextChange()" disabled>
+          <span class="icon"><span class="dc-icon dc-icon-undo"></span></span>
+          <span class="label">Undo</span>
+        </button>
+        <button class="tb-btn" id="btnTextRedo" title="Rehacer cambio (Ctrl+Y / ⌘⇧Z)" onclick="redoTextChange()" disabled>
+          <span class="icon"><span class="dc-icon dc-icon-redo"></span></span>
+          <span class="label">Redo</span>
+        </button>
         <button class="tb-btn" title="Swap Sides (⇄)" onclick="swapSidesText()">
           <span class="icon">⇄</span>
           <span class="label">Swap</span>
