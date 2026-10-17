@@ -1185,9 +1185,10 @@ async function saveSessionFromModal() {
   const name = document.getElementById('editSessionName').value.trim();
   const left = document.getElementById('editSessionLeft').value.trim();
   const right = document.getElementById('editSessionRight').value.trim();
+  const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
 
   if (!name) {
-    alert('Please enter a session name.');
+    alert(t('sessions.enter_name', 'Please enter a session name.'));
     return;
   }
 
@@ -1208,14 +1209,16 @@ async function saveSessionFromModal() {
     await reloadSessions();
     if (res.session) selectSession(res.session.id);
   } else {
-    alert('Error saving session: ' + (res.error || 'Unknown error'));
+    alert(t('sessions.error_saving', 'Error saving session: ') + (res.error || 'Unknown error'));
   }
 }
 
 async function deleteSelectedSession() {
   if (!appState.selectedSession) return;
   const sess = appState.selectedSession;
-  if (!confirm(`Are you sure you want to delete session "${sess.name}"?`)) return;
+  const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
+  const template = t('sessions.confirm_delete', 'Are you sure you want to delete session "{name}"?');
+  if (!confirm(template.replace('{name}', sess.name))) return;
 
   await window.api.deleteSession(sess.id);
   clearSessionDetails();
@@ -3097,6 +3100,7 @@ async function copyItemToSide(item, clickedSide) {
 
 async function moveItemToSide(item, clickedSide) {
   if (!item) return;
+  const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
   let srcPath = '';
   let destPath = '';
   let sideName = '';
@@ -3105,15 +3109,16 @@ async function moveItemToSide(item, clickedSide) {
     if (!item.left || !appState.rightPath) return;
     srcPath = item.left.fullPath;
     destPath = `${appState.rightPath}/${item.relativePath}`;
-    sideName = 'Right';
+    sideName = t('common.right', 'Right');
   } else {
     if (!item.right || !appState.leftPath) return;
     srcPath = item.right.fullPath;
     destPath = `${appState.leftPath}/${item.relativePath}`;
-    sideName = 'Left';
+    sideName = t('common.left', 'Left');
   }
 
-  if (confirm(`Move "${item.name}" to ${sideName}?`)) {
+  const confirmMsg = t('ctx.confirm_move', 'Move "{name}" to {side}?').replace('{name}', item.name).replace('{side}', sideName);
+  if (confirm(confirmMsg)) {
     appendLog(`Moving to ${sideName}: ${item.relativePath}`);
     const res = await window.api.moveItem(srcPath, destPath);
     if (res.success) {
@@ -3160,8 +3165,10 @@ async function moveItemToFolder(item, clickedSide) {
 
 async function deleteContextItem(item, clickedSide) {
   if (!item) return;
-  const sideLabel = clickedSide === 'left' ? 'Left side' : (clickedSide === 'right' ? 'Right side' : 'both sides');
-  if (confirm(`Delete "${item.name}" from ${sideLabel}?`)) {
+  const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
+  const sideLabel = clickedSide === 'left' ? t('ctx.left_side', 'Left side') : (clickedSide === 'right' ? t('ctx.right_side', 'Right side') : t('ctx.both_sides', 'both sides'));
+  const confirmMsg = t('ctx.confirm_delete', 'Delete "{name}" from {side}?').replace('{name}', item.name).replace('{side}', sideLabel);
+  if (confirm(confirmMsg)) {
     if (clickedSide === 'left' && item.left) {
       await window.api.deleteItem(item.left.fullPath);
     } else if (clickedSide === 'right' && item.right) {
@@ -3177,7 +3184,9 @@ async function deleteContextItem(item, clickedSide) {
 
 async function renameContextItem(item, clickedSide) {
   if (!item) return;
-  const newName = prompt(`Rename "${item.name}" to:`, item.name);
+  const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
+  const promptMsg = t('ctx.rename_prompt', 'Rename "{name}" to:').replace('{name}', item.name);
+  const newName = prompt(promptMsg, item.name);
   if (!newName || newName === item.name) return;
 
   let renamedAny = false;
@@ -3418,7 +3427,8 @@ window.saveNameFiltersFromModal = saveNameFiltersFromModal;
 
 async function createNewFolderInContext(item, clickedSide) {
   if (!item) return;
-  const folderName = prompt('Enter new folder name:');
+  const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
+  const folderName = prompt(t('ctx.new_folder_prompt', 'Enter new folder name:'));
   if (!folderName) return;
 
   const targetPath = (clickedSide === 'left' && item.left) ? item.left.fullPath : 
@@ -4801,7 +4811,9 @@ async function executeSyncPlan() {
     return;
   }
 
-  if (!confirm(`Are you sure you want to execute ${plan.length} synchronization action(s)?`)) return;
+  const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
+  const confirmMsg = t('fsync.confirm_actions', 'Are you sure you want to execute {count} synchronization action(s)?').replace('{count}', plan.length);
+  if (!confirm(confirmMsg)) return;
 
   showToast(`Running sync: ${plan.length} item(s)...`, 'info');
   const tasks = plan.map(p => ({
@@ -5426,8 +5438,10 @@ async function executeSync(mode, item) {
     'sync_mirror_left': 'Mirror Left'
   };
 
+  const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
   const label = modeLabels[mode] || mode;
-  if (!confirm(`Are you sure you want to execute "${label}"?`)) return;
+  const confirmMsg = t('fsync.confirm_mode', 'Are you sure you want to execute "{mode}"?').replace('{mode}', label);
+  if (!confirm(confirmMsg)) return;
 
   showToast(`Running synchronization: ${label}...`, 'info');
   appendLog(`Starting Sync: ${label}`);
