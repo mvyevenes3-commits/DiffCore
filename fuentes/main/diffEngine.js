@@ -68,6 +68,65 @@ function scanDirectory(dirPath, relativeRoot = '', acc = []) {
 }
 
 /**
+ * High-performance asynchronous non-blocking directory scanner
+ */
+async function scanDirectoryAsync(dirPath, relativeRoot = '', acc = []) {
+  if (!dirPath) return acc;
+  try {
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+    const subdirs = [];
+    const statPromises = [];
+
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      if (entry.name === '.DS_Store' || entry.name === 'Thumbs.db') continue;
+
+      const relPath = relativeRoot ? `${relativeRoot}/${entry.name}` : entry.name;
+      const fullPath = path.join(dirPath, entry.name);
+      const isDir = entry.isDirectory();
+
+      if (isDir) {
+        acc.push({
+          name: entry.name,
+          relativePath: relPath,
+          fullPath: fullPath,
+          isDirectory: true,
+          size: 0,
+          mtime: new Date()
+        });
+        subdirs.push({ fullPath, relPath });
+      } else {
+        statPromises.push(
+          fs.promises.stat(fullPath)
+            .then(stats => {
+              acc.push({
+                name: entry.name,
+                relativePath: relPath,
+                fullPath: fullPath,
+                isDirectory: false,
+                size: stats.size,
+                mtime: stats.mtime
+              });
+            })
+            .catch(() => {})
+        );
+      }
+    }
+
+    if (statPromises.length > 0) {
+      await Promise.all(statPromises);
+    }
+
+    if (subdirs.length > 0) {
+      await Promise.all(subdirs.map(sub => scanDirectoryAsync(sub.fullPath, sub.relPath, acc)));
+    }
+  } catch (err) {
+    // Directory error
+  }
+  return acc;
+}
+
+/**
  * Fast equality check without reading full huge files
  */
 function areFilesFastEqual(f1, f2, size) {
@@ -118,6 +177,85 @@ function areFilesEqual(f1, f2, size) {
 function compareFolderTrees(leftDir, rightDir) {
   const leftItems = leftDir ? scanDirectory(leftDir, '', []) : [];
   const rightItems = rightDir ? scanDirectory(rightDir, '', []) : [];
+
+  const leftMap = new Map();
+  for (let i = 0; i < leftItems.length; i++) {
+    leftMap.set(leftItems[i].relativePath, leftItems[i]);
+  }
+
+  const rightMap = new Map();
+  for (let i = 0; i < rightItems.length; i++) {
+    rightMap.set(rightItems[i].relativePath, rightItems[i]);
+  }
+
+  const allRelPaths = new Set([...leftMap.keys(), ...rightMap.keys()]);
+  const sortedPaths = Array.from(allRelPaths).sort();
+
+  const comparison = [];
+
+  for (let pIdx = 0; pIdx < sortedPaths.length; pIdx++) {
+    const relPath = sortedPaths[pIdx];
+    const left = leftMap.get(relPath);
+    const right = rightMap.get(relPath);
+
+    let status = 'identical'; // 'identical', 'different', 'orphan_left', 'orphan_right'
+
+    if (left && !right) {
+      status = 'orphan_left';
+    } else if (!left && right) {
+      status = 'orphan_right';
+    } else {
+      // Both exist
+      if (left.isDirectory !== right.isDirectory) {
+        status = 'different';
+      } else if (!left.isDirectory) {
+        if (left.size !== right.size) {
+          status = 'different';
+        } else {
+          // Beyond Compare 5 Quick Compare:
+          // If sizes and timestamps match within 2s, identical (zero disk read)
+          const timeDiff = Math.abs((left.mtime ? left.mtime.getTime() : 0) - (right.mtime ? right.mtime.getTime() : 0));
+          if (timeDiff <= 2000) {
+            status = 'identical';
+          } else {
+            // Fast sample check
+            status = areFilesFastEqual(left.fullPath, right.fullPath, left.size) ? 'identical' : 'different';
+          }
+        }
+      }
+    }
+
+    comparison.push({
+      relativePath: relPath,
+      name: (left || right).name,
+      isDirectory: (left || right).isDirectory,
+      status,
+      left: left ? {
+        name: left.name,
+        size: left.size,
+        modified: left.mtime ? left.mtime.toISOString() : null,
+        fullPath: left.fullPath
+      } : null,
+      right: right ? {
+        name: right.name,
+        size: right.size,
+        modified: right.mtime ? right.mtime.toISOString() : null,
+        fullPath: right.fullPath
+      } : null
+    });
+  }
+
+  return comparison;
+}
+
+/**
+ * High-performance non-blocking asynchronous Beyond Compare 5 Folder Compare Engine
+ */
+async function compareFolderTreesAsync(leftDir, rightDir) {
+  const [leftItems, rightItems] = await Promise.all([
+    leftDir ? scanDirectoryAsync(leftDir, '', []) : Promise.resolve([]),
+    rightDir ? scanDirectoryAsync(rightDir, '', []) : Promise.resolve([])
+  ]);
 
   const leftMap = new Map();
   for (let i = 0; i < leftItems.length; i++) {
@@ -647,7 +785,9 @@ function computeThreeWayTextMerge(textLeft, textBase, textRight) {
 
 module.exports = {
   scanDirectory,
+  scanDirectoryAsync,
   compareFolderTrees,
+  compareFolderTreesAsync,
   compareFilesDeep,
   calculateCRC32,
   computeAlignedDiff,

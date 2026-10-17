@@ -439,8 +439,8 @@
     <!-- Path Selector Bar (Dual Side-by-Side Matching Image 3) -->
     <div class="path-selectors-bar">
       <!-- Left Path -->
-      <div class="path-box" id="leftPathBox">
-        <input type="text" id="leftPathInput" class="path-input" placeholder="Enter path here" onkeydown="handleFolderPathKeydown(event, 'left')" onblur="handleFolderPathBlur('left')" spellcheck="false">
+      <div class="path-box" id="leftPathBox" onclick="focusPathInput('left', event)">
+        <input type="text" id="leftPathInput" class="path-input" placeholder="Enter path here" onpaste="handleFolderPathPaste(event, 'left')" onkeydown="handleFolderPathKeydown(event, 'left')" onblur="handleFolderPathBlur('left')" spellcheck="false">
         <button class="path-tool-btn blue-combo" title="Recent Folders" onclick="showPathHistory('left')">▾</button>
         <button class="path-tool-btn" title="Go Up Folder" onclick="goUpFolder('left')">↩</button>
         <button class="path-tool-btn" title="Browse Left Folder" onclick="browseFolder('left')">📁▾</button>
@@ -452,8 +452,8 @@
       <div class="path-center-divider"></div>
 
       <!-- Right Path -->
-      <div class="path-box" id="rightPathBox">
-        <input type="text" id="rightPathInput" class="path-input" placeholder="Enter path here" onkeydown="handleFolderPathKeydown(event, 'right')" onblur="handleFolderPathBlur('right')" spellcheck="false">
+      <div class="path-box" id="rightPathBox" onclick="focusPathInput('right', event)">
+        <input type="text" id="rightPathInput" class="path-input" placeholder="Enter path here" onpaste="handleFolderPathPaste(event, 'right')" onkeydown="handleFolderPathKeydown(event, 'right')" onblur="handleFolderPathBlur('right')" spellcheck="false">
         <button class="path-tool-btn blue-combo" title="Recent Folders" onclick="showPathHistory('right')">▾</button>
         <button class="path-tool-btn" title="Go Up Folder" onclick="goUpFolder('right')">↩</button>
         <button class="path-tool-btn" title="Browse Right Folder" onclick="browseFolder('right')">📁▾</button>

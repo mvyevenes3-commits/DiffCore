@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { compareFolderTrees, compareFilesDeep, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
+const { compareFolderTrees, compareFolderTreesAsync, compareFilesDeep, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
 const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
 
@@ -150,7 +150,7 @@ ipcMain.handle('dialog:selectFile', async (_event, defaultPath) => {
 ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath }) => {
   sendLog(`Load comparison: ${leftPath || '(none)'} <-> ${rightPath || '(none)'}`);
   try {
-    const items = compareFolderTrees(leftPath, rightPath);
+    const items = await compareFolderTreesAsync(leftPath, rightPath);
     return { success: true, items };
   } catch (err) {
     sendLog(`Error comparing folders: ${err.message}`);

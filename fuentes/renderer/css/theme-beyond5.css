@@ -611,6 +611,7 @@ body.theme-light .tab-add-btn:hover {
   height: 26px;
   gap: 2px;
   min-width: 0;
+  cursor: text;
 }
 
 .path-box:focus-within {
@@ -627,6 +628,10 @@ body.theme-light .tab-add-btn:hover {
   font-size: 11px;
   outline: none;
   min-width: 0;
+  cursor: text;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  pointer-events: auto;
 }
 
 .path-tool-btn {
@@ -2036,6 +2041,10 @@ body.theme-light .tab-add-btn:hover {
   padding: 0 8px;
   outline: none;
   box-sizing: border-box;
+  cursor: text;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  pointer-events: auto;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .text-path-input:focus {

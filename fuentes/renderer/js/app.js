@@ -577,37 +577,172 @@ function renderEmptyFolderCompare(sessionName = 'New Folder Compare') {
   appendLog('Load comparison: <-->');
 }
 
+// --- PATH SANITIZATION & FLUID INPUT HANDLING ---
+function sanitizePath(raw) {
+  if (!raw) return '';
+  let p = String(raw).trim();
+  // Remove surrounding single or double quotes
+  if ((p.startsWith('"') && p.endsWith('"')) || (p.startsWith("'") && p.endsWith("'"))) {
+    p = p.slice(1, -1).trim();
+  }
+  // Strip file:// prefix if present
+  if (p.startsWith('file://')) {
+    try {
+      p = decodeURI(p.replace(/^file:\/\//, ''));
+    } catch (_) {
+      p = p.replace(/^file:\/\//, '');
+    }
+  }
+  return p;
+}
+
+function focusPathInput(side, event) {
+  if (event && event.target && event.target.closest('button')) return;
+  const input = document.getElementById(side === 'left' ? 'leftPathInput' : 'rightPathInput');
+  if (input) {
+    input.focus();
+  }
+}
+
+let singleSideScanTimer = null;
+
+function cancelSingleSideScan() {
+  if (singleSideScanTimer) {
+    clearTimeout(singleSideScanTimer);
+    singleSideScanTimer = null;
+  }
+}
+
+function scheduleSingleSideFolderScan(side, delay = 400) {
+  cancelSingleSideScan();
+  singleSideScanTimer = setTimeout(() => {
+    singleSideScanTimer = null;
+    const inL = document.getElementById('leftPathInput');
+    const inR = document.getElementById('rightPathInput');
+    const pathL = sanitizePath(inL ? inL.value : '');
+    const pathR = sanitizePath(inR ? inR.value : '');
+    if (pathL && pathR) {
+      runFolderComparison();
+    } else if (side === 'left' && pathL) {
+      if (pathL !== appState.lastComparedLeft || appState.lastComparedRight) {
+        runSingleSideFolder('left');
+      }
+    } else if (side === 'right' && pathR) {
+      if (pathR !== appState.lastComparedRight || appState.lastComparedLeft) {
+        runSingleSideFolder('right');
+      }
+    }
+  }, delay);
+}
+
+function handleFolderPathPaste(event, side) {
+  cancelSingleSideScan();
+  const clipboardData = event.clipboardData || window.clipboardData;
+  if (!clipboardData) return;
+
+  const rawPasted = clipboardData.getData('text');
+  if (!rawPasted) return;
+
+  event.preventDefault();
+  const cleaned = sanitizePath(rawPasted);
+
+  const targetInput = event.target;
+  targetInput.value = cleaned;
+
+  const inL = document.getElementById('leftPathInput');
+  const inR = document.getElementById('rightPathInput');
+  const pathL = sanitizePath(inL ? inL.value : '');
+  const pathR = sanitizePath(inR ? inR.value : '');
+
+  appState.leftPath = pathL;
+  appState.rightPath = pathR;
+
+  // If both paths are now provided, compare immediately!
+  if (pathL && pathR) {
+    runFolderComparison();
+    return;
+  }
+
+  // If only one side was pasted:
+  if (side === 'left') {
+    // If right side is empty, focus right side so user can paste immediately
+    if (!pathR && inR) {
+      inR.focus();
+      inR.select();
+    }
+    scheduleSingleSideFolderScan('left', 500);
+  } else {
+    // If left side is empty, focus left side
+    if (!pathL && inL) {
+      inL.focus();
+      inL.select();
+    }
+    scheduleSingleSideFolderScan('right', 500);
+  }
+}
+
 function handleFolderPathKeydown(event, side) {
   if (event.key === 'Enter') {
-    handleFolderPathBlur(side);
+    cancelSingleSideScan();
+    const inL = document.getElementById('leftPathInput');
+    const inR = document.getElementById('rightPathInput');
+    if (inL) inL.value = sanitizePath(inL.value);
+    if (inR) inR.value = sanitizePath(inR.value);
+    const pathL = inL ? inL.value : '';
+    const pathR = inR ? inR.value : '';
+    appState.leftPath = pathL;
+    appState.rightPath = pathR;
+
+    if (pathL && pathR) {
+      runFolderComparison();
+    } else if (pathL || pathR) {
+      const activeSide = pathL ? 'left' : 'right';
+      runSingleSideFolder(activeSide);
+    } else {
+      renderEmptyFolderCompare();
+    }
   }
 }
 
 async function handleFolderPathBlur(side) {
   const inL = document.getElementById('leftPathInput');
   const inR = document.getElementById('rightPathInput');
-  const pathL = inL ? inL.value.trim() : '';
-  const pathR = inR ? inR.value.trim() : '';
+  const pathL = sanitizePath(inL ? inL.value : '');
+  const pathR = sanitizePath(inR ? inR.value : '');
 
-  appState.leftPath = pathL;
-  appState.rightPath = pathR;
+  if (inL && inL.value !== pathL) inL.value = pathL;
+  if (inR && inR.value !== pathR) inR.value = pathR;
 
+  // If paths haven't changed from last comparison, do nothing!
+  if (pathL === appState.lastComparedLeft && pathR === appState.lastComparedRight) {
+    return;
+  }
+
+  // If both paths exist and differ from last compared
   if (pathL && pathR) {
     runFolderComparison();
-  } else if (pathL || pathR) {
+    return;
+  }
+
+  // If only one side has a path, debounce scan so switching inputs doesn't trigger heavy scan
+  if (pathL || pathR) {
     const activeSide = pathL ? 'left' : 'right';
-    runSingleSideFolder(activeSide);
+    scheduleSingleSideFolderScan(activeSide, 400);
   } else {
     renderEmptyFolderCompare();
   }
 }
 
 async function runSingleSideFolder(loadedSide) {
-  const p = loadedSide === 'left' ? appState.leftPath : appState.rightPath;
+  cancelSingleSideScan();
+  const p = sanitizePath(loadedSide === 'left' ? appState.leftPath : appState.rightPath);
   if (!p) {
     renderEmptyFolderCompare();
     return;
   }
+
+  appState.lastComparedLeft = loadedSide === 'left' ? p : '';
+  appState.lastComparedRight = loadedSide === 'right' ? p : '';
 
   // Clear folder open state so folders appear collapsed by default
   appState.folderOpenState.clear();
@@ -1250,14 +1385,22 @@ function showPathHistory(side) {
 
 // --- RUN FOLDER COMPARISON ---
 async function runFolderComparison() {
-  const left = document.getElementById('leftPathInput').value.trim();
-  const right = document.getElementById('rightPathInput').value.trim();
+  cancelSingleSideScan();
+  const inL = document.getElementById('leftPathInput');
+  const inR = document.getElementById('rightPathInput');
+  const left = sanitizePath(inL ? inL.value : '');
+  const right = sanitizePath(inR ? inR.value : '');
+
+  if (inL && inL.value !== left) inL.value = left;
+  if (inR && inR.value !== right) inR.value = right;
 
   appState.leftPath = left;
   appState.rightPath = right;
 
   if (!left && !right) {
     appendLog('No paths specified for comparison.');
+    appState.lastComparedLeft = '';
+    appState.lastComparedRight = '';
     renderEmptyFolderCompare();
     return;
   }
@@ -1270,6 +1413,9 @@ async function runFolderComparison() {
     runSingleSideFolder('right');
     return;
   }
+
+  appState.lastComparedLeft = left;
+  appState.lastComparedRight = right;
 
   // Clear folder open state so folders appear collapsed by default
   appState.folderOpenState.clear();
@@ -5780,8 +5926,7 @@ function setupAllDragAndDrop() {
 
   folderPanes.forEach(({ containerId, inputId, side }) => {
     const pane = document.getElementById(containerId);
-    const input = document.getElementById(inputId);
-    const targets = [pane, input].filter(Boolean);
+    const targets = [pane].filter(Boolean);
 
     targets.forEach(target => {
       let dragCount = 0;
@@ -6066,7 +6211,7 @@ function setupAllDragAndDrop() {
       await loadTableFileForSide(side, paths[0]);
     };
 
-    [wrapper, input].filter(Boolean).forEach(el => {
+    [wrapper].filter(Boolean).forEach(el => {
       let dragCount = 0;
       el.addEventListener('dragenter', (e) => {
         e.preventDefault(); e.stopPropagation(); dragCount++;
@@ -6194,7 +6339,7 @@ function setupAllDragAndDrop() {
       await loadFolderMergeForSide(pos, paths[0]);
     };
 
-    [box, input].filter(Boolean).forEach(el => {
+    [box].filter(Boolean).forEach(el => {
       let dragCount = 0;
       el.addEventListener('dragenter', (e) => {
         e.preventDefault(); e.stopPropagation(); dragCount++;
@@ -6292,7 +6437,7 @@ function setupAllDragAndDrop() {
       await loadTMergeFileForSide(pos, paths[0]);
     };
 
-    [pane, input].filter(Boolean).forEach(el => {
+    [pane].filter(Boolean).forEach(el => {
       let dragCount = 0;
       el.addEventListener('dragenter', (e) => {
         e.preventDefault(); e.stopPropagation(); dragCount++;
