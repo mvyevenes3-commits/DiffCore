@@ -70,10 +70,28 @@ contextBridge.exposeInMainWorld('api', {
 
   // System Info
   getSystemInfo: () => ipcRenderer.invoke('system:getInfo'),
+
+  // Application Menu Integration
+  setMenuLanguage: (lang) => ipcRenderer.invoke('menu:setLanguage', lang),
   
   // Listeners
   onLogMessage: (callback) => ipcRenderer.on('log:message', (_event, msg) => callback(msg)),
   onCliLaunch: (callback) => ipcRenderer.on('cli:launch', (_event, data) => callback(data)),
+  onOpenSettings: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:openSettings', handler);
+    return () => ipcRenderer.removeListener('menu:openSettings', handler);
+  },
+  onNewTab: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:newTab', handler);
+    return () => ipcRenderer.removeListener('menu:newTab', handler);
+  },
+  onCloseTab: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:closeTab', handler);
+    return () => ipcRenderer.removeListener('menu:closeTab', handler);
+  },
   onCompareProgress: (callback) => {
     const handler = (_event, data) => callback(data);
     ipcRenderer.on('diff:compareProgress', handler);

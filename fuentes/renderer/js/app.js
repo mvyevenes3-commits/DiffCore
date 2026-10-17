@@ -147,6 +147,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   setupLogging();
   setupCliListener();
+  setupMenuListeners();
   setupSyncScroll();
   setupTextSyncScroll();
   setupTextDragAndDrop();
@@ -243,6 +244,65 @@ function setupCliListener() {
       openTextCompare(data.left, data.right, data.left);
     }
   });
+}
+
+function setupMenuListeners() {
+  if (window.api && typeof window.api.onOpenSettings === 'function') {
+    window.api.onOpenSettings(() => {
+      openNextDiffOptionsModal();
+    });
+  }
+
+  if (window.api && typeof window.api.onNewTab === 'function') {
+    window.api.onNewTab(() => {
+      switchView('home');
+    });
+  }
+
+  if (window.api && typeof window.api.onCloseTab === 'function') {
+    window.api.onCloseTab(() => {
+      if (appState.activeView === 'text') {
+        closeTextTab();
+      } else if (appState.activeView === 'folder') {
+        closeFolderTab();
+      } else if (appState.activeView === 'foldersync') {
+        closeFolderSyncTab();
+      } else if (appState.activeView === 'foldermerge') {
+        closeFolderMergeTab();
+      } else if (appState.activeView === 'textmerge') {
+        closeTextMergeTab();
+      } else if (appState.activeView === 'textedit') {
+        closeTextEditTab();
+      } else if (appState.activeView === 'hex') {
+        closeHexTab();
+      } else if (appState.activeView === 'pic') {
+        closePicTab();
+      } else if (appState.activeView === 'table') {
+        closeTableTab();
+      } else if (appState.activeView === 'media') {
+        closeMediaTab();
+      }
+    });
+  }
+
+  // Global shortcut for settings (Cmd+, or Ctrl+,)
+  window.addEventListener('keydown', (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === ',') {
+      event.preventDefault();
+      openNextDiffOptionsModal();
+    }
+  });
+
+  // Delegated click for Options modal categories
+  const catList = document.querySelector('.bc-options-cat-list');
+  if (catList) {
+    catList.addEventListener('click', (e) => {
+      const cat = e.target.closest('.bc-opt-cat');
+      if (!cat) return;
+      catList.querySelectorAll('.bc-opt-cat').forEach(c => c.classList.remove('active'));
+      cat.classList.add('active');
+    });
+  }
 }
 
 function setupWindowClickHandlers() {

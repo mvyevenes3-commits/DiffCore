@@ -2306,6 +2306,9 @@
       } catch (_) {}
     }
     applyTranslations();
+    if (window.api && typeof window.api.setMenuLanguage === 'function') {
+      window.api.setMenuLanguage(currentLang);
+    }
   }
 
   function onLanguageChange(fn) {

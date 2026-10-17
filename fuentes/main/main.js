@@ -6,9 +6,19 @@ const os = require('os');
 const { compareFolderTrees, compareFolderTreesAsync, compareFilesDeep, compareFilesDeepAsync, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
 const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
+const { setupApplicationMenu, updateMenuLanguage } = require('./menu');
 
-// Set application identity for Linux WM_CLASS window grouping
-app.name = 'diffcore';
+// Set application identity
+app.name = 'DiffCore';
+
+if (process.platform === 'darwin') {
+  app.setAboutPanelOptions({
+    applicationName: 'DiffCore',
+    applicationVersion: '1.0.0',
+    version: '1.0.0',
+    copyright: 'Copyright © 2026 Miguel Vergara. All rights reserved.'
+  });
+}
 
 let mainWindow;
 
@@ -103,6 +113,7 @@ app.whenReady().then(() => {
   }
 
   createWindow();
+  setupApplicationMenu(mainWindow);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -128,6 +139,12 @@ app.on('window-all-closed', () => {
 });
 
 // --- IPC HANDLERS ---
+
+// Menu Language Update
+ipcMain.handle('menu:setLanguage', async (_event, lang) => {
+  updateMenuLanguage(mainWindow, lang);
+  return true;
+});
 
 // Folder Picker Dialog
 ipcMain.handle('dialog:selectFolder', async (_event, defaultPath) => {
