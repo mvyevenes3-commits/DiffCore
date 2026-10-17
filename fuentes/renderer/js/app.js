@@ -160,17 +160,17 @@ function renderSessionsTree() {
     appState.expandedSessionGroups = new Set(['auto-saved', 'Today']);
   }
 
-  const iconMap = {
-    folder_compare: '<span class="dc-icon dc-icon-folder"></span>',
-    folder_sync: '<span class="dc-icon dc-icon-sync"></span>',
-    folder_merge: '<span class="dc-icon dc-icon-merge"></span>',
-    text_compare: '<span class="dc-icon dc-icon-file-text"></span>',
-    text_merge: '<span class="dc-icon dc-icon-merge"></span>',
-    text_edit: '<span class="dc-icon dc-icon-edit"></span>',
-    hex_compare: '<span class="dc-icon dc-icon-hex"></span>',
-    picture_compare: '<span class="dc-icon dc-icon-picture"></span>',
-    table_compare: '<span class="dc-icon dc-icon-table"></span>',
-    media_compare: '<span class="dc-icon dc-icon-music"></span>'
+  const sessionIconMap = {
+    folder_compare: 'bc-icon-session-folder',
+    folder_sync: 'bc-icon-session-sync',
+    folder_merge: 'bc-icon-session-merge',
+    text_compare: 'bc-icon-session-text',
+    text_merge: 'bc-icon-session-merge',
+    text_edit: 'bc-icon-session-folder',
+    hex_compare: 'bc-icon-session-hex',
+    picture_compare: 'bc-icon-session-picture',
+    table_compare: 'bc-icon-session-table',
+    media_compare: 'bc-icon-session-picture'
   };
 
   // 1. AUTO-SAVED GROUP
@@ -215,27 +215,6 @@ function renderSessionsTree() {
   }
 
   const isAutoRootExpanded = appState.expandedSessionGroups.has('auto-saved');
-  const autoSavedRoot = document.createElement('div');
-  autoSavedRoot.className = 'session-group';
-
-  const autoRootHeader = document.createElement('div');
-  autoRootHeader.className = `session-group-header ${isAutoRootExpanded ? '' : 'collapsed'}`;
-  autoRootHeader.innerHTML = `
-    <span><span class="group-arrow">▼</span> <span>💾</span> Auto-saved</span>
-    <span class="session-sub" id="autoSavedCountBadge">${filteredAutoSaved.length}</span>
-  `;
-  autoRootHeader.onclick = (e) => {
-    e.stopPropagation();
-    if (appState.expandedSessionGroups.has('auto-saved')) {
-      appState.expandedSessionGroups.delete('auto-saved');
-    } else {
-      appState.expandedSessionGroups.add('auto-saved');
-    }
-    renderSessionsTree();
-  };
-
-  const autoRootItems = document.createElement('div');
-  autoRootItems.className = `session-group-items ${isAutoRootExpanded ? '' : 'collapsed'}`;
 
   // Sort available date groups by predefined order
   const availableGroups = Array.from(dateGroupsMap.keys()).sort((a, b) => {
@@ -247,65 +226,84 @@ function renderSessionsTree() {
     return a.localeCompare(b);
   });
 
-  availableGroups.forEach(gName => {
-    const list = dateGroupsMap.get(gName);
-    const isGroupExpanded = appState.expandedSessionGroups.has(gName);
+  const hasGroups = availableGroups.length > 0;
 
-    const subGroup = document.createElement('div');
-    subGroup.className = 'session-subgroup';
+  // Level 0: Auto-saved Root Row
+  const autoRootRow = document.createElement('div');
+  autoRootRow.className = 'bc-tree-row bc-level-0';
+  autoRootRow.innerHTML = `
+    <span class="bc-guide ${isAutoRootExpanded && hasGroups ? 'root-arrow' : ''}" onclick="toggleAutoSavedGroup(event)">
+      <span class="bc-arrow">${isAutoRootExpanded ? '▾' : '▸'}</span>
+    </span>
+    <span class="bc-icon bc-icon-archive-folder"></span>
+    <span class="bc-tree-label">Auto-saved</span>
+    <span class="bc-tree-badge">${filteredAutoSaved.length}</span>
+  `;
+  autoRootRow.onclick = (e) => {
+    if (e.target.closest('.bc-arrow')) return;
+    toggleAutoSavedGroup(e);
+  };
+  container.appendChild(autoRootRow);
 
-    const subHeader = document.createElement('div');
-    subHeader.className = `session-subgroup-header ${isGroupExpanded ? '' : 'collapsed'}`;
-    subHeader.innerHTML = `
-      <span><span class="group-arrow">▼</span> 📁 ${escapeHtml(gName)}</span>
-      <span class="session-sub">${list.length}</span>
-    `;
-    subHeader.onclick = (e) => {
-      e.stopPropagation();
-      if (appState.expandedSessionGroups.has(gName)) {
-        appState.expandedSessionGroups.delete(gName);
-      } else {
-        appState.expandedSessionGroups.add(gName);
-      }
-      renderSessionsTree();
-    };
+  // If Auto-saved is expanded, render date groups and their sessions
+  if (isAutoRootExpanded) {
+    availableGroups.forEach((gName, gIdx) => {
+      const list = dateGroupsMap.get(gName) || [];
+      const isLastGroup = (gIdx === availableGroups.length - 1);
+      const isGroupExpanded = appState.expandedSessionGroups.has(gName);
+      const hasSessions = list.length > 0;
 
-    const subItems = document.createElement('div');
-    subItems.className = `session-subgroup-items ${isGroupExpanded ? '' : 'collapsed'}`;
-
-    list.forEach(sess => {
-      const itemEl = document.createElement('div');
-      itemEl.className = 'session-item';
-      if (appState.selectedSession && appState.selectedSession.id === sess.id) {
-        itemEl.classList.add('selected');
-      }
-      itemEl.id = `sess-${sess.id}`;
-      const icon = iconMap[sess.type] || '<span class="dc-icon dc-icon-folder"></span>';
-      itemEl.innerHTML = `
-        <span>${icon}</span>
-        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="${escapeHtml(sess.name)}">${escapeHtml(sess.name)}</span>
+      // Level 1: Date Group Row (Today, Yesterday, etc.)
+      const groupRow = document.createElement('div');
+      groupRow.className = `bc-tree-row bc-level-1 ${isLastGroup ? 'is-last' : ''}`;
+      groupRow.innerHTML = `
+        <span class="bc-guide ${isLastGroup ? 'l-branch' : 't-branch'}"></span>
+        <span class="bc-guide ${isGroupExpanded && hasSessions ? 'root-arrow' : ''}" onclick="toggleDateGroup('${escapeHtml(gName)}', event)">
+          <span class="bc-arrow">${isGroupExpanded ? '▾' : '▸'}</span>
+        </span>
+        <span class="bc-icon bc-icon-archive-folder"></span>
+        <span class="bc-tree-label">${escapeHtml(gName)}</span>
+        <span class="bc-tree-badge">${list.length}</span>
       `;
-      itemEl.onclick = (e) => {
-        e.stopPropagation();
-        selectSession(sess.id);
+      groupRow.onclick = (e) => {
+        if (e.target.closest('.bc-arrow')) return;
+        toggleDateGroup(gName, e);
       };
-      itemEl.ondblclick = (e) => {
-        e.stopPropagation();
-        selectSession(sess.id);
-        launchSelectedSession();
-      };
+      container.appendChild(groupRow);
 
-      subItems.appendChild(itemEl);
+      // If Date Group is expanded, render session items (Level 2)
+      if (isGroupExpanded) {
+        list.forEach((sess, sIdx) => {
+          const isLastSession = (sIdx === list.length - 1);
+          const isSelected = appState.selectedSession && appState.selectedSession.id === sess.id;
+          const iconClass = sessionIconMap[sess.type] || 'bc-icon-session-folder';
+
+          const sessRow = document.createElement('div');
+          sessRow.className = `bc-tree-row bc-level-2 ${isSelected ? 'selected' : ''}`;
+          sessRow.id = `sess-${sess.id}`;
+          sessRow.innerHTML = `
+            <span class="bc-guide ${isLastGroup ? 'empty' : 'line'}"></span>
+            <span class="bc-guide ${isLastSession ? 'l-branch' : 't-branch'}"></span>
+            <span class="bc-guide h-ext"></span>
+            <span class="bc-icon ${iconClass}"></span>
+            <span class="bc-tree-label ${isSelected ? 'selected' : ''}" title="${escapeHtml(sess.name)}">${escapeHtml(sess.name)}</span>
+          `;
+
+          sessRow.onclick = (e) => {
+            e.stopPropagation();
+            selectSession(sess.id);
+          };
+          sessRow.ondblclick = (e) => {
+            e.stopPropagation();
+            selectSession(sess.id);
+            launchSelectedSession();
+          };
+
+          container.appendChild(sessRow);
+        });
+      }
     });
-
-    subGroup.appendChild(subHeader);
-    subGroup.appendChild(subItems);
-    autoRootItems.appendChild(subGroup);
-  });
-
-  autoSavedRoot.appendChild(autoRootHeader);
-  autoSavedRoot.appendChild(autoRootItems);
-  container.appendChild(autoSavedRoot);
+  }
 
   // 2. SAVED SESSIONS GROUP (DiffCore custom saved sessions if any)
   const savedList = (appState.sessions || []).filter(sess => {
@@ -317,55 +315,52 @@ function renderSessionsTree() {
 
   if (savedList.length > 0) {
     const isSavedExpanded = appState.expandedSessionGroups.has('saved-sessions');
-    const savedRoot = document.createElement('div');
-    savedRoot.className = 'session-group';
+    const hasSaved = savedList.length > 0;
 
-    const savedHeader = document.createElement('div');
-    savedHeader.className = `session-group-header ${isSavedExpanded ? '' : 'collapsed'}`;
-    savedHeader.innerHTML = `
-      <span><span class="group-arrow">▼</span> 📁 Saved Sessions</span>
-      <span class="session-sub">${savedList.length}</span>
+    const savedRootRow = document.createElement('div');
+    savedRootRow.className = 'bc-tree-row bc-level-0';
+    savedRootRow.style.marginTop = '6px';
+    savedRootRow.innerHTML = `
+      <span class="bc-guide ${isSavedExpanded && hasSaved ? 'root-arrow' : ''}" onclick="toggleSavedGroup(event)">
+        <span class="bc-arrow">${isSavedExpanded ? '▾' : '▸'}</span>
+      </span>
+      <span class="bc-icon bc-icon-archive-folder"></span>
+      <span class="bc-tree-label">Saved Sessions</span>
+      <span class="bc-tree-badge">${savedList.length}</span>
     `;
-    savedHeader.onclick = (e) => {
-      e.stopPropagation();
-      if (appState.expandedSessionGroups.has('saved-sessions')) {
-        appState.expandedSessionGroups.delete('saved-sessions');
-      } else {
-        appState.expandedSessionGroups.add('saved-sessions');
-      }
-      renderSessionsTree();
+    savedRootRow.onclick = (e) => {
+      if (e.target.closest('.bc-arrow')) return;
+      toggleSavedGroup(e);
     };
+    container.appendChild(savedRootRow);
 
-    const savedItems = document.createElement('div');
-    savedItems.className = `session-group-items ${isSavedExpanded ? '' : 'collapsed'}`;
+    if (isSavedExpanded) {
+      savedList.forEach((sess, sIdx) => {
+        const isLast = (sIdx === savedList.length - 1);
+        const isSelected = appState.selectedSession && appState.selectedSession.id === sess.id;
+        const iconClass = sessionIconMap[sess.type] || 'bc-icon-session-folder';
 
-    savedList.forEach(sess => {
-      const itemEl = document.createElement('div');
-      itemEl.className = 'session-item';
-      if (appState.selectedSession && appState.selectedSession.id === sess.id) {
-        itemEl.classList.add('selected');
-      }
-      itemEl.id = `sess-${sess.id}`;
-      const icon = iconMap[sess.type] || '<span class="dc-icon dc-icon-folder"></span>';
-      itemEl.innerHTML = `
-        <span>${icon}</span>
-        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="${escapeHtml(sess.name)}">${escapeHtml(sess.name)}</span>
-      `;
-      itemEl.onclick = (e) => {
-        e.stopPropagation();
-        selectSession(sess.id);
-      };
-      itemEl.ondblclick = (e) => {
-        e.stopPropagation();
-        selectSession(sess.id);
-        launchSelectedSession();
-      };
-      savedItems.appendChild(itemEl);
-    });
-
-    savedRoot.appendChild(savedHeader);
-    savedRoot.appendChild(savedItems);
-    container.appendChild(savedRoot);
+        const sRow = document.createElement('div');
+        sRow.className = `bc-tree-row bc-level-1 ${isSelected ? 'selected' : ''}`;
+        sRow.id = `sess-${sess.id}`;
+        sRow.innerHTML = `
+          <span class="bc-guide ${isLast ? 'l-branch' : 't-branch'}"></span>
+          <span class="bc-guide h-ext"></span>
+          <span class="bc-icon ${iconClass}"></span>
+          <span class="bc-tree-label ${isSelected ? 'selected' : ''}" title="${escapeHtml(sess.name)}">${escapeHtml(sess.name)}</span>
+        `;
+        sRow.onclick = (e) => {
+          e.stopPropagation();
+          selectSession(sess.id);
+        };
+        sRow.ondblclick = (e) => {
+          e.stopPropagation();
+          selectSession(sess.id);
+          launchSelectedSession();
+        };
+        container.appendChild(sRow);
+      });
+    }
   }
 }
 
@@ -381,9 +376,17 @@ function selectSession(sessionId) {
   appState.selectedSession = sess;
 
   // Update UI selection highlight
-  document.querySelectorAll('.session-item').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.bc-tree-row, .session-item').forEach(el => {
+    el.classList.remove('selected');
+    const lbl = el.querySelector('.bc-tree-label');
+    if (lbl) lbl.classList.remove('selected');
+  });
   const el = document.getElementById(`sess-${sessionId}`);
-  if (el) el.classList.add('selected');
+  if (el) {
+    el.classList.add('selected');
+    const lbl = el.querySelector('.bc-tree-label');
+    if (lbl) lbl.classList.add('selected');
+  }
 
   // Show Top Details Card
   const headerCard = document.getElementById('sessionHeaderDetails');
@@ -763,14 +766,41 @@ async function runSingleSideFolder(loadedSide) {
   }
 }
 
-function toggleAutoSavedGroup() {
+function toggleAutoSavedGroup(e) {
+  if (e) e.stopPropagation();
   if (!appState.expandedSessionGroups) {
-    appState.expandedSessionGroups = new Set(['auto-saved', 'Today', 'Yesterday']);
+    appState.expandedSessionGroups = new Set(['auto-saved', 'Today']);
   }
   if (appState.expandedSessionGroups.has('auto-saved')) {
     appState.expandedSessionGroups.delete('auto-saved');
   } else {
     appState.expandedSessionGroups.add('auto-saved');
+  }
+  renderSessionsTree();
+}
+
+function toggleDateGroup(gName, e) {
+  if (e) e.stopPropagation();
+  if (!appState.expandedSessionGroups) {
+    appState.expandedSessionGroups = new Set(['auto-saved', 'Today']);
+  }
+  if (appState.expandedSessionGroups.has(gName)) {
+    appState.expandedSessionGroups.delete(gName);
+  } else {
+    appState.expandedSessionGroups.add(gName);
+  }
+  renderSessionsTree();
+}
+
+function toggleSavedGroup(e) {
+  if (e) e.stopPropagation();
+  if (!appState.expandedSessionGroups) {
+    appState.expandedSessionGroups = new Set(['auto-saved', 'Today']);
+  }
+  if (appState.expandedSessionGroups.has('saved-sessions')) {
+    appState.expandedSessionGroups.delete('saved-sessions');
+  } else {
+    appState.expandedSessionGroups.add('saved-sessions');
   }
   renderSessionsTree();
 }

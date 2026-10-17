@@ -74,8 +74,9 @@
         <div class="sidebar-title">Sessions</div>
         <div class="sessions-tree" id="sessionsTreeList">
           <!-- Static top shortcuts -->
-          <div class="session-item" onclick="promptNewSession()">
-            <span>➕</span> <span>New</span>
+          <div class="bc-tree-row bc-new-session-row" onclick="promptNewSession()">
+            <span class="bc-new-plus">➕</span>
+            <span class="bc-tree-label" style="font-weight: 500;">New</span>
           </div>
           <!-- Dynamic Groups Container (Populated via JS: Auto-saved with relative dates & Saved sessions) -->
           <div id="dynamicSessionsTree"></div>
