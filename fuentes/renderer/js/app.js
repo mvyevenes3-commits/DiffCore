@@ -131,6 +131,15 @@ let appState = {
 
 // --- INITIALIZATION ---
 window.addEventListener('DOMContentLoaded', async () => {
+  if (window.i18n && typeof window.i18n.init === 'function') {
+    window.i18n.init();
+    if (typeof window.i18n.onLanguageChange === 'function') {
+      window.i18n.onLanguageChange(() => {
+        updateAppHeader();
+        updateTextDiffBadge();
+      });
+    }
+  }
   initTheme();
   setupLogging();
   setupCliListener();
@@ -238,6 +247,13 @@ function setupWindowClickHandlers() {
     if (menu && menu.style.display !== 'none') {
       if (!menu.contains(event.target)) {
         menu.style.display = 'none';
+      }
+    }
+    const langMenu = document.getElementById('langDropdownMenu');
+    const langBtn = document.getElementById('btnLangToggle');
+    if (langMenu && langMenu.style.display !== 'none') {
+      if (!langMenu.contains(event.target) && (!langBtn || !langBtn.contains(event.target))) {
+        langMenu.style.display = 'none';
       }
     }
   });
@@ -1097,59 +1113,70 @@ function switchView(viewName) {
 function updateAppHeader() {
   const titleEl = document.getElementById('appTitleCenter');
   let title = 'DiffCore';
+  const t = (k, fallback) => (window.i18n ? window.i18n.t(k) : fallback);
 
   switch (appState.activeView) {
     case 'home':
-      title = 'Home';
+      title = t('tab.home', 'Home');
       break;
     case 'folder': {
-      const name = document.getElementById('currentSessionTabTitle')?.textContent?.trim() || 'Folder Compare';
-      title = `${name} - Folder Compare`;
+      const typeLabel = t('tab.folder_compare', 'Folder Compare');
+      const name = document.getElementById('currentSessionTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Folder Compare') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'foldersync': {
-      const name = document.getElementById('currentFolderSyncTabTitle')?.textContent?.trim() || 'Folder Sync';
-      title = `${name} - Folder Sync`;
+      const typeLabel = t('tab.folder_sync', 'Folder Sync');
+      const name = document.getElementById('currentFolderSyncTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Folder Sync') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'foldermerge': {
-      const name = document.getElementById('currentFolderMergeTabTitle')?.textContent?.trim() || 'Folder Merge';
-      title = `${name} - Folder Merge`;
+      const typeLabel = t('tab.folder_merge', 'Folder Merge');
+      const name = document.getElementById('currentFolderMergeTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Folder Merge') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'text': {
-      const name = document.getElementById('currentTextTabTitle')?.textContent?.trim() || 'Text Compare';
-      title = `${name} - Text Compare`;
+      const typeLabel = t('tab.text_compare', 'Text Compare');
+      const name = document.getElementById('currentTextTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Text Compare') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'textmerge': {
-      const name = document.getElementById('currentTextMergeTabTitle')?.textContent?.trim() || 'Text Merge';
-      title = `${name} - Text Merge`;
+      const typeLabel = t('tab.text_merge', 'Text Merge');
+      const name = document.getElementById('currentTextMergeTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Text Merge') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'textedit': {
-      const name = document.getElementById('currentTextEditTabTitle')?.textContent?.trim() || 'Text Edit';
-      title = `${name} - Text Edit`;
+      const typeLabel = t('tab.text_edit', 'Text Edit');
+      const name = document.getElementById('currentTextEditTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Text Edit') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'hex': {
-      const name = document.getElementById('currentHexTabTitle')?.textContent?.trim() || 'Hex Compare';
-      title = `${name} - Hex Compare`;
+      const typeLabel = t('tab.hex_compare', 'Hex Compare');
+      const name = document.getElementById('currentHexTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Hex Compare') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'picture': {
-      const name = document.getElementById('currentPictureTabTitle')?.textContent?.trim() || 'Picture Compare';
-      title = `${name} - Picture Compare`;
+      const typeLabel = t('tab.picture_compare', 'Picture Compare');
+      const name = document.getElementById('currentPictureTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Picture Compare') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'table': {
-      const name = document.getElementById('currentTableTabTitle')?.textContent?.trim() || 'Table Compare';
-      title = `${name} - Table Compare`;
+      const typeLabel = t('tab.table_compare', 'Table Compare');
+      const name = document.getElementById('currentTableTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Table Compare') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     case 'media': {
-      const name = document.getElementById('currentMediaTabTitle')?.textContent?.trim() || 'Media Compare';
-      title = `${name} - Media Compare`;
+      const typeLabel = t('tab.media_compare', 'Media Compare');
+      const name = document.getElementById('currentMediaTabTitle')?.textContent?.trim() || typeLabel;
+      title = (name === typeLabel || name === 'Media Compare') ? typeLabel : `${name} - ${typeLabel}`;
       break;
     }
     default:
@@ -3437,11 +3464,17 @@ function applyTheme(theme) {
   if (theme === 'light') {
     document.body.classList.add('theme-light');
     if (icon) icon.textContent = '🌙';
-    if (label) label.textContent = 'Dark Mode';
+    if (label) {
+      label.setAttribute('data-i18n', 'common.theme_dark');
+      label.textContent = window.i18n ? window.i18n.t('common.theme_dark') : 'Dark Mode';
+    }
   } else {
     document.body.classList.remove('theme-light');
     if (icon) icon.textContent = '☀️';
-    if (label) label.textContent = 'Light Mode';
+    if (label) {
+      label.setAttribute('data-i18n', 'common.theme_light');
+      label.textContent = window.i18n ? window.i18n.t('common.theme_light') : 'Light Mode';
+    }
   }
   localStorage.setItem('diffcore_theme', theme);
 }
@@ -3451,6 +3484,52 @@ function toggleTheme() {
   applyTheme(isLight ? 'dark' : 'light');
   showToast(isLight ? 'Switched to Dark Mode' : 'Switched to Light Mode', 'info');
 }
+
+// --- LANGUAGE SWITCHER (Beyond Compare 5 i18n) ---
+function toggleLanguageDropdown(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('langDropdownMenu');
+  if (!menu) return;
+  menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
+}
+
+function selectLanguage(lang) {
+  if (window.i18n && typeof window.i18n.setLanguage === 'function') {
+    window.i18n.setLanguage(lang);
+  }
+  const menu = document.getElementById('langDropdownMenu');
+  if (menu) menu.style.display = 'none';
+  updateTextDiffBadge();
+}
+
+function updateTextDiffBadge() {
+  const badge = document.getElementById('textDiffBadge');
+  if (!badge) return;
+  const currentDiff = appState.currentTextFile ? appState.currentTextFile.diffResult : null;
+  if (!currentDiff) {
+    if (window.i18n) {
+      badge.textContent = window.i18n.t('text.dropzone_left') || 'Drag files into panels or click 📁 to browse';
+    }
+    return;
+  }
+  if (currentDiff.isSingleSide) {
+    badge.textContent = currentDiff.isSingleSide === 'left'
+      ? (window.i18n ? window.i18n.t('text.left_only_loaded') : 'Left file loaded — Select right file to compare')
+      : (window.i18n ? window.i18n.t('text.right_only_loaded') : 'Right file loaded — Select left file to compare');
+  } else {
+    const sectionCount = currentDiff.sectionCount !== undefined ? currentDiff.sectionCount : (currentDiff.sections ? currentDiff.sections.length : 0);
+    if (sectionCount === 0) {
+      badge.textContent = window.i18n ? window.i18n.t('text.identical') : '0 differences (Identical)';
+    } else {
+      const pluralStr = sectionCount > 1 ? (window.i18n && window.i18n.getCurrentLanguage() === 'ru' ? '' : 's') : '';
+      badge.textContent = window.i18n ? window.i18n.t('text.differences_count', { count: sectionCount, plural: pluralStr }) : `${sectionCount} difference section${pluralStr}`;
+    }
+  }
+}
+
+window.toggleLanguageDropdown = toggleLanguageDropdown;
+window.selectLanguage = selectLanguage;
+window.updateTextDiffBadge = updateTextDiffBadge;
 
 // --- TEXT COMPARE WORD WRAP & OVER-UNDER LAYOUT (Beyond Compare 5) ---
 function toggleTextWordWrap() {
@@ -5826,16 +5905,18 @@ function renderEmptyTextCompare() {
   const metaR = document.getElementById('textRightMeta');
 
   if (gutter) gutter.innerHTML = '';
+  const dropL = window.i18n ? window.i18n.t('text.dropzone_left') : 'Drop left file here, or click 📁 to browse';
+  const dropR = window.i18n ? window.i18n.t('text.dropzone_right') : 'Drop right file here, or click 📁 to browse';
   if (containerL) {
-    containerL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('left')"><div class="dropzone-icon">📄</div><div>Drop left file here, or click 📁 to browse</div></div>`;
+    containerL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('left')"><div class="dropzone-icon">📄</div><div>${dropL}</div></div>`;
     containerL.style.height = '100%';
   }
   if (containerR) {
-    containerR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('right')"><div class="dropzone-icon">📄</div><div>Drop right file here, or click 📁 to browse</div></div>`;
+    containerR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('right')"><div class="dropzone-icon">📄</div><div>${dropR}</div></div>`;
     containerR.style.height = '100%';
   }
   if (badge) {
-    badge.textContent = 'Drag files into panels or click 📁 to browse';
+    badge.textContent = dropL;
     badge.style.background = 'rgba(255, 255, 255, 0.08)';
     badge.style.color = '#aaa';
   }
@@ -5882,7 +5963,9 @@ function renderSingleSideText(loadedSide) {
   appState.currentTextFile.diffResult = singleDiff;
 
   if (badge) {
-    badge.textContent = loadedSide === 'left' ? 'Left file loaded — Select right file to compare' : 'Right file loaded — Select left file to compare';
+    badge.textContent = loadedSide === 'left'
+      ? (window.i18n ? window.i18n.t('text.left_only_loaded') : 'Left file loaded — Select right file to compare')
+      : (window.i18n ? window.i18n.t('text.right_only_loaded') : 'Right file loaded — Select left file to compare');
     badge.style.background = 'rgba(74, 222, 128, 0.15)';
     badge.style.color = '#4ade80';
   }
@@ -6852,16 +6935,17 @@ function renderTextDiff(diffResult) {
   if (badge) {
     if (diffResult.isSingleSide) {
       badge.textContent = diffResult.isSingleSide === 'left'
-        ? 'Left file loaded — Select right file to compare'
-        : 'Right file loaded — Select left file to compare';
+        ? (window.i18n ? window.i18n.t('text.left_only_loaded') : 'Left file loaded — Select right file to compare')
+        : (window.i18n ? window.i18n.t('text.right_only_loaded') : 'Right file loaded — Select left file to compare');
       badge.style.background = 'rgba(74, 222, 128, 0.15)';
       badge.style.color = '#4ade80';
     } else if (sectionCount === 0) {
-      badge.textContent = '0 differences (Identical)';
+      badge.textContent = window.i18n ? window.i18n.t('text.identical') : '0 differences (Identical)';
       badge.style.background = 'rgba(74, 222, 128, 0.15)';
       badge.style.color = '#4ade80';
     } else {
-      badge.textContent = `${sectionCount} difference section${sectionCount > 1 ? 's' : ''}`;
+      const pluralStr = sectionCount > 1 ? (window.i18n && window.i18n.getCurrentLanguage() === 'ru' ? '' : 's') : '';
+      badge.textContent = window.i18n ? window.i18n.t('text.differences_count', { count: sectionCount, plural: pluralStr }) : `${sectionCount} difference section${pluralStr}`;
       badge.style.background = 'rgba(224, 82, 82, 0.2)';
       badge.style.color = '#ff8080';
     }
@@ -7312,7 +7396,7 @@ function saveNextDiffOptionsFromModal() {
 
   saveDiffOptionsConfig();
   closeNextDiffOptionsModal();
-  showToast('Next Difference options updated', 'info');
+  showToast(window.i18n ? window.i18n.t('toast.options_saved') : 'Next Difference options updated', 'info');
 }
 
 window.openNextDiffOptionsModal = openNextDiffOptionsModal;
@@ -7326,7 +7410,7 @@ function navDiff(direction) {
 
   if (!diffResult || !diffResult.sections || diffResult.sections.length === 0) {
     if (opts.showMessagePanel) {
-      showToast('No difference sections in this file', 'info');
+      showToast(window.i18n ? window.i18n.t('text.no_differences_file') : 'No difference sections in this file', 'info');
     }
     return;
   }
@@ -7336,20 +7420,20 @@ function navDiff(direction) {
   if (next < 0) {
     if (opts.wrapAroundDiffs) {
       next = diffResult.sections.length - 1;
-      if (opts.showMessagePanel) showToast('Wrapped to last difference', 'info');
+      if (opts.showMessagePanel) showToast(window.i18n ? window.i18n.t('text.wrapped_last') : 'Wrapped to last difference', 'info');
     } else {
       next = 0;
-      if (opts.showMessagePanel) showToast('Reached the first difference', 'info');
+      if (opts.showMessagePanel) showToast(window.i18n ? window.i18n.t('text.reached_first') : 'Reached the first difference', 'info');
       jumpToSection(0);
       return;
     }
   } else if (next >= diffResult.sections.length) {
     if (opts.wrapAroundDiffs) {
       next = 0;
-      if (opts.showMessagePanel) showToast('Wrapped to first difference', 'info');
+      if (opts.showMessagePanel) showToast(window.i18n ? window.i18n.t('text.wrapped_first') : 'Wrapped to first difference', 'info');
     } else {
       next = diffResult.sections.length - 1;
-      if (opts.showMessagePanel) showToast('Reached the last difference', 'info');
+      if (opts.showMessagePanel) showToast(window.i18n ? window.i18n.t('text.reached_last') : 'Reached the last difference', 'info');
       jumpToSection(diffResult.sections.length - 1);
       return;
     }
@@ -7602,7 +7686,7 @@ async function undoTextChange() {
   renderTextDiff(updatedDiff);
 
   updateUndoRedoButtons();
-  showToast(`Deshecho: ${prevState.description || 'cambio revertido'}`, 'info');
+  showToast(window.i18n ? window.i18n.t('toast.undo_done') : `Deshecho: ${prevState.description || 'cambio revertido'}`, 'info');
 }
 
 async function redoTextChange() {
@@ -7632,7 +7716,7 @@ async function redoTextChange() {
   renderTextDiff(updatedDiff);
 
   updateUndoRedoButtons();
-  showToast(`Rehecho: ${nextState.description || 'cambio aplicado'}`, 'info');
+  showToast(window.i18n ? window.i18n.t('toast.redo_done') : `Rehecho: ${nextState.description || 'cambio aplicado'}`, 'info');
 }
 
 function setupTextKeyboardNavigation() {
@@ -7705,7 +7789,10 @@ async function copyDiffSection(sectionIndex, direction) {
     if (saveBtn) {
       saveBtn.style.boxShadow = '0 0 10px #388bfd';
     }
-    showToast(`Copied section ${sectionIndex + 1} (${sec.rightLineCount} lines) to Left. Click '💾 Save Left' to write.`, 'success');
+    const msgL = window.i18n
+      ? window.i18n.t('toast.copied_section_left', { idx: sectionIndex + 1, lines: sec.rightLineCount })
+      : `Copied section ${sectionIndex + 1} (${sec.rightLineCount} lines) to Left. Click '💾 Save Left' to write.`;
+    showToast(msgL, 'success');
   } else if (direction === 'to_right') {
     let rightLines = appState.currentTextFile.rightContent ? appState.currentTextFile.rightContent.split(/\r\n|\r|\n/) : [];
     if (rightLines.length > 0 && rightLines[rightLines.length - 1] === '' && appState.currentTextFile.rightContent.endsWith('\n')) {
@@ -7718,7 +7805,10 @@ async function copyDiffSection(sectionIndex, direction) {
     if (saveBtn) {
       saveBtn.style.boxShadow = '0 0 10px #388bfd';
     }
-    showToast(`Copied section ${sectionIndex + 1} (${sec.leftLineCount} lines) to Right. Click '💾 Save Right' to write.`, 'success');
+    const msgR = window.i18n
+      ? window.i18n.t('toast.copied_section_right', { idx: sectionIndex + 1, lines: sec.leftLineCount })
+      : `Copied section ${sectionIndex + 1} (${sec.leftLineCount} lines) to Right. Click '💾 Save Right' to write.`;
+    showToast(msgR, 'success');
   }
 
   // Recalculate Aligned Diff with updated memory content

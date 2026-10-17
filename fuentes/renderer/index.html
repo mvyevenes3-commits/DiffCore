@@ -59,8 +59,21 @@
       <button class="tab-nav-btn" id="tabNavLeftBtn" title="Scroll Tabs Left (Shift+Click: Previous Tab)" onclick="handleTabNavClick('left', event)">◀</button>
       <button class="tab-nav-btn" id="tabNavRightBtn" title="Scroll Tabs Right (Shift+Click: Next Tab)" onclick="handleTabNavClick('right', event)">▶</button>
       <button class="tab-add-btn" title="New Compare Tab" onclick="openNewCompareTab()">+</button>
+      <div class="lang-selector-wrapper" style="position: relative;">
+        <button class="theme-toggle-btn lang-toggle-btn" id="btnLangToggle" title="Select Language / Seleccionar Idioma" onclick="toggleLanguageDropdown(event)">
+          <span id="currentLangLabel">🌐 Idioma</span> <span style="font-size: 8px; opacity: 0.7; margin-left: 2px;">▼</span>
+        </button>
+        <div class="lang-dropdown-menu" id="langDropdownMenu" style="display: none;">
+          <div class="lang-opt" onclick="selectLanguage('en')"><span>🇺🇸</span> English</div>
+          <div class="lang-opt" onclick="selectLanguage('es')"><span>🇪🇸</span> Español</div>
+          <div class="lang-opt" onclick="selectLanguage('pt-BR')"><span>🇧🇷</span> Português (Brasil)</div>
+          <div class="lang-opt" onclick="selectLanguage('fr')"><span>🇫🇷</span> Français</div>
+          <div class="lang-opt" onclick="selectLanguage('it')"><span>🇮🇹</span> Italiano</div>
+          <div class="lang-opt" onclick="selectLanguage('ru')"><span>🇷🇺</span> Русский</div>
+        </div>
+      </div>
       <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode (Beyond Compare 5)" onclick="toggleTheme()">
-        <span id="themeToggleIcon">☀️</span> <span id="themeToggleLabel">Light Mode</span>
+        <span id="themeToggleIcon">☀️</span> <span id="themeToggleLabel" data-i18n="common.theme_light">Light Mode</span>
       </button>
     </div>
   </div>
@@ -71,21 +84,21 @@
       
       <!-- Left Sidebar: Sessions Tree -->
       <aside class="home-sidebar">
-        <div class="sidebar-title">Sessions</div>
+        <div class="sidebar-title" data-i18n="home.sessions">Sessions</div>
         <div class="sessions-tree" id="sessionsTreeList">
           <!-- Static top shortcuts -->
           <div class="bc-tree-row bc-new-session-row" onclick="promptNewSession()">
             <span class="bc-new-plus">➕</span>
-            <span class="bc-tree-label" style="font-weight: 500;">New</span>
+            <span class="bc-tree-label" style="font-weight: 500;" data-i18n="home.new">New</span>
           </div>
           <!-- Dynamic Groups Container (Populated via JS: Auto-saved with relative dates & Saved sessions) -->
           <div id="dynamicSessionsTree"></div>
         </div>
 
         <div style="display: flex; gap: 4px; padding: 6px 10px; border-top: 1px solid var(--border-color); background: #1c1c1c;">
-          <button class="btn-small" title="Add Session" onclick="promptNewSession()">➕</button>
-          <button class="btn-small" title="Delete Session" onclick="deleteSelectedSession()">➖</button>
-          <input type="text" class="tb-filter-input" id="sessionSearchInput" placeholder="🔍 Search" style="flex: 1;" oninput="filterSessionsList()">
+          <button class="btn-small" title="Add Session" data-i18n-title="home.add_session" onclick="promptNewSession()">➕</button>
+          <button class="btn-small" title="Delete Session" data-i18n-title="home.delete_session" onclick="deleteSelectedSession()">➖</button>
+          <input type="text" class="tb-filter-input" id="sessionSearchInput" placeholder="🔍 Search" data-i18n-placeholder="common.search" style="flex: 1;" oninput="filterSessionsList()">
         </div>
       </aside>
 
@@ -109,7 +122,7 @@
         </div>
 
         <!-- Center Prompt -->
-        <div class="home-center-prompt">
+        <div class="home-center-prompt" data-i18n="home.prompt">
           Drag folders or files onto session icon or click a session icon to begin:
         </div>
 
@@ -129,7 +142,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Folder Compare</div>
+            <div class="title" data-i18n="home.card_folder_compare">Folder Compare</div>
           </div>
 
           <div class="tool-card" onclick="openTool('folder_merge')" title="Folder Merge">
@@ -146,7 +159,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Folder Merge</div>
+            <div class="title" data-i18n="home.card_folder_merge">Folder Merge</div>
           </div>
 
           <div class="tool-card" onclick="openTool('folder_sync')" title="Folder Sync">
@@ -161,7 +174,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Folder Sync</div>
+            <div class="title" data-i18n="home.card_folder_sync">Folder Sync</div>
           </div>
 
           <div class="tool-card" onclick="openTool('text_compare')" title="Text Compare">
@@ -187,7 +200,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Text Compare</div>
+            <div class="title" data-i18n="home.card_text_compare">Text Compare</div>
           </div>
 
           <div class="tool-card" onclick="openTool('text_merge')" title="Text Merge">
@@ -203,7 +216,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Text Merge</div>
+            <div class="title" data-i18n="home.card_text_merge">Text Merge</div>
           </div>
 
           <div class="tool-card" onclick="openTool('text_edit')" title="Text Edit">
@@ -223,7 +236,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Text Edit</div>
+            <div class="title" data-i18n="home.card_text_edit">Text Edit</div>
           </div>
 
           <!-- Row 2 -->
@@ -243,7 +256,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Hex Compare</div>
+            <div class="title" data-i18n="home.card_hex_compare">Hex Compare</div>
           </div>
 
           <div class="tool-card" onclick="openTool('media_compare')" title="Media Compare">
@@ -259,7 +272,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Media Compare</div>
+            <div class="title" data-i18n="home.card_media_compare">Media Compare</div>
           </div>
 
           <div class="tool-card" onclick="openTool('picture_compare')" title="Picture Compare">
@@ -275,7 +288,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Picture Compare</div>
+            <div class="title" data-i18n="home.card_picture_compare">Picture Compare</div>
           </div>
 
           <div class="tool-card" onclick="openTool('table_compare')" title="Table Compare">
@@ -293,7 +306,7 @@
                 </g>
               </svg>
             </div>
-            <div class="title">Table Compare</div>
+            <div class="title" data-i18n="home.card_table_compare">Table Compare</div>
           </div>
         </div>
       </main>
@@ -327,13 +340,13 @@
     <header class="folder-toolbar">
       <!-- Group 1: Navigation & Sessions -->
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon"><span class="dc-icon dc-icon-home"></span></span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
-        <button class="tb-btn" title="Sessions" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Sessions" data-i18n-title="toolbar.sessions_tip" onclick="handleToolbarHomeClick()">
           <span class="icon"><span class="dc-icon dc-icon-sessions"></span></span>
-          <span class="label">Sessions ▾</span>
+          <span class="label" data-i18n="home.sessions">Sessions ▾</span>
         </button>
       </div>
 
@@ -341,17 +354,17 @@
 
       <!-- Group 2: Display Filters (All, Diffs, Same) -->
       <div class="toolbar-group">
-        <button class="tb-btn" id="filterAllBtn" title="Show All" onclick="setFilter('all')">
+        <button class="tb-btn" id="filterAllBtn" title="Show All" data-i18n-title="toolbar.show_all_tip" onclick="setFilter('all')">
           <span class="icon">✳</span>
-          <span class="label">All</span>
+          <span class="label" data-i18n="toolbar.all">All</span>
         </button>
-        <button class="tb-btn active" id="filterDiffsBtn" title="Show Differences" onclick="setFilter('diffs')">
+        <button class="tb-btn active" id="filterDiffsBtn" title="Show Differences" data-i18n-title="toolbar.show_diffs_tip" onclick="setFilter('diffs')">
           <span class="icon" style="color: #ff6b6b; font-size: 18px; font-weight: 800;">≠</span>
-          <span class="label" style="color: #ff8080;">Diffs ▾</span>
+          <span class="label" style="color: #ff8080;" data-i18n="toolbar.diffs">Diffs ▾</span>
         </button>
-        <button class="tb-btn" id="filterSameBtn" title="Show Same" onclick="setFilter('same')">
+        <button class="tb-btn" id="filterSameBtn" title="Show Same" data-i18n-title="toolbar.show_same_tip" onclick="setFilter('same')">
           <span class="icon" style="color: #e2c08d; font-size: 16px; font-weight: 800;">═</span>
-          <span class="label">Same</span>
+          <span class="label" data-i18n="toolbar.same">Same</span>
         </button>
       </div>
 
@@ -359,25 +372,25 @@
 
       <!-- Group 3: Comparison & Actions -->
       <div class="toolbar-group">
-        <button class="tb-btn" title="Structure Mode" onclick="toggleStructureMode()">
+        <button class="tb-btn" title="Structure Mode" data-i18n-title="toolbar.structure_tip" onclick="toggleStructureMode()">
           <span class="icon">📁</span>
-          <span class="label">Structure ▾</span>
+          <span class="label" data-i18n="toolbar.structure">Structure ▾</span>
         </button>
-        <button class="tb-btn" title="Minor Differences" onclick="toggleMinorDiffs()">
+        <button class="tb-btn" title="Minor Differences" data-i18n-title="toolbar.minor_tip" onclick="toggleMinorDiffs()">
           <span class="icon" style="font-size: 16px;">≈</span>
-          <span class="label">Minor</span>
+          <span class="label" data-i18n="toolbar.minor">Minor</span>
         </button>
-        <button class="tb-btn" title="Rules" onclick="openDeepCompareModal()">
+        <button class="tb-btn" title="Rules" data-i18n-title="toolbar.rules_tip" onclick="openDeepCompareModal()">
           <span class="icon">⚖️</span>
-          <span class="label">Rules</span>
+          <span class="label" data-i18n="toolbar.rules">Rules</span>
         </button>
-        <button class="tb-btn" id="btnDeepCompare" title="Compare Contents [=?]" onclick="openDeepCompareModal()">
+        <button class="tb-btn" id="btnDeepCompare" title="Compare Contents [=?]" data-i18n-title="toolbar.specs_tip" onclick="openDeepCompareModal()">
           <span class="icon" style="font-weight: 700; font-family: var(--font-mono); font-size: 13px;">=?</span>
-          <span class="label">Compare</span>
+          <span class="label" data-i18n="toolbar.specs">Compare</span>
         </button>
-        <button class="tb-btn" title="Copy to other side" onclick="copySelectedToRight()">
+        <button class="tb-btn" title="Copy to other side" data-i18n-title="toolbar.copy_other_tip" onclick="copySelectedToRight()">
           <span class="icon"><span class="dc-icon dc-icon-copy-right"></span></span>
-          <span class="label">Copy</span>
+          <span class="label" data-i18n="toolbar.copy">Copy</span>
         </button>
       </div>
 
@@ -385,21 +398,21 @@
 
       <!-- Group 4: Expand / Collapse / Selection -->
       <div class="toolbar-group">
-        <button class="tb-btn" title="Expand All Folders" onclick="expandAllFolders()">
+        <button class="tb-btn" title="Expand All Folders" data-i18n-title="toolbar.expand_all_tip" onclick="expandAllFolders()">
           <span class="icon" style="font-size: 16px;">⇥</span>
-          <span class="label">Expand</span>
+          <span class="label" data-i18n="toolbar.expand">Expand</span>
         </button>
-        <button class="tb-btn" title="Collapse All Folders" onclick="collapseAllFolders()">
+        <button class="tb-btn" title="Collapse All Folders" data-i18n-title="toolbar.collapse_all_tip" onclick="collapseAllFolders()">
           <span class="icon" style="font-size: 16px;">⇤</span>
-          <span class="label">Collapse</span>
+          <span class="label" data-i18n="toolbar.collapse">Collapse</span>
         </button>
-        <button class="tb-btn" title="Select All" onclick="selectAllRows()">
+        <button class="tb-btn" title="Select All" data-i18n-title="toolbar.select_all_tip" onclick="selectAllRows()">
           <span class="icon"><span class="dc-icon dc-icon-select-all"></span></span>
-          <span class="label">Select</span>
+          <span class="label" data-i18n="toolbar.select_all">Select</span>
         </button>
-        <button class="tb-btn" title="Toggle Files" onclick="toggleFileView()">
+        <button class="tb-btn" title="Toggle Files" data-i18n-title="toolbar.files_tip" onclick="toggleFileView()">
           <span class="icon"><span class="dc-icon dc-icon-files"></span></span>
-          <span class="label">Files</span>
+          <span class="label" data-i18n="common.files">Files</span>
         </button>
       </div>
 
@@ -407,33 +420,33 @@
 
       <!-- Group 5: Operations (Refresh, Swap, Stop) -->
       <div class="toolbar-group">
-        <button class="tb-btn" title="Refresh (Cmd+R)" onclick="runFolderComparison()">
+        <button class="tb-btn" title="Refresh (Cmd+R)" data-i18n-title="toolbar.refresh_tip" onclick="runFolderComparison()">
           <span class="icon"><span class="dc-icon dc-icon-refresh"></span></span>
-          <span class="label">Refresh</span>
+          <span class="label" data-i18n="toolbar.refresh">Refresh</span>
         </button>
-        <button class="tb-btn" title="Swap Sides" onclick="swapSides()">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapSides()">
           <span class="icon">⇄</span>
-          <span class="label">Swap</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
         </button>
-        <button class="tb-btn" title="Stop" onclick="stopComparison()">
+        <button class="tb-btn" title="Stop" data-i18n-title="toolbar.stop_tip" onclick="stopComparison()">
           <span class="icon"><span class="dc-icon dc-icon-stop"></span></span>
-          <span class="label">Stop</span>
+          <span class="label" data-i18n="common.cancel">Stop</span>
         </button>
       </div>
 
       <!-- Far Right: Search & Filters Box (Image 1 & Image 3) -->
       <div class="toolbar-group" style="margin-left: auto;">
-        <span style="font-size: 11px; color: #888;">Filters:</span>
+        <span style="font-size: 11px; color: #888;" data-i18n="toolbar.filters">Filters:</span>
         <input type="text" class="tb-filter-input" id="tableFilterInput" placeholder="*.*" oninput="filterTableItems()">
-        <button class="tb-icon-only-btn" title="Clear Filter" onclick="clearTableFilter()">✕</button>
-        <button class="tb-btn" id="btnNameFilters" style="min-width: 36px; height: 46px; position: relative;" title="File & Folder Filters (Exclusions)" onclick="openNameFiltersModal()">
+        <button class="tb-icon-only-btn" title="Clear Filter" data-i18n-title="toolbar.clear_filter_tip" onclick="clearTableFilter()">✕</button>
+        <button class="tb-btn" id="btnNameFilters" style="min-width: 36px; height: 46px; position: relative;" title="File & Folder Filters (Exclusions)" data-i18n-title="modal.filters_title" onclick="openNameFiltersModal()">
           <span class="icon"><span class="dc-icon dc-icon-filter"></span></span>
-          <span class="label">Filters</span>
+          <span class="label" data-i18n="toolbar.filters">Filters</span>
           <span id="filterActiveDot" class="filter-active-dot" style="display: none;"></span>
         </button>
-        <button class="tb-btn" style="min-width: 36px; height: 46px;" title="Peek Next Difference" onclick="peekNextDiff()">
+        <button class="tb-btn" style="min-width: 36px; height: 46px;" title="Peek Next Difference" data-i18n-title="toolbar.peek_tip" onclick="peekNextDiff()">
           <span class="icon"><span class="dc-icon dc-icon-search"></span></span>
-          <span class="label">Peek</span>
+          <span class="label" data-i18n="toolbar.peek">Peek</span>
         </button>
       </div>
     </header>
@@ -472,9 +485,9 @@
           <table class="diff-table" id="leftDiffTable">
             <thead>
               <tr>
-                <th style="width: 58%;">Name <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
-                <th style="width: 17%; text-align: right;">Size</th>
-                <th style="width: 22%;">Modified</th>
+                <th style="width: 58%;"><span data-i18n="table.name">Name</span> <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
+                <th style="width: 17%; text-align: right;" data-i18n="table.size">Size</th>
+                <th style="width: 22%;" data-i18n="table.modified">Modified</th>
                 <th style="width: 18px; padding: 0;"></th>
               </tr>
             </thead>
@@ -497,9 +510,9 @@
           <table class="diff-table" id="rightDiffTable">
             <thead>
               <tr>
-                <th style="width: 58%;">Name <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
-                <th style="width: 17%; text-align: right;">Size</th>
-                <th style="width: 22%;">Modified</th>
+                <th style="width: 58%;"><span data-i18n="table.name">Name</span> <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
+                <th style="width: 17%; text-align: right;" data-i18n="table.size">Size</th>
+                <th style="width: 22%;" data-i18n="table.modified">Modified</th>
                 <th style="width: 18px; padding: 0;"></th>
               </tr>
             </thead>
@@ -544,9 +557,9 @@
   <div id="textView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
 
@@ -554,17 +567,17 @@
 
       <!-- Filter buttons matching Beyond Compare 5 (Image 1) -->
       <div class="toolbar-group">
-        <button class="tb-btn active" id="textFilterAllBtn" title="Show All" onclick="setTextFilter('all')">
+        <button class="tb-btn active" id="textFilterAllBtn" title="Show All" data-i18n-title="toolbar.show_all_tip" onclick="setTextFilter('all')">
           <span class="icon" style="font-size: 15px;">✳️</span>
-          <span class="label">All</span>
+          <span class="label" data-i18n="toolbar.all">All</span>
         </button>
-        <button class="tb-btn" id="textFilterDiffsBtn" title="Show Differences" onclick="setTextFilter('diffs')">
+        <button class="tb-btn" id="textFilterDiffsBtn" title="Show Differences" data-i18n-title="toolbar.show_diffs_tip" onclick="setTextFilter('diffs')">
           <span class="icon" style="color: #ff6b6b; font-size: 18px; font-weight: 800;">≠</span>
-          <span class="label" style="color: #ff8080;">Diffs</span>
+          <span class="label" style="color: #ff8080;" data-i18n="toolbar.diffs">Diffs</span>
         </button>
-        <button class="tb-btn" id="textFilterSameBtn" title="Show Same" onclick="setTextFilter('same')">
+        <button class="tb-btn" id="textFilterSameBtn" title="Show Same" data-i18n-title="toolbar.show_same_tip" onclick="setTextFilter('same')">
           <span class="icon" style="color: #e2c08d; font-size: 16px; font-weight: 800;">═</span>
-          <span class="label">Same</span>
+          <span class="label" data-i18n="toolbar.same">Same</span>
         </button>
       </div>
 
@@ -572,45 +585,45 @@
 
       <!-- Navigation & Operations matching Beyond Compare 5 (Image 1) -->
       <div class="toolbar-group">
-        <button class="tb-btn" title="Previous Difference Section (Ctrl+Up)" onclick="navDiff(-1)">
+        <button class="tb-btn" title="Previous Difference Section (Ctrl+Up)" data-i18n-title="toolbar.prev_diff_tip" onclick="navDiff(-1)">
           <span class="icon">⬆</span>
-          <span class="label">Prev</span>
+          <span class="label" data-i18n="toolbar.prev">Prev</span>
         </button>
-        <button class="tb-btn" title="Next Difference Section (Ctrl+Down)" onclick="navDiff(1)">
+        <button class="tb-btn" title="Next Difference Section (Ctrl+Down)" data-i18n-title="toolbar.next_diff_tip" onclick="navDiff(1)">
           <span class="icon">⬇</span>
-          <span class="label">Next</span>
+          <span class="label" data-i18n="toolbar.next">Next</span>
         </button>
-        <button class="tb-btn" id="btnNextDiffOptions" title="Next Difference Options (Beyond Compare)" onclick="openNextDiffOptionsModal()">
+        <button class="tb-btn" id="btnNextDiffOptions" title="Next Difference Options (Beyond Compare)" data-i18n-title="modal.options_title" onclick="openNextDiffOptionsModal()">
           <span class="icon">⚙️</span>
-          <span class="label">Options</span>
+          <span class="label" data-i18n="toolbar.options">Options</span>
         </button>
-        <button class="tb-btn" id="btnTextUndo" title="Deshacer cambio (Ctrl+Z / ⌘Z)" onclick="undoTextChange()" disabled>
+        <button class="tb-btn" id="btnTextUndo" title="Undo change (Ctrl+Z / ⌘Z)" data-i18n-title="toolbar.undo_tip" onclick="undoTextChange()" disabled>
           <span class="icon"><span class="dc-icon dc-icon-undo"></span></span>
-          <span class="label">Undo</span>
+          <span class="label" data-i18n="toolbar.undo">Undo</span>
         </button>
-        <button class="tb-btn" id="btnTextRedo" title="Rehacer cambio (Ctrl+Y / ⌘⇧Z)" onclick="redoTextChange()" disabled>
+        <button class="tb-btn" id="btnTextRedo" title="Redo change (Ctrl+Y / ⌘⇧Z)" data-i18n-title="toolbar.redo_tip" onclick="redoTextChange()" disabled>
           <span class="icon"><span class="dc-icon dc-icon-redo"></span></span>
-          <span class="label">Redo</span>
+          <span class="label" data-i18n="toolbar.redo">Redo</span>
         </button>
-        <button class="tb-btn" title="Swap Sides (⇄)" onclick="swapSidesText()">
+        <button class="tb-btn" title="Swap Sides (⇄)" data-i18n-title="toolbar.swap_tip" onclick="swapSidesText()">
           <span class="icon">⇄</span>
-          <span class="label">Swap</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
         </button>
-        <button class="tb-btn" title="Reload Files (🔄)" onclick="reloadTextCompare()">
+        <button class="tb-btn" title="Reload Files (🔄)" data-i18n-title="toolbar.reload_tip" onclick="reloadTextCompare()">
           <span class="icon">🔄</span>
-          <span class="label">Reload</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
         </button>
-        <button class="tb-btn" id="btnTextWordWrap" title="Toggle Word Wrap (Beyond Compare 5)" onclick="toggleTextWordWrap()">
+        <button class="tb-btn" id="btnTextWordWrap" title="Toggle Word Wrap (Beyond Compare 5)" data-i18n-title="toolbar.wrap_tip" onclick="toggleTextWordWrap()">
           <span class="icon">↵</span>
-          <span class="label">Wrap</span>
+          <span class="label" data-i18n="toolbar.wrap">Wrap</span>
         </button>
-        <button class="tb-btn" id="btnTextLayout" title="Toggle Side-by-Side / Over-Under Layout" onclick="toggleTextLayout()">
+        <button class="tb-btn" id="btnTextLayout" title="Toggle Side-by-Side / Over-Under Layout" data-i18n-title="toolbar.layout_tip" onclick="toggleTextLayout()">
           <span class="icon">◫</span>
-          <span class="label">Layout</span>
+          <span class="label" data-i18n="toolbar.layout">Layout</span>
         </button>
-        <button class="tb-btn" title="Generate File Compare Report" onclick="openTextCompareReport()">
+        <button class="tb-btn" title="Generate File Compare Report" data-i18n-title="toolbar.report_tip" onclick="openTextCompareReport()">
           <span class="icon">📋</span>
-          <span class="label">Report</span>
+          <span class="label" data-i18n="toolbar.report">Report</span>
         </button>
       </div>
 
@@ -621,8 +634,8 @@
         <span id="textDiffBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
           Drag files into panels or click 📁 to browse
         </span>
-        <button class="btn-primary" id="btnSaveLeft" onclick="saveTextFile('left')">💾 Save Left</button>
-        <button class="btn-primary" id="btnSaveRight" onclick="saveTextFile('right')">💾 Save Right</button>
+        <button class="btn-primary" id="btnSaveLeft" data-i18n="toolbar.save_left" onclick="saveTextFile('left')">💾 Save Left</button>
+        <button class="btn-primary" id="btnSaveRight" data-i18n="toolbar.save_right" onclick="saveTextFile('right')">💾 Save Right</button>
       </div>
     </header>
 
@@ -1509,7 +1522,7 @@
     <div class="modal-window" style="width: 560px;">
       <div class="modal-header">
         <div class="modal-title">
-          <span>📁 File & Folder Filters (Exclusions)</span>
+          <span data-i18n="modal.filters_title">📁 File & Folder Filters (Exclusions)</span>
         </div>
         <button class="modal-close-btn" onclick="closeNameFiltersModal()">✕</button>
       </div>
@@ -1526,13 +1539,13 @@
         </div>
 
         <fieldset class="modal-group" id="fsExcludeFolders">
-          <legend>Exclude Folders</legend>
+          <legend data-i18n="modal.exclude_folders">Exclude Folders</legend>
           <textarea id="txtExcludeFolders" class="tb-filter-input" style="width: 100%; height: 55px; font-family: var(--font-mono); font-size: 12px; resize: vertical; line-height: 1.5;" placeholder=".settings; target; .git; node_modules; .idea; dist; build"></textarea>
           <div style="font-size: 11px; color: #777; margin-top: 4px;">Separate folder names with semicolons (;) or commas (,).</div>
         </fieldset>
 
         <fieldset class="modal-group" id="fsExcludeFiles" style="margin-top: 12px;">
-          <legend>Exclude Files</legend>
+          <legend data-i18n="modal.exclude_files">Exclude Files</legend>
           <textarea id="txtExcludeFiles" class="tb-filter-input" style="width: 100%; height: 55px; font-family: var(--font-mono); font-size: 12px; resize: vertical; line-height: 1.5;" placeholder=".classpath; .gitignore; .project; *.log; *.tmp; .DS_Store; Thumbs.db"></textarea>
           <div style="font-size: 11px; color: #777; margin-top: 4px;">Separate file names or wildcards (e.g. *.log) with semicolons (;) or commas (,).</div>
         </fieldset>
@@ -1551,10 +1564,10 @@
       </div>
 
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <button class="btn-secondary" onclick="resetNameFiltersToDefaults()">Reset Defaults</button>
+        <button class="btn-secondary" data-i18n="common.reset_defaults" onclick="resetNameFiltersToDefaults()">Reset Defaults</button>
         <div style="display: flex; gap: 8px;">
-          <button class="btn-secondary" onclick="closeNameFiltersModal()">Cancel</button>
-          <button class="btn-primary" onclick="saveNameFiltersFromModal()">Save & Apply</button>
+          <button class="btn-secondary" data-i18n="common.cancel" onclick="closeNameFiltersModal()">Cancel</button>
+          <button class="btn-primary" data-i18n="common.save" onclick="saveNameFiltersFromModal()">Save & Apply</button>
         </div>
       </div>
     </div>
@@ -1565,7 +1578,7 @@
     <div class="modal-window bc-options-window" style="width: 700px; max-width: 92vw;">
       <div class="modal-header">
         <div class="modal-title">
-          <span>Options</span>
+          <span data-i18n="modal.options_title">Options</span>
         </div>
         <button class="modal-close-btn" onclick="closeNextDiffOptionsModal()">✕</button>
       </div>
@@ -1574,61 +1587,61 @@
         <!-- Left Categories Sidebar matching Beyond Compare 5 (Image 1) -->
         <aside class="bc-options-sidebar">
           <div class="bc-options-search">
-            <input type="text" placeholder="🔍 Search" class="tb-filter-input" style="width: 100%; font-size: 11px;">
+            <input type="text" placeholder="🔍 Search" data-i18n-placeholder="common.search" class="tb-filter-input" style="width: 100%; font-size: 11px;">
           </div>
           <div class="bc-options-cat-list">
-            <div class="bc-opt-cat"><span class="cat-icon">⏻</span> Startup</div>
-            <div class="bc-opt-cat"><span class="cat-icon">📁</span> Tabs</div>
-            <div class="bc-opt-cat"><span class="cat-icon">🎨</span> Appearance</div>
-            <div class="bc-opt-cat"><span class="cat-icon">📝</span> Text Editing</div>
-            <div class="bc-opt-cat active"><span class="cat-icon">⬇</span> Next Difference</div>
-            <div class="bc-opt-cat"><span class="cat-icon">💾</span> Backups</div>
-            <div class="bc-opt-cat"><span class="cat-icon">⚠️</span> File Operations</div>
-            <div class="bc-opt-cat"><span class="cat-icon">📦</span> Archive Types</div>
-            <div class="bc-opt-cat"><span class="cat-icon">⌨️</span> Commands</div>
-            <div class="bc-opt-cat"><span class="cat-icon">🗂️</span> Open With</div>
-            <div class="bc-opt-cat"><span class="cat-icon">⚙️</span> Tweaks</div>
+            <div class="bc-opt-cat"><span class="cat-icon">⏻</span> <span data-i18n="modal.opt_cat_startup">Startup</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">📁</span> <span data-i18n="modal.opt_cat_tabs">Tabs</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">🎨</span> <span data-i18n="modal.opt_cat_appearance">Appearance</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">📝</span> <span data-i18n="modal.opt_cat_text_editing">Text Editing</span></div>
+            <div class="bc-opt-cat active"><span class="cat-icon">⬇</span> <span data-i18n="modal.opt_cat_next_diff">Next Difference</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">💾</span> <span data-i18n="modal.opt_cat_backup">Backups</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">⚠️</span> <span data-i18n="modal.opt_cat_file_ops">File Operations</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">📦</span> <span data-i18n="modal.opt_cat_archive">Archive Types</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">⌨️</span> <span data-i18n="modal.opt_cat_commands">Commands</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">🗂️</span> <span data-i18n="modal.opt_cat_open_with">Open With</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">⚙️</span> <span data-i18n="modal.opt_cat_tweaks">Tweaks</span></div>
           </div>
         </aside>
 
         <!-- Right Settings Panel (Next Difference) -->
         <main class="bc-options-content">
-          <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;">Next Difference</h3>
+          <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;" data-i18n="modal.opt_cat_next_diff">Next Difference</h3>
 
           <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;">
             <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
               <input type="checkbox" id="chkGoToFirstDiffOnLoad">
-              <span>When <u>l</u>oading new files, go to first difference</span>
+              <span data-i18n="modal.chk_first_diff">When <u>l</u>oading new files, go to first difference</span>
             </label>
             <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
               <input type="checkbox" id="chkNextDiffAfterCopy">
-              <span><u>G</u>o to next difference in files after <u>c</u>opying to other side</span>
+              <span data-i18n="modal.chk_next_diff_copy"><u>G</u>o to next difference in files after <u>c</u>opying to other side</span>
             </label>
             <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
               <input type="checkbox" id="chkLimitNextDiffToFolder">
-              <span>Limit "Next Difference Files" to current fol<u>d</u>er</span>
+              <span data-i18n="modal.chk_limit_folder">Limit "Next Difference Files" to current fol<u>d</u>er</span>
             </label>
           </div>
 
-          <div style="font-size: 12px; font-weight: 600; margin-bottom: 12px; color: #ddd;">When no more differences:</div>
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 12px; color: #ddd;" data-i18n="modal.when_no_more">When no more differences:</div>
           <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 12px;">
             <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
               <input type="checkbox" id="chkWrapAroundDiffs">
-              <span><u>W</u>rap around to first difference</span>
+              <span data-i18n="modal.chk_wrap_around"><u>W</u>rap around to first difference</span>
             </label>
             <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
               <input type="checkbox" id="chkShowMessagePanel">
-              <span>Show <u>m</u>essage panel</span>
+              <span data-i18n="modal.chk_show_panel">Show <u>m</u>essage panel</span>
             </label>
           </div>
         </main>
       </div>
 
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <button class="btn-secondary" onclick="resetNextDiffOptionsToDefaults()">Reset Defaults</button>
+        <button class="btn-secondary" data-i18n="common.reset_defaults" onclick="resetNextDiffOptionsToDefaults()">Reset Defaults</button>
         <div style="display: flex; gap: 8px;">
-          <button class="btn-secondary" onclick="closeNextDiffOptionsModal()">Cancel</button>
-          <button class="btn-primary" onclick="saveNextDiffOptionsFromModal()">OK</button>
+          <button class="btn-secondary" data-i18n="common.cancel" onclick="closeNextDiffOptionsModal()">Cancel</button>
+          <button class="btn-primary" data-i18n="common.ok" onclick="saveNextDiffOptionsFromModal()">OK</button>
         </div>
       </div>
     </div>
@@ -1639,12 +1652,12 @@
     <div class="modal-window save-confirm-window">
       <div class="save-confirm-body">
         <div class="save-confirm-icon">⚠️</div>
-        <div class="save-confirm-message" id="saveConfirmMessage">Save changes to file?</div>
+        <div class="save-confirm-message" id="saveConfirmMessage" data-i18n="modal.save_confirm_msg">Save changes to file?</div>
       </div>
       <div class="save-confirm-footer">
-        <button class="btn-secondary save-confirm-btn" onclick="handleSaveConfirmResponse('no')">No</button>
-        <button class="btn-secondary save-confirm-btn" onclick="handleSaveConfirmResponse('cancel')">Cancel</button>
-        <button class="btn-primary save-confirm-btn" onclick="handleSaveConfirmResponse('yes')">Yes</button>
+        <button class="btn-secondary save-confirm-btn" data-i18n="common.no" onclick="handleSaveConfirmResponse('no')">No</button>
+        <button class="btn-secondary save-confirm-btn" data-i18n="common.cancel" onclick="handleSaveConfirmResponse('cancel')">Cancel</button>
+        <button class="btn-primary save-confirm-btn" data-i18n="common.yes" onclick="handleSaveConfirmResponse('yes')">Yes</button>
       </div>
     </div>
   </div>
@@ -1652,6 +1665,8 @@
   <!-- FLOATING TOAST NOTIFICATION -->
   <div id="toastNotification" class="toast-notification"></div>
 
+  <!-- Internationalization Engine -->
+  <script src="js/i18n.js"></script>
   <!-- Main Renderer Script -->
   <script src="js/app.js"></script>
 </body>
