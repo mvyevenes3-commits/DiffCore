@@ -6,7 +6,7 @@ const os = require('os');
 const { compareFolderTrees, compareFolderTreesAsync, compareFilesDeep, compareFilesDeepAsync, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
 const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
-const { setupApplicationMenu, updateMenuLanguage } = require('./menu');
+const { setupApplicationMenu, updateMenuLanguage, updateActiveView } = require('./menu');
 
 // Set application identity
 app.name = 'DiffCore';
@@ -143,6 +143,12 @@ app.on('window-all-closed', () => {
 // Menu Language Update
 ipcMain.handle('menu:setLanguage', async (_event, lang) => {
   updateMenuLanguage(mainWindow, lang);
+  return true;
+});
+
+// Menu Active View Update (Controls visibility of Edit menu)
+ipcMain.handle('menu:setActiveView', async (_event, viewName) => {
+  updateActiveView(mainWindow, viewName);
   return true;
 });
 

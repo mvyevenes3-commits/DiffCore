@@ -202,6 +202,7 @@ const MENU_TRANSLATIONS = {
 };
 
 let currentMenuLang = 'es';
+let isTextEditActive = false;
 
 function buildMenuTemplate(lang, mainWindow) {
   const t = MENU_TRANSLATIONS[lang] || MENU_TRANSLATIONS['es'] || MENU_TRANSLATIONS['en'];
@@ -287,20 +288,22 @@ function buildMenuTemplate(lang, mainWindow) {
     submenu: fileSubmenu
   });
 
-  // 3. Edit Menu
-  template.push({
-    label: t.edit,
-    submenu: [
-      { label: t.undo, role: 'undo' },
-      { label: t.redo, role: 'redo' },
-      { type: 'separator' },
-      { label: t.cut, role: 'cut' },
-      { label: t.copy, role: 'copy' },
-      { label: t.paste, role: 'paste' },
-      { type: 'separator' },
-      { label: t.selectAll, role: 'selectAll' }
-    ]
-  });
+  // 3. Edit Menu (Only shown when inside Text Edit session)
+  if (isTextEditActive) {
+    template.push({
+      label: t.edit,
+      submenu: [
+        { label: t.undo, role: 'undo' },
+        { label: t.redo, role: 'redo' },
+        { type: 'separator' },
+        { label: t.cut, role: 'cut' },
+        { label: t.copy, role: 'copy' },
+        { label: t.paste, role: 'paste' },
+        { type: 'separator' },
+        { label: t.selectAll, role: 'selectAll' }
+      ]
+    });
+  }
 
   // 4. View Menu (Toggle Developer Tools removed as requested)
   template.push({
@@ -359,6 +362,9 @@ function setupApplicationMenu(mainWindow, initialLang) {
   const template = buildMenuTemplate(currentMenuLang, mainWindow);
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
+  if (mainWindow && !mainWindow.isDestroyed() && process.platform !== 'darwin') {
+    mainWindow.setMenu(menu);
+  }
 }
 
 function updateMenuLanguage(mainWindow, lang) {
@@ -367,7 +373,15 @@ function updateMenuLanguage(mainWindow, lang) {
   setupApplicationMenu(mainWindow, lang);
 }
 
+function updateActiveView(mainWindow, viewName) {
+  const nextState = (viewName === 'textedit');
+  if (isTextEditActive === nextState) return;
+  isTextEditActive = nextState;
+  setupApplicationMenu(mainWindow, currentMenuLang);
+}
+
 module.exports = {
   setupApplicationMenu,
-  updateMenuLanguage
+  updateMenuLanguage,
+  updateActiveView
 };

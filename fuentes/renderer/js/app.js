@@ -178,6 +178,18 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  const btnFolderOptions = document.getElementById('btnFolderOptions');
+  if (btnFolderOptions) {
+    btnFolderOptions.addEventListener('click', (e) => {
+      e.preventDefault();
+      openNextDiffOptionsModal();
+    });
+  }
+
+  if (window.api && typeof window.api.setActiveView === 'function') {
+    window.api.setActiveView(appState.activeView || 'home').catch(() => {});
+  }
+
   // Re-calculate visible virtual window and sync scrollbars on resize
   window.addEventListener('resize', () => {
     if (appState.activeView === 'folder') {
@@ -1249,6 +1261,9 @@ async function openTextCompareDialog() {
 // --- VIEW / TABS SWITCHING ---
 function switchView(viewName) {
   appState.activeView = viewName;
+  if (window.api && typeof window.api.setActiveView === 'function') {
+    window.api.setActiveView(viewName).catch(() => {});
+  }
   document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
