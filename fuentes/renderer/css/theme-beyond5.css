@@ -3560,7 +3560,7 @@ body.theme-light .lang-opt:hover {
 }
 
 .about-body {
-  padding: 24px 28px 16px 28px;
+  padding: 28px 28px 26px 28px;
   background: #2b2b2b;
 }
 
@@ -3620,27 +3620,6 @@ body.theme-light .lang-opt:hover {
   line-height: 1.45;
 }
 
-.about-eval-row {
-  margin-top: 18px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.about-eval-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #cccccc;
-  cursor: pointer;
-  user-select: none;
-}
-
-.about-eval-label input[type="checkbox"] {
-  accent-color: #3b82f6;
-  cursor: pointer;
-}
-
 .about-footer {
   background: #1e1e1e;
   border-top: 1px solid #161616;
@@ -3671,13 +3650,16 @@ body.theme-light .lang-opt:hover {
   z-index: 2;
 }
 
+.about-status-title,
 .about-trial-title {
   font-size: 12.5px;
   font-weight: 800;
   color: #dfb44a;
   letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
+.about-status-desc,
 .about-trial-desc {
   font-size: 12px;
   color: #cfcfcf;
