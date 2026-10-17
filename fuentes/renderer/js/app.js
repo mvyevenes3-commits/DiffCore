@@ -140,6 +140,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         updateAppHeader();
         updateTextDiffBadge();
         refreshActiveViewEmptyState();
+        updateStatusBar();
       });
     }
   }
@@ -2096,10 +2097,38 @@ function selectAllRows() {
   for (let i = 0; i < appState.filteredItems.length; i++) {
     appState.selectedIndices.add(i);
   }
+  if (appState.filteredItems.length > 0) {
+    appState.selectedIndex = 0;
+    appState.lastClickedIndex = 0;
+  }
   virtualScrollState.lastRenderedStart = -1;
   virtualScrollState.lastRenderedEnd = -1;
   renderVisibleWindow(true);
+  updateStatusBar();
   if (typeof folderSyncScrollbar !== 'undefined' && folderSyncScrollbar) folderSyncScrollbar.update();
+  appendLog(`Select all: ${appState.selectedIndices.size} items selected.`);
+}
+
+function selectFilesOnly() {
+  appState.selectedIndices.clear();
+  let firstSelected = -1;
+  for (let i = 0; i < appState.filteredItems.length; i++) {
+    const item = appState.filteredItems[i];
+    if (item && !item.isDirectory) {
+      appState.selectedIndices.add(i);
+      if (firstSelected === -1) firstSelected = i;
+    }
+  }
+  if (firstSelected !== -1) {
+    appState.selectedIndex = firstSelected;
+    appState.lastClickedIndex = firstSelected;
+  }
+  virtualScrollState.lastRenderedStart = -1;
+  virtualScrollState.lastRenderedEnd = -1;
+  renderVisibleWindow(true);
+  updateStatusBar();
+  if (typeof folderSyncScrollbar !== 'undefined' && folderSyncScrollbar) folderSyncScrollbar.update();
+  appendLog(`Select files: ${appState.selectedIndices.size} files selected.`);
 }
 
 function toggleStructureMode() {
@@ -2112,7 +2141,7 @@ function toggleMinorDiffs() {
 }
 
 function toggleFileView() {
-  appendLog('Toggle files');
+  selectFilesOnly();
 }
 
 function copySelectedToRight() {
@@ -2365,6 +2394,7 @@ function updateSelectionDOM() {
       }
     }
   });
+  updateStatusBar();
 }
 
 function setupFolderKeyboardNavigation() {
@@ -2382,12 +2412,18 @@ function setupFolderKeyboardNavigation() {
 
     if (isMeta && (event.key === 'a' || event.key === 'A')) {
       event.preventDefault();
-      selectAllRows();
+      if (event.shiftKey) {
+        selectFilesOnly();
+      } else {
+        selectAllRows();
+      }
       return;
     }
 
     if (event.key === 'Escape') {
       appState.selectedIndices.clear();
+      appState.selectedIndex = -1;
+      appState.lastClickedIndex = -1;
       updateSelectionDOM();
       return;
     }
@@ -8259,6 +8295,22 @@ async function loadSystemInfo() {
   } catch {}
 }
 
+function formatSelectedStatus(folders, files, bytes) {
+  const t = (k, fb, params) => (window.i18n ? window.i18n.t(k, params) : fb);
+  const sizeText = formatBytes(bytes);
+  if (folders > 0 && files > 0) {
+    const text = t('status.folders_and_files_selected', `${folders} folder(s), ${files} file(s) selected`, { folders, files });
+    return sizeText ? `${text}, ${sizeText}` : text;
+  } else if (files > 0) {
+    const text = t('status.files_selected', `${files} file(s) selected`, { count: files });
+    return sizeText ? `${text}, ${sizeText}` : text;
+  } else if (folders > 0) {
+    return t('status.folders_selected', `${folders} folder(s) selected`, { count: folders });
+  } else {
+    return t('status.no_items_selected', '0 items selected');
+  }
+}
+
 function updateStatusBar() {
   let leftCount = 0, leftBytes = 0;
   let rightCount = 0, rightBytes = 0;
@@ -8281,11 +8333,52 @@ function updateStatusBar() {
     });
   }
 
-  document.getElementById('statusLeftCount').textContent = `${leftCount} items`;
-  document.getElementById('statusLeftSize').textContent = formatBytes(leftBytes);
+  const sLC = document.getElementById('statusLeftCount');
+  const sLS = document.getElementById('statusLeftSize');
+  const sRC = document.getElementById('statusRightCount');
+  const sRS = document.getElementById('statusRightSize');
+  if (!sLC || !sRC) return;
 
-  document.getElementById('statusRightCount').textContent = `${rightCount} items`;
-  document.getElementById('statusRightSize').textContent = formatBytes(rightBytes);
+  const t = (k, fb, params) => (window.i18n ? window.i18n.t(k, params) : fb);
+  const hasSelection = appState.selectedIndices && appState.selectedIndices.size > 0;
+
+  if (hasSelection) {
+    let leftFolders = 0, leftFiles = 0, leftSelBytes = 0;
+    let rightFolders = 0, rightFiles = 0, rightSelBytes = 0;
+
+    for (const idx of appState.selectedIndices) {
+      const item = appState.filteredItems[idx];
+      if (!item) continue;
+      if (item.hasLeft) {
+        if (item.isDirectory) {
+          leftFolders++;
+        } else {
+          leftFiles++;
+          leftSelBytes += (item.left && item.left.size) ? item.left.size : (item.leftSize || 0);
+        }
+      }
+      if (item.hasRight) {
+        if (item.isDirectory) {
+          rightFolders++;
+        } else {
+          rightFiles++;
+          rightSelBytes += (item.right && item.right.size) ? item.right.size : (item.rightSize || 0);
+        }
+      }
+    }
+
+    sLC.textContent = formatSelectedStatus(leftFolders, leftFiles, leftSelBytes);
+    if (sLS) sLS.textContent = '';
+
+    sRC.textContent = formatSelectedStatus(rightFolders, rightFiles, rightSelBytes);
+    if (sRS) sRS.textContent = '';
+  } else {
+    sLC.textContent = t('status.items_count', `${leftCount} items`, { count: leftCount });
+    if (sLS) sLS.textContent = formatBytes(leftBytes);
+
+    sRC.textContent = t('status.items_count', `${rightCount} items`, { count: rightCount });
+    if (sRS) sRS.textContent = formatBytes(rightBytes);
+  }
 }
 
 // --- UTILITIES ---

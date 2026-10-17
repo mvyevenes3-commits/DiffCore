@@ -788,15 +788,23 @@ body.theme-light .tab-add-btn:hover {
 .diff-row:hover {
   background: #282a2d;
 }
-.diff-row.selected {
+.diff-row.empty-ghost {
+  background: #151515 !important;
+}
+.diff-row.selected,
+.diff-row.selected.empty-ghost,
+.diff-row.selected td {
   background: var(--bg-selected) !important;
   color: #ffffff !important;
 }
-.diff-row.selected td {
-  color: #ffffff !important;
+body.theme-light .diff-row.empty-ghost {
+  background: #f0f2f5 !important;
 }
-.diff-row.empty-ghost {
-  background: #151515 !important;
+body.theme-light .diff-row.selected,
+body.theme-light .diff-row.selected.empty-ghost,
+body.theme-light .diff-row.selected td {
+  background: var(--bg-selected) !important;
+  color: #1a1a1a !important;
 }
 
 /* High-Performance Virtual Scrolling Spacers */
@@ -1120,6 +1128,10 @@ body.theme-light .log-content::-webkit-scrollbar-button:single-button {
 }
 .status-right {
   padding-left: 12px;
+}
+#statusLeftDisk,
+#statusRightDisk {
+  margin-left: auto;
 }
 
 /* HOME VIEW (Image 3) */
