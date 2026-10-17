@@ -2569,7 +2569,10 @@ function handleTableContextMenu(event) {
 
   const isLeft = !!row.closest('#leftTableBody');
   const clickedSide = isLeft ? 'left' : 'right';
-  const otherSideCapitalized = isLeft ? 'Right' : 'Left';
+
+  const t = (k, fb) => (window.i18n ? window.i18n.t(k, fb) : fb);
+  const copySideLabel = isLeft ? t('ctx.copy_to_right', 'Copy to Right...') : t('ctx.copy_to_left', 'Copy to Left...');
+  const moveSideLabel = isLeft ? t('ctx.move_to_right', 'Move to Right...') : t('ctx.move_to_left', 'Move to Left...');
 
   appState.contextItem = item;
   appState.contextSide = clickedSide;
@@ -2580,85 +2583,85 @@ function handleTableContextMenu(event) {
   let menuHtml = '';
   if (item.isDirectory) {
     // IMAGE 1: Authentic Folder Context Menu
-    const folderStateLabel = item.isOpen ? 'Close Folder' : 'Open Folder';
+    const folderStateLabel = item.isOpen ? t('ctx.close_folder', 'Close Folder') : t('ctx.open_folder', 'Open Folder');
     const folderStateAction = item.isOpen ? 'close_folder' : 'open_folder';
     menuHtml = `
       <div class="context-menu-item" onclick="contextAction('${folderStateAction}')">
         <span>${folderStateLabel}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('open_subfolders')">
-        <span>Open Subfolders</span>
+        <span>${t('ctx.open_subfolders', 'Open Subfolders')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('close_subfolders')">
-        <span>Close Subfolders</span>
+        <span>${t('ctx.close_subfolders', 'Close Subfolders')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('set_base_folders')">
-        <span>Set as Base Folders</span>
+        <span>${t('ctx.set_base_folders', 'Set as Base Folders')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('open_in_new_view')">
-        <span>Open in New View</span>
+        <span>${t('ctx.open_in_new_view', 'Open in New View')}</span>
       </div>
       <div class="context-menu-item has-submenu">
-        <span>Open With</span>
+        <span>${t('ctx.open_with', 'Open With')}</span>
         <span class="ctx-arrow">›</span>
         <div class="context-submenu">
-          <div class="context-menu-item" onclick="contextAction('open_with_finder')"><span>Finder</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_terminal')"><span>Terminal</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_default')"><span>System Default</span></div>
+          <div class="context-menu-item" onclick="contextAction('open_with_finder')"><span>${t('ctx.finder', 'Finder')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('open_with_terminal')"><span>${t('ctx.terminal', 'Terminal')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('open_with_default')"><span>${t('ctx.system_default', 'System Default')}</span></div>
         </div>
       </div>
       <div class="context-menu-separator"></div>
       <div class="context-menu-item" onclick="contextAction('compare_contents')">
-        <span>Compare Contents...</span>
+        <span>${t('ctx.compare_contents', 'Compare Contents...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('copy_to_side')">
-        <span>Copy to Side...</span>
+        <span>${copySideLabel}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('move_to_side')">
-        <span>Move to Side...</span>
+        <span>${moveSideLabel}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('copy_to_folder')">
-        <span>Copy to Folder...</span>
+        <span>${t('ctx.copy_to_folder', 'Copy to Folder...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('move_to_folder')">
-        <span>Move to Folder...</span>
+        <span>${t('ctx.move_to_folder', 'Move to Folder...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('delete')">
-        <span>Delete...</span>
+        <span>${t('ctx.delete', 'Delete...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('rename')">
-        <span>Rename...</span>
+        <span>${t('ctx.rename', 'Rename...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('attributes')">
-        <span>Attributes...</span>
+        <span>${t('ctx.attributes', 'Attributes...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('touch')">
-        <span>Touch...</span>
+        <span>${t('ctx.touch', 'Touch...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('exclude')">
-        <span>Exclude</span>
+        <span>${t('ctx.exclude', 'Exclude...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('new_folder')">
-        <span>New Folder...</span>
+        <span>${t('ctx.new_folder', 'New Folder...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('copy_filename')">
-        <span>Copy Filename</span>
+        <span>${t('ctx.copy_filename', 'Copy Filename')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('ignored')">
-        <span>Ignored</span>
+        <span>${t('ctx.ignored', 'Ignored')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('refresh_selection')">
-        <span>Refresh Selection</span>
+        <span>${t('ctx.refresh_selection', 'Refresh Selection')}</span>
       </div>
       <div class="context-menu-separator"></div>
       <div class="context-menu-item has-submenu">
-        <span>Synchronize</span>
+        <span>${t('ctx.synchronize', 'Synchronize')}</span>
         <span class="ctx-arrow">›</span>
         <div class="context-submenu">
-          <div class="context-menu-item" onclick="contextAction('sync_update_right')"><span>Update Right</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_update_left')"><span>Update Left</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_mirror_right')"><span>Mirror Right</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_mirror_left')"><span>Mirror Left</span></div>
+          <div class="context-menu-item" onclick="contextAction('sync_update_right')"><span>${t('ctx.sync_update_right', 'Update Right')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('sync_update_left')"><span>${t('ctx.sync_update_left', 'Update Left')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('sync_mirror_right')"><span>${t('ctx.sync_mirror_right', 'Mirror Right')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('sync_mirror_left')"><span>${t('ctx.sync_mirror_left', 'Mirror Left')}</span></div>
         </div>
       </div>
     `;
@@ -2666,82 +2669,82 @@ function handleTableContextMenu(event) {
     // IMAGE 2: Authentic File Context Menu
     menuHtml = `
       <div class="context-menu-item" onclick="contextAction('open')">
-        <span>Open</span>
+        <span>${t('ctx.open', 'Open')}</span>
       </div>
       <div class="context-menu-item has-submenu">
-        <span>Open With</span>
+        <span>${t('ctx.open_with', 'Open With')}</span>
         <span class="ctx-arrow">›</span>
         <div class="context-submenu">
-          <div class="context-menu-item" onclick="contextAction('open_with_finder')"><span>Finder</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_default')"><span>System Default</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_hex')"><span>Hex Compare</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_text')"><span>Text Compare</span></div>
+          <div class="context-menu-item" onclick="contextAction('open_with_finder')"><span>${t('ctx.finder', 'Finder')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('open_with_default')"><span>${t('ctx.system_default', 'System Default')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('open_with_hex')"><span>${t('ctx.hex_compare', 'Hex Compare')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('open_with_text')"><span>${t('ctx.text_compare', 'Text Compare')}</span></div>
         </div>
       </div>
       <div class="context-menu-item" onclick="contextAction('quick_compare')">
-        <span>Quick Compare</span>
+        <span>${t('ctx.quick_compare', 'Quick Compare')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('compare_to')">
-        <span>Compare To...</span>
+        <span>${t('ctx.compare_to', 'Compare To...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('align_with')">
-        <span>Align With...</span>
+        <span>${t('ctx.align_with', 'Align With...')}</span>
       </div>
       <div class="context-menu-separator"></div>
       <div class="context-menu-item" onclick="contextAction('compare_contents')">
-        <span>Compare Contents...</span>
+        <span>${t('ctx.compare_contents', 'Compare Contents...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('copy_to_side')">
-        <span>Copy to ${otherSideCapitalized}...</span>
+        <span>${copySideLabel}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('move_to_side')">
-        <span>Move to ${otherSideCapitalized}...</span>
+        <span>${moveSideLabel}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('copy_to_folder')">
-        <span>Copy to Folder...</span>
+        <span>${t('ctx.copy_to_folder', 'Copy to Folder...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('move_to_folder')">
-        <span>Move to Folder...</span>
+        <span>${t('ctx.move_to_folder', 'Move to Folder...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('delete')">
-        <span>Delete...</span>
+        <span>${t('ctx.delete', 'Delete...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('rename')">
-        <span>Rename</span>
+        <span>${t('ctx.rename', 'Rename...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('attributes')">
-        <span>Attributes...</span>
+        <span>${t('ctx.attributes', 'Attributes...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('touch')">
-        <span>Touch...</span>
+        <span>${t('ctx.touch', 'Touch...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('exclude')">
-        <span>Exclude...</span>
+        <span>${t('ctx.exclude', 'Exclude...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('new_folder')">
-        <span>New Folder...</span>
+        <span>${t('ctx.new_folder', 'New Folder...')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('copy_filename')">
-        <span>Copy Filename</span>
+        <span>${t('ctx.copy_filename', 'Copy Filename')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('ignored')">
-        <span>Ignored</span>
+        <span>${t('ctx.ignored', 'Ignored')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('refresh_selection')">
-        <span>Refresh Selection</span>
+        <span>${t('ctx.refresh_selection', 'Refresh Selection')}</span>
       </div>
       <div class="context-menu-item" onclick="contextAction('file_compare_report')">
-        <span>File Compare Report...</span>
+        <span>${t('ctx.file_compare_report', 'File Compare Report...')}</span>
       </div>
       <div class="context-menu-separator"></div>
       <div class="context-menu-item has-submenu">
-        <span>Synchronize</span>
+        <span>${t('ctx.synchronize', 'Synchronize')}</span>
         <span class="ctx-arrow">›</span>
         <div class="context-submenu">
-          <div class="context-menu-item" onclick="contextAction('sync_update_right')"><span>Update Right</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_update_left')"><span>Update Left</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_mirror_right')"><span>Mirror Right</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_mirror_left')"><span>Mirror Left</span></div>
+          <div class="context-menu-item" onclick="contextAction('sync_update_right')"><span>${t('ctx.sync_update_right', 'Update Right')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('sync_update_left')"><span>${t('ctx.sync_update_left', 'Update Left')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('sync_mirror_right')"><span>${t('ctx.sync_mirror_right', 'Mirror Right')}</span></div>
+          <div class="context-menu-item" onclick="contextAction('sync_mirror_left')"><span>${t('ctx.sync_mirror_left', 'Mirror Left')}</span></div>
         </div>
       </div>
     `;
@@ -2750,8 +2753,8 @@ function handleTableContextMenu(event) {
   menu.innerHTML = menuHtml;
   menu.style.display = 'block';
 
-  const menuWidth = 220;
-  const menuHeight = item.isDirectory ? 490 : 510;
+  const menuWidth = Math.max(220, menu.offsetWidth || 240);
+  const menuHeight = menu.offsetHeight || (item.isDirectory ? 490 : 510);
   let posX = event.clientX;
   let posY = event.clientY;
 
