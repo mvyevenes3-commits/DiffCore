@@ -15,50 +15,50 @@
     <div class="app-tabs-center-title" id="appTitleCenter">Home</div>
     <div class="app-tabs-list" id="appTabsList">
       <button class="tab-btn" id="tabFolderBtn" style="display: none;" onclick="switchView('folder')">
-        <span class="tab-icon">📁</span> <span class="tab-text" id="currentSessionTabTitle">Folder Compare</span>
-        <span class="tab-close" title="Close Tab" onclick="closeFolderTab(event)">✕</span>
+        <span class="tab-icon">📁</span> <span class="tab-text" id="currentSessionTabTitle" data-i18n="tab.folder_compare">Folder Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeFolderTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabFolderSyncBtn" style="display: none;" onclick="switchView('foldersync')">
-        <span class="tab-icon">🔄</span> <span class="tab-text" id="currentFolderSyncTabTitle">Folder Sync</span>
-        <span class="tab-close" title="Close Tab" onclick="closeFolderSyncTab(event)">✕</span>
+        <span class="tab-icon">🔄</span> <span class="tab-text" id="currentFolderSyncTabTitle" data-i18n="tab.folder_sync">Folder Sync</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeFolderSyncTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabFolderMergeBtn" style="display: none;" onclick="switchView('foldermerge')">
-        <span class="tab-icon">🗂️</span> <span class="tab-text" id="currentFolderMergeTabTitle">Folder Merge</span>
-        <span class="tab-close" title="Close Tab" onclick="closeFolderMergeTab(event)">✕</span>
+        <span class="tab-icon">🗂️</span> <span class="tab-text" id="currentFolderMergeTabTitle" data-i18n="tab.folder_merge">Folder Merge</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeFolderMergeTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabTextBtn" style="display: none;" onclick="switchView('text')">
-        <span class="tab-icon">📄</span> <span class="tab-text" id="currentTextTabTitle">Text Compare</span>
-        <span class="tab-close" title="Close Tab" onclick="closeTextTab(event)">✕</span>
+        <span class="tab-icon">📄</span> <span class="tab-text" id="currentTextTabTitle" data-i18n="tab.text_compare">Text Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTextTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabTextMergeBtn" style="display: none;" onclick="switchView('textmerge')">
-        <span class="tab-icon">📑</span> <span class="tab-text" id="currentTextMergeTabTitle">Text Merge</span>
-        <span class="tab-close" title="Close Tab" onclick="closeTextMergeTab(event)">✕</span>
+        <span class="tab-icon">📑</span> <span class="tab-text" id="currentTextMergeTabTitle" data-i18n="tab.text_merge">Text Merge</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTextMergeTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabTextEditBtn" style="display: none;" onclick="switchView('textedit')">
-        <span class="tab-icon">📝</span> <span class="tab-text" id="currentTextEditTabTitle">Text Edit</span>
-        <span class="tab-close" title="Close Tab" onclick="closeTextEditTab(event)">✕</span>
+        <span class="tab-icon">📝</span> <span class="tab-text" id="currentTextEditTabTitle" data-i18n="tab.text_edit">Text Edit</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTextEditTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabHexBtn" style="display: none;" onclick="switchView('hex')">
-        <span class="tab-icon">🔢</span> <span class="tab-text" id="currentHexTabTitle">Hex Compare</span>
-        <span class="tab-close" title="Close Tab" onclick="closeHexTab(event)">✕</span>
+        <span class="tab-icon">🔢</span> <span class="tab-text" id="currentHexTabTitle" data-i18n="tab.hex_compare">Hex Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeHexTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabPictureBtn" style="display: none;" onclick="switchView('picture')">
-        <span class="tab-icon">🖼️</span> <span class="tab-text" id="currentPictureTabTitle">Picture Compare</span>
-        <span class="tab-close" title="Close Tab" onclick="closePictureTab(event)">✕</span>
+        <span class="tab-icon">🖼️</span> <span class="tab-text" id="currentPictureTabTitle" data-i18n="tab.picture_compare">Picture Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closePictureTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabTableBtn" style="display: none;" onclick="switchView('table')">
-        <span class="tab-icon">📊</span> <span class="tab-text" id="currentTableTabTitle">Table Compare</span>
-        <span class="tab-close" title="Close Tab" onclick="closeTableTab(event)">✕</span>
+        <span class="tab-icon">📊</span> <span class="tab-text" id="currentTableTabTitle" data-i18n="tab.table_compare">Table Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTableTab(event)">✕</span>
       </button>
       <button class="tab-btn" id="tabMediaBtn" style="display: none;" onclick="switchView('media')">
-        <span class="tab-icon">🎵</span> <span class="tab-text" id="currentMediaTabTitle">Media Compare</span>
-        <span class="tab-close" title="Close Tab" onclick="closeMediaTab(event)">✕</span>
+        <span class="tab-icon">🎵</span> <span class="tab-text" id="currentMediaTabTitle" data-i18n="tab.media_compare">Media Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeMediaTab(event)">✕</span>
       </button>
     </div>
     <div class="app-tabs-actions">
       <button class="tab-nav-btn" id="tabNavLeftBtn" title="Scroll Tabs Left (Shift+Click: Previous Tab)" onclick="handleTabNavClick('left', event)">◀</button>
       <button class="tab-nav-btn" id="tabNavRightBtn" title="Scroll Tabs Right (Shift+Click: Next Tab)" onclick="handleTabNavClick('right', event)">▶</button>
-      <button class="tab-add-btn" title="New Compare Tab" onclick="openNewCompareTab()">+</button>
+      <button class="tab-add-btn" title="New Compare Tab" data-i18n-title="tab.new_tab" onclick="openNewCompareTab()">+</button>
       <div class="lang-selector-wrapper" style="position: relative;">
         <button class="theme-toggle-btn lang-toggle-btn" id="btnLangToggle" title="Select Language / Seleccionar Idioma" onclick="toggleLanguageDropdown(event)">
           <span id="currentLangLabel">🌐 Idioma</span> <span style="font-size: 8px; opacity: 0.7; margin-left: 2px;">▼</span>
@@ -703,24 +703,24 @@
   <div id="hexView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" title="Swap Sides" onclick="swapHexSides()">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapHexSides()">
           <span class="icon">⇄</span>
-          <span class="label">Swap</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
         </button>
-        <button class="tb-btn" title="Reload Files" onclick="reloadHexCompare()">
+        <button class="tb-btn" title="Reload Files" data-i18n-title="toolbar.reload_tip" onclick="reloadHexCompare()">
           <span class="icon">🔄</span>
-          <span class="label">Reload</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
         </button>
       </div>
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-        <span id="hexDiffBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+        <span id="hexDiffBadge" data-i18n="hex.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
           Drag files into panels or click 📁 to browse
         </span>
       </div>
@@ -730,12 +730,12 @@
       <div class="text-pane-wrapper" id="hexLeftPaneWrapper">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="hexLeftPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handleHexPathKeydown(event, 'left')" onblur="handleHexPathBlur('left')" spellcheck="false">
-            <button class="text-address-btn" title="Browse for Left File" onclick="browseHexFile('left')">📁▾</button>
+            <input type="text" id="hexLeftPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handleHexPathKeydown(event, 'left')" onblur="handleHexPathBlur('left')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Left File" data-i18n-title="hex.browse_left" onclick="browseHexFile('left')">📁▾</button>
           </div>
           <div class="text-address-sub-row">
-            <span class="text-format-badge">Everything Else ▾</span>
-            <span class="text-encoding-badge" id="hexLeftMeta">Binary / Hex ▾</span>
+            <span class="text-format-badge" data-i18n="text.format_everything">Everything Else ▾</span>
+            <span class="text-encoding-badge" id="hexLeftMeta" data-i18n="hex.meta_binary">Binary / Hex ▾</span>
           </div>
         </div>
         <div class="hex-pane-scroll" id="hexLeftScroll">
@@ -748,12 +748,12 @@
       <div class="text-pane-wrapper" id="hexRightPaneWrapper">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="hexRightPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handleHexPathKeydown(event, 'right')" onblur="handleHexPathBlur('right')" spellcheck="false">
-            <button class="text-address-btn" title="Browse for Right File" onclick="browseHexFile('right')">📁▾</button>
+            <input type="text" id="hexRightPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handleHexPathKeydown(event, 'right')" onblur="handleHexPathBlur('right')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Right File" data-i18n-title="hex.browse_right" onclick="browseHexFile('right')">📁▾</button>
           </div>
           <div class="text-address-sub-row">
-            <span class="text-format-badge">Everything Else ▾</span>
-            <span class="text-encoding-badge" id="hexRightMeta">Binary / Hex ▾</span>
+            <span class="text-format-badge" data-i18n="text.format_everything">Everything Else ▾</span>
+            <span class="text-encoding-badge" id="hexRightMeta" data-i18n="hex.meta_binary">Binary / Hex ▾</span>
           </div>
         </div>
         <div class="hex-pane-scroll" id="hexRightScroll">
@@ -767,20 +767,20 @@
   <div id="pictureView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" title="Swap Sides" onclick="swapPicSides()">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapPicSides()">
           <span class="icon">⇄</span>
-          <span class="label">Swap</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
         </button>
-        <button class="tb-btn" title="Reload Images" onclick="reloadPictureCompare()">
+        <button class="tb-btn" title="Reload Images" data-i18n-title="toolbar.reload_tip" onclick="reloadPictureCompare()">
           <span class="icon">🔄</span>
-          <span class="label">Reload</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
         </button>
       </div>
 
@@ -788,12 +788,12 @@
 
       <!-- Beyond Compare 5 Picture Compare Display Modes -->
       <div class="toolbar-group pic-mode-bar">
-        <button class="pic-mode-btn active" id="btnPicModeSide" onclick="setPictureMode('side')">Side-by-Side</button>
-        <button class="pic-mode-btn" id="btnPicModeBlend" onclick="setPictureMode('blend')">Blend</button>
-        <button class="pic-mode-btn" id="btnPicModeSplit" onclick="setPictureMode('split')">Split</button>
-        <button class="pic-mode-btn" id="btnPicModeDiff" onclick="setPictureMode('diff')">Difference</button>
+        <button class="pic-mode-btn active" id="btnPicModeSide" data-i18n="pic.mode_side" onclick="setPictureMode('side')">Side-by-Side</button>
+        <button class="pic-mode-btn" id="btnPicModeBlend" data-i18n="pic.mode_blend" onclick="setPictureMode('blend')">Blend</button>
+        <button class="pic-mode-btn" id="btnPicModeSplit" data-i18n="pic.mode_split" onclick="setPictureMode('split')">Split</button>
+        <button class="pic-mode-btn" id="btnPicModeDiff" data-i18n="pic.mode_diff" onclick="setPictureMode('diff')">Difference</button>
         <div id="picBlendControls" style="display: none; align-items: center; gap: 4px; margin-left: 6px;">
-          <span style="font-size: 11px; color: #888;">Opacity:</span>
+          <span style="font-size: 11px; color: #888;" data-i18n="pic.opacity">Opacity:</span>
           <input type="range" id="picBlendSlider" min="0" max="100" value="50" style="width: 80px;" oninput="handlePicBlendSlide(this.value)">
           <span id="picBlendVal" style="font-size: 10px; color: #aaa; width: 30px;">50%</span>
         </div>
@@ -803,15 +803,15 @@
 
       <!-- Zoom & Transform Controls -->
       <div class="toolbar-group">
-        <button class="tb-btn" title="Zoom In (+)" onclick="zoomPicture(1.25)"><span class="icon">🔍+</span><span class="label">Zoom In</span></button>
-        <button class="tb-btn" title="Zoom Out (-)" onclick="zoomPicture(0.8)"><span class="icon">🔍-</span><span class="label">Zoom Out</span></button>
-        <button class="tb-btn" title="Actual Size (100%)" onclick="resetPictureZoom()"><span class="icon">1:1</span><span class="label">100%</span></button>
-        <button class="tb-btn" title="Rotate Clockwise" onclick="rotatePicture(90)"><span class="icon">↷</span><span class="label">Rotate</span></button>
-        <button class="tb-btn" title="Flip Horizontal" onclick="flipPicture('h')"><span class="icon">⇆</span><span class="label">Flip</span></button>
+        <button class="tb-btn" title="Zoom In (+)" data-i18n-title="pic.zoom_in" onclick="zoomPicture(1.25)"><span class="icon">🔍+</span><span class="label" data-i18n="pic.zoom_in">Zoom In</span></button>
+        <button class="tb-btn" title="Zoom Out (-)" data-i18n-title="pic.zoom_out" onclick="zoomPicture(0.8)"><span class="icon">🔍-</span><span class="label" data-i18n="pic.zoom_out">Zoom Out</span></button>
+        <button class="tb-btn" title="Actual Size (100%)" data-i18n-title="pic.actual_size" onclick="resetPictureZoom()"><span class="icon">1:1</span><span class="label" data-i18n="pic.actual_size">100%</span></button>
+        <button class="tb-btn" title="Rotate Clockwise" data-i18n-title="pic.rotate" onclick="rotatePicture(90)"><span class="icon">↷</span><span class="label" data-i18n="pic.rotate">Rotate</span></button>
+        <button class="tb-btn" title="Flip Horizontal" data-i18n-title="pic.flip" onclick="flipPicture('h')"><span class="icon">⇆</span><span class="label" data-i18n="pic.flip">Flip</span></button>
       </div>
 
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-        <span id="pictureDiffBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+        <span id="pictureDiffBadge" data-i18n="pic.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
           Drag images into panels or click 📁 to browse
         </span>
       </div>
@@ -821,11 +821,11 @@
       <div class="text-pane-wrapper" id="picLeftPaneWrapper">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="picLeftPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePicPathKeydown(event, 'left')" onblur="handlePicPathBlur('left')" spellcheck="false">
-            <button class="text-address-btn" title="Browse for Left Image" onclick="browsePicFile('left')">📁▾</button>
+            <input type="text" id="picLeftPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handlePicPathKeydown(event, 'left')" onblur="handlePicPathBlur('left')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Left Image" data-i18n-title="pic.browse_left" onclick="browsePicFile('left')">📁▾</button>
           </div>
           <div class="text-address-sub-row">
-            <span class="text-format-badge">Picture Compare ▾</span>
+            <span class="text-format-badge" data-i18n="tab.picture_compare">Picture Compare ▾</span>
             <span class="text-encoding-badge" id="picLeftMeta">Image: -</span>
           </div>
         </div>
@@ -839,11 +839,11 @@
       <div class="text-pane-wrapper" id="picRightPaneWrapper">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="picRightPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePicPathKeydown(event, 'right')" onblur="handlePicPathBlur('right')" spellcheck="false">
-            <button class="text-address-btn" title="Browse for Right Image" onclick="browsePicFile('right')">📁▾</button>
+            <input type="text" id="picRightPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handlePicPathKeydown(event, 'right')" onblur="handlePicPathBlur('right')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Right Image" data-i18n-title="pic.browse_right" onclick="browsePicFile('right')">📁▾</button>
           </div>
           <div class="text-address-sub-row">
-            <span class="text-format-badge">Picture Compare ▾</span>
+            <span class="text-format-badge" data-i18n="tab.picture_compare">Picture Compare ▾</span>
             <span class="text-encoding-badge" id="picRightMeta">Image: -</span>
           </div>
         </div>
@@ -858,24 +858,24 @@
   <div id="mediaView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" title="Swap Sides" onclick="swapMediaSides()">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapMediaSides()">
           <span class="icon">⇄</span>
-          <span class="label">Swap</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
         </button>
-        <button class="tb-btn" title="Reload Media" onclick="reloadMediaCompare()">
+        <button class="tb-btn" title="Reload Media" data-i18n-title="toolbar.reload_tip" onclick="reloadMediaCompare()">
           <span class="icon">🔄</span>
-          <span class="label">Reload</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
         </button>
       </div>
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-        <span id="mediaDiffBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+        <span id="mediaDiffBadge" data-i18n="media.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
           Drag media files into panels or click 📁 to browse
         </span>
       </div>
@@ -883,13 +883,13 @@
 
     <div class="path-selectors-bar">
       <div class="path-box">
-        <input type="text" id="mediaLeftPathInput" class="path-input" placeholder="Enter left media filename" onkeydown="handleMediaPathKeydown(event, 'left')" onblur="handleMediaPathBlur('left')">
-        <button class="path-tool-btn" onclick="browseMediaFile('left')">📁▾</button>
+        <input type="text" id="mediaLeftPathInput" class="path-input" placeholder="Enter left media filename" data-i18n-placeholder="media.left_placeholder" onkeydown="handleMediaPathKeydown(event, 'left')" onblur="handleMediaPathBlur('left')">
+        <button class="path-tool-btn" title="Browse for Left Media" data-i18n-title="media.browse_left" onclick="browseMediaFile('left')">📁▾</button>
       </div>
       <div class="path-center-divider"></div>
       <div class="path-box">
-        <input type="text" id="mediaRightPathInput" class="path-input" placeholder="Enter right media filename" onkeydown="handleMediaPathKeydown(event, 'right')" onblur="handleMediaPathBlur('right')">
-        <button class="path-tool-btn" onclick="browseMediaFile('right')">📁▾</button>
+        <input type="text" id="mediaRightPathInput" class="path-input" placeholder="Enter right media filename" data-i18n-placeholder="media.right_placeholder" onkeydown="handleMediaPathKeydown(event, 'right')" onblur="handleMediaPathBlur('right')">
+        <button class="path-tool-btn" title="Browse for Right Media" data-i18n-title="media.browse_right" onclick="browseMediaFile('right')">📁▾</button>
       </div>
     </div>
 
@@ -898,13 +898,13 @@
       <table class="media-tags-table" id="mediaTagsTable">
         <thead>
           <tr>
-            <th style="width: 25%;">Tag Field</th>
-            <th style="width: 37.5%;">Left File Value</th>
-            <th style="width: 37.5%;">Right File Value</th>
+            <th style="width: 25%;" data-i18n="media.col_field">Tag Field</th>
+            <th style="width: 37.5%;" data-i18n="media.col_left">Left File Value</th>
+            <th style="width: 37.5%;" data-i18n="media.col_right">Right File Value</th>
           </tr>
         </thead>
         <tbody id="mediaTagsTableBody">
-          <tr><td colspan="3" style="text-align: center; color: #888; padding: 30px;">Select or drop audio/video files (MP3, FLAC, M4A/AAC, WAV) to compare metadata</td></tr>
+          <tr><td colspan="3" data-i18n="media.empty_prompt" style="text-align: center; color: #888; padding: 30px;">Select or drop audio/video files (MP3, FLAC, M4A/AAC, WAV) to compare metadata</td></tr>
         </tbody>
       </table>
     </div>
@@ -912,11 +912,11 @@
     <!-- Media Preview Players -->
     <div class="media-player-box">
       <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 11px; font-weight: 600; color: #888;">Left:</span>
+        <span style="font-size: 11px; font-weight: 600; color: #888;" data-i18n="media.left_player">Left:</span>
         <audio id="mediaPlayerLeft" controls style="height: 30px; flex: 1;"></audio>
       </div>
       <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 11px; font-weight: 600; color: #888;">Right:</span>
+        <span style="font-size: 11px; font-weight: 600; color: #888;" data-i18n="media.right_player">Right:</span>
         <audio id="mediaPlayerRight" controls style="height: 30px; flex: 1;"></audio>
       </div>
     </div>
@@ -926,28 +926,28 @@
   <div id="tableCompareView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" title="Swap Sides" onclick="swapTableSides()">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapTableSides()">
           <span class="icon">⇄</span>
-          <span class="label">Swap</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
         </button>
-        <button class="tb-btn" title="Reload Table" onclick="reloadTableCompare()">
+        <button class="tb-btn" title="Reload Table" data-i18n-title="toolbar.reload_tip" onclick="reloadTableCompare()">
           <span class="icon">🔄</span>
-          <span class="label">Reload</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
         </button>
-        <button class="tb-btn" title="Previous Difference Row" onclick="navTableDiff(-1)">
+        <button class="tb-btn" title="Previous Difference Row" data-i18n-title="toolbar.prev_diff_tip" onclick="navTableDiff(-1)">
           <span class="icon">⬆</span>
-          <span class="label">Prev Diff</span>
+          <span class="label" data-i18n="tableview.prev_diff">Prev Diff</span>
         </button>
-        <button class="tb-btn" title="Next Difference Row" onclick="navTableDiff(1)">
+        <button class="tb-btn" title="Next Difference Row" data-i18n-title="toolbar.next_diff_tip" onclick="navTableDiff(1)">
           <span class="icon">⬇</span>
-          <span class="label">Next Diff</span>
+          <span class="label" data-i18n="tableview.next_diff">Next Diff</span>
         </button>
       </div>
 
@@ -955,18 +955,18 @@
 
       <!-- Delimiter selector -->
       <div class="toolbar-group">
-        <span style="font-size: 11px; color: #888;">Delimiter:</span>
+        <span style="font-size: 11px; color: #888;" data-i18n="tableview.delimiter">Delimiter:</span>
         <select id="tableDelimiterSelect" style="background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-color); font-size: 11px; padding: 2px 6px; border-radius: 3px;" onchange="handleTableDelimiterChange(this.value)">
-          <option value="auto">Auto-detect</option>
-          <option value=",">Comma (,)</option>
-          <option value="\t">Tab (\t)</option>
-          <option value=";">Semicolon (;)</option>
-          <option value="|">Pipe (|)</option>
+          <option value="auto" data-i18n="tableview.delim_auto">Auto-detect</option>
+          <option value="," data-i18n="tableview.delim_comma">Comma (,)</option>
+          <option value="\t" data-i18n="tableview.delim_tab">Tab (\t)</option>
+          <option value=";" data-i18n="tableview.delim_semicolon">Semicolon (;)</option>
+          <option value="|" data-i18n="tableview.delim_pipe">Pipe (|)</option>
         </select>
       </div>
 
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-        <span id="tableDiffBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+        <span id="tableDiffBadge" data-i18n="tableview.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
           Drag Excel (.xlsx/.xls) or CSV/TSV table into panels or click 📁 to browse
         </span>
       </div>
@@ -976,11 +976,11 @@
       <div class="text-pane-wrapper" id="tblLeftPaneWrapper">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="tblLeftPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handleTablePathKeydown(event, 'left')" onblur="handleTablePathBlur('left')" spellcheck="false">
-            <button class="text-address-btn" title="Browse for Left Table" onclick="browseTableFile('left')">📁▾</button>
+            <input type="text" id="tblLeftPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handleTablePathKeydown(event, 'left')" onblur="handleTablePathBlur('left')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Left Table" data-i18n-title="tableview.browse_left" onclick="browseTableFile('left')">📁▾</button>
           </div>
           <div class="text-address-sub-row">
-            <span class="text-format-badge" id="tblLeftFormat">Table / Excel ▾</span>
+            <span class="text-format-badge" id="tblLeftFormat" data-i18n="tab.table_compare">Table / Excel ▾</span>
             <span class="text-encoding-badge" id="tblLeftMeta">-</span>
           </div>
         </div>
@@ -994,11 +994,11 @@
       <div class="text-pane-wrapper" id="tblRightPaneWrapper">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="tblRightPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handleTablePathKeydown(event, 'right')" onblur="handleTablePathBlur('right')" spellcheck="false">
-            <button class="text-address-btn" title="Browse for Right Table" onclick="browseTableFile('right')">📁▾</button>
+            <input type="text" id="tblRightPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handleTablePathKeydown(event, 'right')" onblur="handleTablePathBlur('right')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Right Table" data-i18n-title="tableview.browse_right" onclick="browseTableFile('right')">📁▾</button>
           </div>
           <div class="text-address-sub-row">
-            <span class="text-format-badge" id="tblRightFormat">Table / Excel ▾</span>
+            <span class="text-format-badge" id="tblRightFormat" data-i18n="tab.table_compare">Table / Excel ▾</span>
             <span class="text-encoding-badge" id="tblRightMeta">-</span>
           </div>
         </div>
@@ -1010,7 +1010,7 @@
 
     <!-- Beyond Compare 5 Multiple Excel Sheets & HTML Tables Bottom Bar -->
     <div class="table-sheets-bar" id="tableSheetsBar">
-      <div style="font-size: 11px; color: #888; padding-left: 8px;">Sheets:</div>
+      <div style="font-size: 11px; color: #888; padding-left: 8px;" data-i18n="tableview.sheets">Sheets:</div>
       <div id="tableSheetsList" style="display: flex; gap: 4px;">
         <button class="table-sheet-tab active">Sheet 1</button>
       </div>
@@ -1021,9 +1021,9 @@
   <div id="folderSyncView" class="view-container">
     <header class="folder-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
@@ -1031,50 +1031,50 @@
       <!-- Sync Presets Bar (Beyond Compare 5) -->
       <div class="toolbar-group sync-presets-bar" style="background: transparent; border: none; padding: 0;">
         <button class="sync-preset-btn active" id="btnSyncUpdateLR" onclick="setSyncPreset('update_lr')">
-          <span>➡️</span> <span>Update > Left to Right</span>
+          <span>➡️</span> <span data-i18n="fsync.update_lr">Update > Left to Right</span>
         </button>
         <button class="sync-preset-btn" id="btnSyncUpdateRL" onclick="setSyncPreset('update_rl')">
-          <span>⬅️</span> <span>Update > Right to Left</span>
+          <span>⬅️</span> <span data-i18n="fsync.update_rl">Update > Right to Left</span>
         </button>
         <button class="sync-preset-btn" id="btnSyncUpdateBoth" onclick="setSyncPreset('update_both')">
-          <span>⇄</span> <span>Update Both</span>
+          <span>⇄</span> <span data-i18n="fsync.update_both">Update Both</span>
         </button>
         <button class="sync-preset-btn" id="btnSyncMirrorR" onclick="setSyncPreset('mirror_r')">
-          <span>▶️</span> <span>Mirror to Right</span>
+          <span>▶️</span> <span data-i18n="fsync.mirror_r">Mirror to Right</span>
         </button>
         <button class="sync-preset-btn" id="btnSyncMirrorL" onclick="setSyncPreset('mirror_l')">
-          <span>◀️</span> <span>Mirror to Left</span>
+          <span>◀️</span> <span data-i18n="fsync.mirror_l">Mirror to Left</span>
         </button>
       </div>
 
       <div class="toolbar-separator"></div>
 
       <div class="toolbar-group">
-        <button class="tb-btn" title="Swap Sides" onclick="swapSyncSides()">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapSyncSides()">
           <span class="icon">⇄</span>
-          <span class="label">Swap</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
         </button>
-        <button class="tb-btn" title="Refresh Sync Preview" onclick="computeFolderSyncPlan()">
+        <button class="tb-btn" title="Refresh Sync Preview" data-i18n-title="toolbar.refresh_tip" onclick="computeFolderSyncPlan()">
           <span class="icon">🔄</span>
-          <span class="label">Refresh</span>
+          <span class="label" data-i18n="toolbar.refresh">Refresh</span>
         </button>
       </div>
 
-      <button class="btn-sync-now" id="btnExecuteSyncNow" title="Execute Folder Sync" onclick="executeSyncPlan()">
-        <span>⚡</span> <span>Sync Now</span>
+      <button class="btn-sync-now" id="btnExecuteSyncNow" title="Execute Folder Sync" data-i18n-title="fsync.sync_now" onclick="executeSyncPlan()">
+        <span>⚡</span> <span data-i18n="fsync.sync_now">Sync Now</span>
       </button>
     </header>
 
     <!-- Path Selector Bar -->
     <div class="path-selectors-bar">
       <div class="path-box" id="syncLeftPathBox">
-        <input type="text" id="syncLeftPathInput" class="path-input" placeholder="Enter source folder here" onkeydown="handleSyncPathKeydown(event, 'left')" onblur="handleSyncPathBlur('left')" spellcheck="false">
-        <button class="path-tool-btn" title="Browse Left Folder" onclick="browseSyncFolder('left')">📁▾</button>
+        <input type="text" id="syncLeftPathInput" class="path-input" placeholder="Enter source folder here" data-i18n-placeholder="fsync.src_placeholder" onkeydown="handleSyncPathKeydown(event, 'left')" onblur="handleSyncPathBlur('left')" spellcheck="false">
+        <button class="path-tool-btn" title="Browse Left Folder" data-i18n-title="fsync.browse_left" onclick="browseSyncFolder('left')">📁▾</button>
       </div>
       <div class="path-center-divider"></div>
       <div class="path-box" id="syncRightPathBox">
-        <input type="text" id="syncRightPathInput" class="path-input" placeholder="Enter target folder here" onkeydown="handleSyncPathKeydown(event, 'right')" onblur="handleSyncPathBlur('right')" spellcheck="false">
-        <button class="path-tool-btn" title="Browse Right Folder" onclick="browseSyncFolder('right')">📁▾</button>
+        <input type="text" id="syncRightPathInput" class="path-input" placeholder="Enter target folder here" data-i18n-placeholder="fsync.tgt_placeholder" onkeydown="handleSyncPathKeydown(event, 'right')" onblur="handleSyncPathBlur('right')" spellcheck="false">
+        <button class="path-tool-btn" title="Browse Right Folder" data-i18n-title="fsync.browse_right" onclick="browseSyncFolder('right')">📁▾</button>
       </div>
     </div>
 
@@ -1083,15 +1083,15 @@
       <table class="diff-table" style="width: 100%;">
         <thead>
           <tr>
-            <th style="width: 36%;">Left Item (Source)</th>
-            <th style="width: 10%;">Left Size</th>
-            <th style="width: 14%; text-align: center;">Sync Action</th>
-            <th style="width: 10%;">Right Size</th>
-            <th style="width: 30%;">Right Item (Target)</th>
+            <th style="width: 36%;" data-i18n="fsync.col_left_source">Left Item (Source)</th>
+            <th style="width: 10%;" data-i18n="fsync.col_left_size">Left Size</th>
+            <th style="width: 14%; text-align: center;" data-i18n="fsync.col_action">Sync Action</th>
+            <th style="width: 10%;" data-i18n="fsync.col_right_size">Right Size</th>
+            <th style="width: 30%;" data-i18n="fsync.col_right_target">Right Item (Target)</th>
           </tr>
         </thead>
         <tbody id="folderSyncTableBody">
-          <tr><td colspan="5" style="text-align: center; color: #888; padding: 40px;">Select Left and Right folders to preview sync actions</td></tr>
+          <tr><td colspan="5" data-i18n="fsync.empty_prompt" style="text-align: center; color: #888; padding: 40px;">Select Left and Right folders to preview sync actions</td></tr>
         </tbody>
       </table>
     </div>
@@ -1111,23 +1111,23 @@
   <div id="folderMergeView" class="view-container">
     <header class="folder-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn active" id="fMergeFilterAll" onclick="setFolderMergeFilter('all')"><span class="icon">✳️</span><span class="label">All</span></button>
-        <button class="tb-btn" id="fMergeFilterConflicts" onclick="setFolderMergeFilter('conflicts')"><span class="icon" style="color: #ff5555;">⚠️</span><span class="label">Conflicts</span></button>
-        <button class="tb-btn" id="fMergeFilterChanges" onclick="setFolderMergeFilter('changes')"><span class="icon" style="color: #55ff55;">Δ</span><span class="label">Changes</span></button>
+        <button class="tb-btn active" id="fMergeFilterAll" onclick="setFolderMergeFilter('all')"><span class="icon">✳️</span><span class="label" data-i18n="toolbar.all">All</span></button>
+        <button class="tb-btn" id="fMergeFilterConflicts" onclick="setFolderMergeFilter('conflicts')"><span class="icon" style="color: #ff5555;">⚠️</span><span class="label" data-i18n="fmerge.conflicts">Conflicts</span></button>
+        <button class="tb-btn" id="fMergeFilterChanges" onclick="setFolderMergeFilter('changes')"><span class="icon" style="color: #55ff55;">Δ</span><span class="label" data-i18n="fmerge.changes">Changes</span></button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" title="Refresh" onclick="runFolderMergeComparison()"><span class="icon">🔄</span><span class="label">Refresh</span></button>
+        <button class="tb-btn" title="Refresh" data-i18n-title="toolbar.refresh_tip" onclick="runFolderMergeComparison()"><span class="icon">🔄</span><span class="label" data-i18n="toolbar.refresh">Refresh</span></button>
       </div>
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
-        <span id="folderMergeBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px;">
+        <span id="folderMergeBadge" data-i18n="fmerge.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px;">
           Select Left (Theirs), Center (Base), and Right (Mine) folders
         </span>
       </div>
@@ -1136,16 +1136,16 @@
     <!-- 3-Way Path Selector Bar -->
     <div class="path-selectors-bar" style="display: flex; gap: 4px;">
       <div class="path-box" style="flex: 1;" id="fMergeLeftBox">
-        <input type="text" id="fMergeLeftPathInput" class="path-input" placeholder="Left folder (Theirs)" onkeydown="handleFMergePathKeydown(event, 'left')">
-        <button class="path-tool-btn" onclick="browseFMergeFolder('left')">📁▾</button>
+        <input type="text" id="fMergeLeftPathInput" class="path-input" placeholder="Left folder (Theirs)" data-i18n-placeholder="fmerge.left_placeholder" onkeydown="handleFMergePathKeydown(event, 'left')">
+        <button class="path-tool-btn" title="Browse Left Folder" data-i18n-title="fmerge.browse_left" onclick="browseFMergeFolder('left')">📁▾</button>
       </div>
       <div class="path-box" style="flex: 1;" id="fMergeBaseBox">
-        <input type="text" id="fMergeBasePathInput" class="path-input" placeholder="Center folder (Base)" onkeydown="handleFMergePathKeydown(event, 'base')">
-        <button class="path-tool-btn" onclick="browseFMergeFolder('base')">📁▾</button>
+        <input type="text" id="fMergeBasePathInput" class="path-input" placeholder="Center folder (Base)" data-i18n-placeholder="fmerge.base_placeholder" onkeydown="handleFMergePathKeydown(event, 'base')">
+        <button class="path-tool-btn" title="Browse Center Folder" data-i18n-title="fmerge.browse_base" onclick="browseFMergeFolder('base')">📁▾</button>
       </div>
       <div class="path-box" style="flex: 1;" id="fMergeRightBox">
-        <input type="text" id="fMergeRightPathInput" class="path-input" placeholder="Right folder (Mine)" onkeydown="handleFMergePathKeydown(event, 'right')">
-        <button class="path-tool-btn" onclick="browseFMergeFolder('right')">📁▾</button>
+        <input type="text" id="fMergeRightPathInput" class="path-input" placeholder="Right folder (Mine)" data-i18n-placeholder="fmerge.right_placeholder" onkeydown="handleFMergePathKeydown(event, 'right')">
+        <button class="path-tool-btn" title="Browse Right Folder" data-i18n-title="fmerge.browse_right" onclick="browseFMergeFolder('right')">📁▾</button>
       </div>
     </div>
 
@@ -1154,14 +1154,14 @@
       <table class="diff-table" style="width: 100%;">
         <thead>
           <tr>
-            <th style="width: 30%;">Left Item (Theirs)</th>
-            <th style="width: 25%;">Center Item (Base)</th>
-            <th style="width: 30%;">Right Item (Mine)</th>
-            <th style="width: 15%; text-align: center;">Merge Status</th>
+            <th style="width: 30%;" data-i18n="fmerge.col_left">Left Item (Theirs)</th>
+            <th style="width: 25%;" data-i18n="fmerge.col_base">Center Item (Base)</th>
+            <th style="width: 30%;" data-i18n="fmerge.col_right">Right Item (Mine)</th>
+            <th style="width: 15%; text-align: center;" data-i18n="fmerge.col_status">Merge Status</th>
           </tr>
         </thead>
         <tbody id="folderMergeTableBody">
-          <tr><td colspan="4" style="text-align: center; color: #888; padding: 40px;">Select 3 folders to run 3-way folder merge</td></tr>
+          <tr><td colspan="4" data-i18n="fmerge.empty_prompt" style="text-align: center; color: #888; padding: 40px;">Select 3 folders to run 3-way folder merge</td></tr>
         </tbody>
       </table>
     </div>
@@ -1171,55 +1171,55 @@
   <div id="textMergeView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" title="Previous Conflict (Ctrl+Up)" onclick="navMergeConflict(-1)">
+        <button class="tb-btn" title="Previous Conflict (Ctrl+Up)" data-i18n-title="tmerge.prev_conflict" onclick="navMergeConflict(-1)">
           <span class="icon">⬆</span>
-          <span class="label">Prev Conflict</span>
+          <span class="label" data-i18n="tmerge.prev_conflict">Prev Conflict</span>
         </button>
-        <button class="tb-btn" title="Next Conflict (Ctrl+Down)" onclick="navMergeConflict(1)">
+        <button class="tb-btn" title="Next Conflict (Ctrl+Down)" data-i18n-title="tmerge.next_conflict" onclick="navMergeConflict(1)">
           <span class="icon">⬇</span>
-          <span class="label">Next Conflict</span>
+          <span class="label" data-i18n="tmerge.next_conflict">Next Conflict</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" title="Take Left (Theirs)" onclick="takeMergeSelection('left')">
+        <button class="tb-btn" title="Take Left (Theirs)" data-i18n-title="tmerge.take_left" onclick="takeMergeSelection('left')">
           <span class="icon">⬅️</span>
-          <span class="label">Take Left</span>
+          <span class="label" data-i18n="tmerge.take_left">Take Left</span>
         </button>
-        <button class="tb-btn" title="Take Center (Base)" onclick="takeMergeSelection('base')">
+        <button class="tb-btn" title="Take Center (Base)" data-i18n-title="tmerge.take_base" onclick="takeMergeSelection('base')">
           <span class="icon">⬇</span>
-          <span class="label">Take Base</span>
+          <span class="label" data-i18n="tmerge.take_base">Take Base</span>
         </button>
-        <button class="tb-btn" title="Take Right (Mine)" onclick="takeMergeSelection('right')">
+        <button class="tb-btn" title="Take Right (Mine)" data-i18n-title="tmerge.take_right" onclick="takeMergeSelection('right')">
           <span class="icon">➡️</span>
-          <span class="label">Take Right</span>
+          <span class="label" data-i18n="tmerge.take_right">Take Right</span>
         </button>
-        <button class="tb-btn" title="Take Both" onclick="takeMergeSelection('both')">
+        <button class="tb-btn" title="Take Both" data-i18n-title="tmerge.take_both" onclick="takeMergeSelection('both')">
           <span class="icon">⇄</span>
-          <span class="label">Take Both</span>
+          <span class="label" data-i18n="tmerge.take_both">Take Both</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" id="btnToggleMergeCenter" title="Toggle Base Center Pane" onclick="toggleMergeCenterPane()">
+        <button class="tb-btn" id="btnToggleMergeCenter" title="Toggle Base Center Pane" data-i18n-title="tmerge.center" onclick="toggleMergeCenterPane()">
           <span class="icon">👁️</span>
-          <span class="label">Center</span>
+          <span class="label" data-i18n="tmerge.center">Center</span>
         </button>
-        <button class="tb-btn" title="Toggle Word Wrap" onclick="toggleMergeWordWrap()">
+        <button class="tb-btn" title="Toggle Word Wrap" data-i18n-title="toolbar.wrap_tip" onclick="toggleMergeWordWrap()">
           <span class="icon">↵</span>
-          <span class="label">Wrap</span>
+          <span class="label" data-i18n="toolbar.wrap">Wrap</span>
         </button>
       </div>
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
         <span class="conflict-badge" id="mergeConflictBadge" style="display: none;">0 Conflicts</span>
-        <button class="btn-primary" onclick="saveMergedOutputFile()">💾 Save Output</button>
+        <button class="btn-primary" data-i18n="tmerge.save_output" onclick="saveMergedOutputFile()">💾 Save Output</button>
       </div>
     </header>
 
@@ -1229,10 +1229,10 @@
       <div class="text-merge-source-pane" id="tMergeLeftPane">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="tMergeLeftPathInput" class="text-path-input" placeholder="Left file (Theirs)" onkeydown="handleTMergePathKeydown(event, 'left')">
-            <button class="text-address-btn" onclick="browseTMergeFile('left')">📁▾</button>
+            <input type="text" id="tMergeLeftPathInput" class="text-path-input" placeholder="Left file (Theirs)" data-i18n-placeholder="tmerge.left_placeholder" onkeydown="handleTMergePathKeydown(event, 'left')">
+            <button class="text-address-btn" title="Browse Left File" data-i18n-title="tmerge.badge_left" onclick="browseTMergeFile('left')">📁▾</button>
           </div>
-          <div class="text-address-sub-row"><span class="text-format-badge">Left (Theirs)</span></div>
+          <div class="text-address-sub-row"><span class="text-format-badge" data-i18n="tmerge.badge_left">Left (Theirs)</span></div>
         </div>
         <div class="text-pane-scroll" id="tMergeLeftScroll" onscroll="syncThreeWayScroll('left')">
           <div id="tMergeLeftLines"></div>
@@ -1243,10 +1243,10 @@
       <div class="text-merge-source-pane" id="tMergeCenterPane">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="tMergeBasePathInput" class="text-path-input" placeholder="Center file (Base Ancestor)" onkeydown="handleTMergePathKeydown(event, 'base')">
-            <button class="text-address-btn" onclick="browseTMergeFile('base')">📁▾</button>
+            <input type="text" id="tMergeBasePathInput" class="text-path-input" placeholder="Center file (Base Ancestor)" data-i18n-placeholder="tmerge.base_placeholder" onkeydown="handleTMergePathKeydown(event, 'base')">
+            <button class="text-address-btn" title="Browse Center Base File" data-i18n-title="tmerge.badge_base" onclick="browseTMergeFile('base')">📁▾</button>
           </div>
-          <div class="text-address-sub-row"><span class="text-format-badge">Center (Base)</span></div>
+          <div class="text-address-sub-row"><span class="text-format-badge" data-i18n="tmerge.badge_base">Center (Base)</span></div>
         </div>
         <div class="text-pane-scroll" id="tMergeCenterScroll" onscroll="syncThreeWayScroll('base')">
           <div id="tMergeBaseLines"></div>
@@ -1257,10 +1257,10 @@
       <div class="text-merge-source-pane" id="tMergeRightPane">
         <div class="text-address-bar">
           <div class="text-address-input-row">
-            <input type="text" id="tMergeRightPathInput" class="text-path-input" placeholder="Right file (Mine)" onkeydown="handleTMergePathKeydown(event, 'right')">
-            <button class="text-address-btn" onclick="browseTMergeFile('right')">📁▾</button>
+            <input type="text" id="tMergeRightPathInput" class="text-path-input" placeholder="Right file (Mine)" data-i18n-placeholder="tmerge.right_placeholder" onkeydown="handleTMergePathKeydown(event, 'right')">
+            <button class="text-address-btn" title="Browse Right File" data-i18n-title="tmerge.badge_right" onclick="browseTMergeFile('right')">📁▾</button>
           </div>
-          <div class="text-address-sub-row"><span class="text-format-badge">Right (Mine)</span></div>
+          <div class="text-address-sub-row"><span class="text-format-badge" data-i18n="tmerge.badge_right">Right (Mine)</span></div>
         </div>
         <div class="text-pane-scroll" id="tMergeRightScroll" onscroll="syncThreeWayScroll('right')">
           <div id="tMergeRightLines"></div>
@@ -1272,16 +1272,16 @@
     <div class="text-merge-output-container">
       <div class="text-merge-output-header">
         <div style="font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 10px;">
-          <span>Merged Output</span>
-          <span style="font-weight: normal; color: #888; font-size: 11px;">(Editable result to be saved)</span>
+          <span data-i18n="tmerge.merged_output">Merged Output</span>
+          <span style="font-weight: normal; color: #888; font-size: 11px;" data-i18n="tmerge.merged_desc">(Editable result to be saved)</span>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <input type="text" id="tMergeOutputPathInput" class="path-input" placeholder="Output destination file" style="width: 320px;">
-          <button class="btn-secondary" onclick="browseTMergeOutputFile()">📂 Browse</button>
+          <input type="text" id="tMergeOutputPathInput" class="path-input" placeholder="Output destination file" data-i18n-placeholder="tmerge.output_placeholder" style="width: 320px;">
+          <button class="btn-secondary" data-i18n="common.browse" onclick="browseTMergeOutputFile()">📂 Browse</button>
         </div>
       </div>
       <div class="text-edit-body">
-        <textarea id="tMergeOutputEditor" class="text-edit-editor" placeholder="Merged content appears here. You can directly edit or use Take buttons above." spellcheck="false"></textarea>
+        <textarea id="tMergeOutputEditor" class="text-edit-editor" placeholder="Merged content appears here. You can directly edit or use Take buttons above." data-i18n-placeholder="tmerge.output_editor_placeholder" spellcheck="false"></textarea>
       </div>
     </div>
   </div>
@@ -1290,22 +1290,22 @@
   <div id="textEditView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
-        <button class="tb-btn" title="Home (Back to Sessions)" onclick="handleToolbarHomeClick()">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
           <span class="icon">🏠</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
         </button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <button class="tb-btn" title="Open File" onclick="openTextEditFile()"><span class="icon">📂</span><span class="label">Open</span></button>
-        <button class="tb-btn" title="Save File (Cmd+S)" onclick="saveTextEditContent()"><span class="icon">💾</span><span class="label">Save</span></button>
-        <button class="tb-btn" title="Reload File" onclick="reloadTextEditFile()"><span class="icon">🔄</span><span class="label">Reload</span></button>
-        <button class="tb-btn" id="btnTextEditWrap" title="Toggle Word Wrap" onclick="toggleTextEditWrap()"><span class="icon">↵</span><span class="label">Wrap</span></button>
+        <button class="tb-btn" title="Open File" data-i18n-title="toolbar.open_tip" onclick="openTextEditFile()"><span class="icon">📂</span><span class="label" data-i18n="toolbar.open_file">Open</span></button>
+        <button class="tb-btn" title="Save File (Cmd+S)" data-i18n-title="toolbar.save_tip" onclick="saveTextEditContent()"><span class="icon">💾</span><span class="label" data-i18n="toolbar.save_file">Save</span></button>
+        <button class="tb-btn" title="Reload File" data-i18n-title="toolbar.reload_tip" onclick="reloadTextEditFile()"><span class="icon">🔄</span><span class="label" data-i18n="toolbar.reload">Reload</span></button>
+        <button class="tb-btn" id="btnTextEditWrap" title="Toggle Word Wrap" data-i18n-title="toolbar.wrap_tip" onclick="toggleTextEditWrap()"><span class="icon">↵</span><span class="label" data-i18n="toolbar.wrap">Wrap</span></button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-group">
-        <input type="text" id="textEditSearchInput" class="tb-filter-input" placeholder="🔍 Find..." style="width: 140px;" onkeydown="handleTextEditSearchKeydown(event)">
-        <button class="tb-btn" title="Find Next" onclick="navTextEditFind(1)"><span class="icon">⬇</span><span class="label">Next</span></button>
+        <input type="text" id="textEditSearchInput" class="tb-filter-input" placeholder="🔍 Find..." data-i18n-placeholder="textedit.find_placeholder" style="width: 140px;" onkeydown="handleTextEditSearchKeydown(event)">
+        <button class="tb-btn" title="Find Next" data-i18n-title="textedit.next_tip" onclick="navTextEditFind(1)"><span class="icon">⬇</span><span class="label" data-i18n="common.search">Next</span></button>
       </div>
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
         <span id="textEditMetaBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px;">
@@ -1316,14 +1316,14 @@
 
     <div class="text-address-bar">
       <div class="text-address-input-row">
-        <input type="text" id="textEditPathInput" class="text-path-input" placeholder="Enter file path to edit" onkeydown="handleTextEditPathKeydown(event)" onblur="handleTextEditPathBlur()" spellcheck="false">
-        <button class="text-address-btn" title="Browse for File" onclick="openTextEditFile()">📁▾</button>
+        <input type="text" id="textEditPathInput" class="text-path-input" placeholder="Enter file path to edit" data-i18n-placeholder="textedit.path_placeholder" onkeydown="handleTextEditPathKeydown(event)" onblur="handleTextEditPathBlur()" spellcheck="false">
+        <button class="text-address-btn" title="Browse for File" data-i18n-title="textedit.browse_file" onclick="openTextEditFile()">📁▾</button>
       </div>
     </div>
 
     <div class="text-edit-container">
       <div class="text-edit-body">
-        <textarea id="textEditMainTextarea" class="text-edit-editor" placeholder="Type or drop file to edit..." spellcheck="false" oninput="handleTextEditChange()"></textarea>
+        <textarea id="textEditMainTextarea" class="text-edit-editor" placeholder="Type or drop file to edit..." data-i18n-placeholder="textedit.editor_placeholder" spellcheck="false" oninput="handleTextEditChange()"></textarea>
       </div>
       <footer class="folder-status-bar" style="height: 24px; padding: 2px 10px;">
         <span id="textEditLineCount">0 lines</span>
@@ -1347,16 +1347,16 @@
 
       <div class="modal-body">
         <fieldset class="modal-group">
-          <legend>Selection</legend>
+          <legend data-i18n="modal.selection">Selection</legend>
           <div class="stats-grid">
             <div class="stats-column">
-              <div class="stats-side-label">Left Side</div>
+              <div class="stats-side-label" data-i18n="modal.left_side">Left Side</div>
               <div class="stat-line">Files: <span id="modalLeftFiles">0</span></div>
               <div class="stat-line">Folders: <span id="modalLeftFolders">0</span></div>
               <div class="stat-line">Size: <span id="modalLeftBytes">0 bytes</span></div>
             </div>
             <div class="stats-column">
-              <div class="stats-side-label">Right Side</div>
+              <div class="stats-side-label" data-i18n="modal.right_side">Right Side</div>
               <div class="stat-line">Files: <span id="modalRightFiles">0</span></div>
               <div class="stat-line">Folders: <span id="modalRightFolders">0</span></div>
               <div class="stat-line">Size: <span id="modalRightBytes">0 bytes</span></div>
@@ -1365,19 +1365,19 @@
         </fieldset>
 
         <fieldset class="modal-group">
-          <legend>Comparison method</legend>
+          <legend data-i18n="modal.method">Comparison method</legend>
           <div class="radio-options">
             <label class="radio-label">
               <input type="radio" name="compareMethod" value="crc">
-              <span>CRC comparison</span>
+              <span data-i18n="modal.crc">CRC comparison</span>
             </label>
             <label class="radio-label">
               <input type="radio" name="compareMethod" value="binary">
-              <span>Binary comparison</span>
+              <span data-i18n="modal.binary">Binary comparison</span>
             </label>
             <label class="radio-label">
               <input type="radio" name="compareMethod" value="rules" checked>
-              <span>Rules-based comparison</span>
+              <span data-i18n="modal.rules">Rules-based comparison</span>
             </label>
           </div>
         </fieldset>
@@ -1385,11 +1385,11 @@
         <div class="checkbox-group">
           <label class="radio-label">
             <input type="checkbox" id="chkSkipBinary" checked>
-            <span>Skip binary files</span>
+            <span data-i18n="modal.skip_binary">Skip binary files</span>
           </label>
           <label class="radio-label">
             <input type="checkbox" id="chkAutoClose" checked>
-            <span>Automatically close this dialog when comparison completes</span>
+            <span data-i18n="modal.auto_close">Automatically close this dialog when comparison completes</span>
           </label>
         </div>
 
@@ -1402,8 +1402,8 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeDeepCompareModal()">Cancel</button>
-        <button class="btn-primary" id="btnExecuteCompare" onclick="executeDeepCompare()">Compare</button>
+        <button class="btn-secondary" data-i18n="common.cancel" onclick="closeDeepCompareModal()">Cancel</button>
+        <button class="btn-primary" id="btnExecuteCompare" data-i18n="modal.compare_btn" onclick="executeDeepCompare()">Compare</button>
       </div>
     </div>
   </div>
@@ -1413,19 +1413,19 @@
     <div class="modal-window" style="width: 580px;">
       <div class="modal-header">
         <div class="modal-title">
-          <span id="sessionModalHeaderTitle">Edit Session</span>
+          <span id="sessionModalHeaderTitle" data-i18n="modal.edit_session">Edit Session</span>
         </div>
         <button class="modal-close-btn" onclick="closeSessionModal()">✕</button>
       </div>
 
       <div class="modal-body">
         <div class="form-group">
-          <label>Session Name</label>
+          <label data-i18n="modal.session_name">Session Name</label>
           <input type="text" class="form-input" id="editSessionName" placeholder="My Project Compare">
         </div>
 
         <div class="form-group">
-          <label>Left Folder</label>
+          <label data-i18n="modal.left_folder">Left Folder</label>
           <div class="form-row">
             <input type="text" class="form-input" id="editSessionLeft" placeholder="/path/to/left/folder">
             <button class="btn-secondary" onclick="browseModalFolder('left')">📂 Browse</button>
@@ -1433,7 +1433,7 @@
         </div>
 
         <div class="form-group">
-          <label>Right Folder</label>
+          <label data-i18n="modal.right_folder">Right Folder</label>
           <div class="form-row">
             <input type="text" class="form-input" id="editSessionRight" placeholder="/path/to/right/folder">
             <button class="btn-secondary" onclick="browseModalFolder('right')">📂 Browse</button>
@@ -1442,8 +1442,8 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeSessionModal()">Cancel</button>
-        <button class="btn-primary" onclick="saveSessionFromModal()">Save Session</button>
+        <button class="btn-secondary" data-i18n="common.cancel" onclick="closeSessionModal()">Cancel</button>
+        <button class="btn-primary" data-i18n="modal.save_session" onclick="saveSessionFromModal()">Save Session</button>
       </div>
     </div>
   </div>

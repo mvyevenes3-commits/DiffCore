@@ -135,8 +135,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.i18n.init();
     if (typeof window.i18n.onLanguageChange === 'function') {
       window.i18n.onLanguageChange(() => {
+        refreshAllTabTitles();
+        renderSessionsTree();
         updateAppHeader();
         updateTextDiffBadge();
+        refreshActiveViewEmptyState();
       });
     }
   }
@@ -277,6 +280,94 @@ function updateAutoSavedBadge() {
   if (badge) badge.textContent = (appState.autoSaved || []).length;
 }
 
+function formatSessionGroupDateName(gName) {
+  if (!window.i18n) return gName;
+  const map = {
+    'Today': 'sessions.today',
+    'Yesterday': 'sessions.yesterday',
+    '2 days ago': 'sessions.2_days_ago',
+    '3 days ago': 'sessions.3_days_ago',
+    '4 days ago': 'sessions.4_days_ago',
+    '5 days ago': 'sessions.5_days_ago',
+    '6 days ago': 'sessions.6_days_ago',
+    'More than 6 days ago': 'sessions.more_than_6_days_ago',
+    'Other': 'sessions.other'
+  };
+  const key = map[gName];
+  return key ? window.i18n.t(key) : gName;
+}
+
+function setSessionTabTitle(elId, i18nKey, defaultEnglishTitle, customTitle) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const isGeneric = !customTitle ||
+    customTitle === defaultEnglishTitle ||
+    customTitle === `New ${defaultEnglishTitle}` ||
+    customTitle.startsWith('New ') ||
+    customTitle.endsWith(` - ${defaultEnglishTitle}`);
+
+  if (isGeneric) {
+    el.setAttribute('data-i18n', i18nKey);
+    el.textContent = window.i18n ? window.i18n.t(i18nKey) : defaultEnglishTitle;
+  } else {
+    el.removeAttribute('data-i18n');
+    el.textContent = customTitle.replace(/^New\s+/, '').replace(new RegExp(`\\s*-\\s*${defaultEnglishTitle}$`), '');
+  }
+}
+
+function refreshAllTabTitles() {
+  const tabs = [
+    { id: 'currentSessionTabTitle', key: 'tab.folder_compare' },
+    { id: 'currentFolderSyncTabTitle', key: 'tab.folder_sync' },
+    { id: 'currentFolderMergeTabTitle', key: 'tab.folder_merge' },
+    { id: 'currentTextTabTitle', key: 'tab.text_compare' },
+    { id: 'currentTextMergeTabTitle', key: 'tab.text_merge' },
+    { id: 'currentTextEditTabTitle', key: 'tab.text_edit' },
+    { id: 'currentHexTabTitle', key: 'tab.hex_compare' },
+    { id: 'currentPictureTabTitle', key: 'tab.picture_compare' },
+    { id: 'currentTableTabTitle', key: 'tab.table_compare' },
+    { id: 'currentMediaTabTitle', key: 'tab.media_compare' }
+  ];
+  tabs.forEach(t => {
+    const el = document.getElementById(t.id);
+    if (el && el.hasAttribute('data-i18n')) {
+      el.textContent = window.i18n ? window.i18n.t(t.key) : el.textContent;
+    }
+  });
+}
+
+function refreshActiveViewEmptyState() {
+  switch (appState.activeView) {
+    case 'hex':
+      if (!hexCompareState.leftPath && !hexCompareState.rightPath) renderEmptyHexCompare();
+      break;
+    case 'picture':
+      if (!picCompareState.leftPath && !picCompareState.rightPath) renderEmptyPictureCompare();
+      break;
+    case 'media':
+      if (!mediaCompareState.leftPath && !mediaCompareState.rightPath) renderEmptyMediaCompare();
+      break;
+    case 'table':
+      if (!tableCompareState.leftPath && !tableCompareState.rightPath) renderEmptyTableCompare();
+      break;
+    case 'foldersync':
+      if (!folderSyncState.leftPath && !folderSyncState.rightPath) renderEmptyFolderSync();
+      break;
+    case 'foldermerge':
+      if (!folderMergeState.leftPath && !folderMergeState.basePath && !folderMergeState.rightPath) renderEmptyFolderMerge();
+      break;
+    case 'textmerge':
+      if (!textMergeState.leftPath && !textMergeState.basePath && !textMergeState.rightPath) renderEmptyTextMerge();
+      break;
+    case 'text':
+      if (!appState.currentTextFile.leftFullPath && !appState.currentTextFile.rightFullPath) renderEmptyTextCompare();
+      break;
+    case 'folder':
+      if (!appState.leftPath && !appState.rightPath) renderEmptyFolderCompare();
+      break;
+  }
+}
+
 function renderSessionsTree() {
   const container = document.getElementById('dynamicSessionsTree');
   if (!container) return;
@@ -358,6 +449,7 @@ function renderSessionsTree() {
   const hasGroups = availableGroups.length > 0;
 
   // Level 0: Auto-saved Root Row
+  const autoRootLabel = window.i18n ? escapeHtml(window.i18n.t('sessions.auto_saved')) : 'Auto-saved';
   const autoRootRow = document.createElement('div');
   autoRootRow.className = 'bc-tree-row bc-level-0';
   autoRootRow.innerHTML = `
@@ -365,7 +457,7 @@ function renderSessionsTree() {
       <span class="bc-arrow">${isAutoRootExpanded ? '▾' : '▸'}</span>
     </span>
     <span class="bc-icon bc-icon-archive-folder"></span>
-    <span class="bc-tree-label">Auto-saved</span>
+    <span class="bc-tree-label">${autoRootLabel}</span>
     <span class="bc-tree-badge">${filteredAutoSaved.length}</span>
   `;
   autoRootRow.onclick = (e) => {
@@ -383,6 +475,7 @@ function renderSessionsTree() {
       const hasSessions = list.length > 0;
 
       // Level 1: Date Group Row (Today, Yesterday, etc.)
+      const localizedGroupName = formatSessionGroupDateName(gName);
       const groupRow = document.createElement('div');
       groupRow.className = `bc-tree-row bc-level-1 ${isLastGroup ? 'is-last' : ''}`;
       groupRow.innerHTML = `
@@ -391,7 +484,7 @@ function renderSessionsTree() {
           <span class="bc-arrow">${isGroupExpanded ? '▾' : '▸'}</span>
         </span>
         <span class="bc-icon bc-icon-archive-folder"></span>
-        <span class="bc-tree-label">${escapeHtml(gName)}</span>
+        <span class="bc-tree-label">${escapeHtml(localizedGroupName)}</span>
         <span class="bc-tree-badge">${list.length}</span>
       `;
       groupRow.onclick = (e) => {
@@ -446,6 +539,7 @@ function renderSessionsTree() {
     const isSavedExpanded = appState.expandedSessionGroups.has('saved-sessions');
     const hasSaved = savedList.length > 0;
 
+    const savedRootLabel = window.i18n ? escapeHtml(window.i18n.t('sessions.saved_sessions')) : 'Saved Sessions';
     const savedRootRow = document.createElement('div');
     savedRootRow.className = 'bc-tree-row bc-level-0';
     savedRootRow.style.marginTop = '6px';
@@ -454,7 +548,7 @@ function renderSessionsTree() {
         <span class="bc-arrow">${isSavedExpanded ? '▾' : '▸'}</span>
       </span>
       <span class="bc-icon bc-icon-archive-folder"></span>
-      <span class="bc-tree-label">Saved Sessions</span>
+      <span class="bc-tree-label">${savedRootLabel}</span>
       <span class="bc-tree-badge">${savedList.length}</span>
     `;
     savedRootRow.onclick = (e) => {
@@ -611,11 +705,7 @@ function openFolderCompare(left = '', right = '', sessionName = 'Folder Compare'
     inR.placeholder = 'Enter path here';
   }
 
-  const tabTitle = document.getElementById('currentSessionTabTitle');
-  if (tabTitle) {
-    const clean = (sessionName || 'Folder Compare').replace(/^New\s+/, '').replace(/\s*-\s*Folder Compare$/, '');
-    tabTitle.textContent = clean || 'Folder Compare';
-  }
+  setSessionTabTitle('currentSessionTabTitle', 'tab.folder_compare', 'Folder Compare', sessionName);
 
   const tabFolderBtn = document.getElementById('tabFolderBtn');
   if (tabFolderBtn) tabFolderBtn.style.display = 'flex';
@@ -666,8 +756,10 @@ function renderEmptyFolderCompare(sessionName = 'New Folder Compare') {
   if (inL) inL.value = '';
   if (inR) inR.value = '';
 
-  const tabTitle = document.getElementById('currentSessionTabTitle');
-  if (tabTitle) tabTitle.textContent = sessionName.includes('-') ? sessionName : `${sessionName} - Folder Compare`;
+  setSessionTabTitle('currentSessionTabTitle', 'tab.folder_compare', 'Folder Compare', sessionName);
+
+  const dropL = window.i18n ? window.i18n.t('folder.dropzone_left') : 'Drop left folder here, or click 📁▾ to browse';
+  const dropR = window.i18n ? window.i18n.t('folder.dropzone_right') : 'Drop right folder here, or click 📁▾ to browse';
 
   const leftBody = document.getElementById('leftTableBody');
   const rightBody = document.getElementById('rightTableBody');
@@ -676,7 +768,7 @@ function renderEmptyFolderCompare(sessionName = 'New Folder Compare') {
       <tr>
         <td colspan="4" style="text-align: center; padding: 80px 20px; color: #666; font-family: var(--font-sans); cursor: pointer;" onclick="browseFolder('left')">
           <div style="font-size: 40px; margin-bottom: 8px; opacity: 0.6;">📁</div>
-          <div style="font-size: 13px; font-weight: 500;">Drop left folder here, or click 📁▾ to browse</div>
+          <div style="font-size: 13px; font-weight: 500;">${dropL}</div>
         </td>
       </tr>
     `;
@@ -686,7 +778,7 @@ function renderEmptyFolderCompare(sessionName = 'New Folder Compare') {
       <tr>
         <td colspan="4" style="text-align: center; padding: 80px 20px; color: #666; font-family: var(--font-sans); cursor: pointer;" onclick="browseFolder('right')">
           <div style="font-size: 40px; margin-bottom: 8px; opacity: 0.6;">📁</div>
-          <div style="font-size: 13px; font-weight: 500;">Drop right folder here, or click 📁▾ to browse</div>
+          <div style="font-size: 13px; font-weight: 500;">${dropR}</div>
         </td>
       </tr>
     `;
@@ -3297,11 +3389,7 @@ function openHexCompare(left = '', right = '', title = 'Hex Compare') {
   if (inL) inL.value = left || '';
   if (inR) inR.value = right || '';
 
-  const tabTitle = document.getElementById('currentHexTabTitle');
-  if (tabTitle) {
-    const clean = (title || 'Hex Compare').replace(/^New\s+/, '').replace(/\s*-\s*Hex Compare$/, '');
-    tabTitle.textContent = clean || 'Hex Compare';
-  }
+  setSessionTabTitle('currentHexTabTitle', 'tab.hex_compare', 'Hex Compare', title);
 
   const tabHexBtn = document.getElementById('tabHexBtn');
   if (tabHexBtn) tabHexBtn.style.display = 'flex';
@@ -3330,11 +3418,13 @@ function openHexCompare(left = '', right = '', title = 'Hex Compare') {
 function renderEmptyHexCompare() {
   const cL = document.getElementById('hexLeftContent');
   const cR = document.getElementById('hexRightContent');
+  const dropL = window.i18n ? window.i18n.t('hex.dropzone_left') : 'Drop left file here to view Hex, or click 📁▾ to browse';
+  const dropR = window.i18n ? window.i18n.t('hex.dropzone_right') : 'Drop right file here to view Hex, or click 📁▾ to browse';
   if (cL) {
     cL.innerHTML = `
       <div class="text-empty-dropzone" onclick="browseHexFile('left')">
         <div class="dropzone-icon">🔢</div>
-        <div>Drop left file here to view Hex, or click 📁▾ to browse</div>
+        <div>${dropL}</div>
       </div>
     `;
   }
@@ -3342,13 +3432,13 @@ function renderEmptyHexCompare() {
     cR.innerHTML = `
       <div class="text-empty-dropzone" onclick="browseHexFile('right')">
         <div class="dropzone-icon">🔢</div>
-        <div>Drop right file here to view Hex, or click 📁▾ to browse</div>
+        <div>${dropR}</div>
       </div>
     `;
   }
   const badge = document.getElementById('hexDiffBadge');
   if (badge) {
-    badge.textContent = 'Drag files into panels or click 📁 to browse';
+    badge.textContent = window.i18n ? window.i18n.t('hex.badge') : 'Drag files into panels or click 📁 to browse';
     badge.style.background = 'rgba(255, 255, 255, 0.08)';
     badge.style.color = '#aaa';
   }
@@ -3621,11 +3711,7 @@ function openPictureCompare(left = '', right = '', title = 'Picture Compare') {
   if (inL) inL.value = left || '';
   if (inR) inR.value = right || '';
 
-  const tabTitle = document.getElementById('currentPictureTabTitle');
-  if (tabTitle) {
-    const clean = (title || 'Picture Compare').replace(/^New\s+/, '').replace(/\s*-\s*Picture Compare$/, '');
-    tabTitle.textContent = clean || 'Picture Compare';
-  }
+  setSessionTabTitle('currentPictureTabTitle', 'tab.picture_compare', 'Picture Compare', title);
 
   const tabPicBtn = document.getElementById('tabPictureBtn');
   if (tabPicBtn) tabPicBtn.style.display = 'flex';
@@ -3654,11 +3740,13 @@ function openPictureCompare(left = '', right = '', title = 'Picture Compare') {
 function renderEmptyPictureCompare() {
   const cL = document.getElementById('picLeftContent');
   const cR = document.getElementById('picRightContent');
+  const dropL = window.i18n ? window.i18n.t('pic.dropzone_left') : 'Drop left image here, or click 📁▾ to browse';
+  const dropR = window.i18n ? window.i18n.t('pic.dropzone_right') : 'Drop right image here, or click 📁▾ to browse';
   if (cL) {
     cL.innerHTML = `
       <div class="text-empty-dropzone" onclick="browsePicFile('left')">
         <div class="dropzone-icon">🖼️</div>
-        <div>Drop left image here, or click 📁▾ to browse</div>
+        <div>${dropL}</div>
       </div>
     `;
   }
@@ -3666,13 +3754,13 @@ function renderEmptyPictureCompare() {
     cR.innerHTML = `
       <div class="text-empty-dropzone" onclick="browsePicFile('right')">
         <div class="dropzone-icon">🖼️</div>
-        <div>Drop right image here, or click 📁▾ to browse</div>
+        <div>${dropR}</div>
       </div>
     `;
   }
   const badge = document.getElementById('pictureDiffBadge');
   if (badge) {
-    badge.textContent = 'Drag images into panels or click 📁 to browse';
+    badge.textContent = window.i18n ? window.i18n.t('pic.badge') : 'Drag images into panels or click 📁 to browse';
     badge.style.background = 'rgba(255, 255, 255, 0.08)';
     badge.style.color = '#aaa';
   }
@@ -3945,11 +4033,7 @@ async function openMediaCompare(left = '', right = '', title = 'Media Compare') 
   if (inL) inL.value = left || '';
   if (inR) inR.value = right || '';
 
-  const tabTitle = document.getElementById('currentMediaTabTitle');
-  if (tabTitle) {
-    const clean = (title || 'Media Compare').replace(/^New\s+/, '').replace(/\s*-\s*Media Compare$/, '');
-    tabTitle.textContent = clean || 'Media Compare';
-  }
+  setSessionTabTitle('currentMediaTabTitle', 'tab.media_compare', 'Media Compare', title);
 
   const tabBtn = document.getElementById('tabMediaBtn');
   if (tabBtn) tabBtn.style.display = 'flex';
@@ -3974,7 +4058,8 @@ async function openMediaCompare(left = '', right = '', title = 'Media Compare') 
 function renderEmptyMediaCompare() {
   const tbody = document.getElementById('mediaTagsTableBody');
   if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #888; padding: 40px;">Select Left and Right audio/video files to compare tags</td></tr>`;
+    const msg = window.i18n ? window.i18n.t('media.empty_prompt') : 'Select Left and Right audio/video files to compare tags';
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #888; padding: 40px;">${msg}</td></tr>`;
   }
 }
 
@@ -4109,11 +4194,7 @@ async function openTableCompare(left = '', right = '', title = 'Table Compare') 
   if (inL) inL.value = left || '';
   if (inR) inR.value = right || '';
 
-  const tabTitle = document.getElementById('currentTableTabTitle');
-  if (tabTitle) {
-    const clean = (title || 'Table Compare').replace(/^New\s+/, '').replace(/\s*-\s*Table Compare$/, '');
-    tabTitle.textContent = clean || 'Table Compare';
-  }
+  setSessionTabTitle('currentTableTabTitle', 'tab.table_compare', 'Table Compare', title);
 
   const tabBtn = document.getElementById('tabTableBtn');
   if (tabBtn) tabBtn.style.display = 'flex';
@@ -4138,8 +4219,10 @@ async function openTableCompare(left = '', right = '', title = 'Table Compare') 
 function renderEmptyTableCompare() {
   const cL = document.getElementById('tblLeftContent');
   const cR = document.getElementById('tblRightContent');
-  if (cL) cL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTableFile('left')"><div class="dropzone-icon">📊</div><div>Drop Excel or CSV/TSV table here, or click 📁▾</div></div>`;
-  if (cR) cR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTableFile('right')"><div class="dropzone-icon">📊</div><div>Drop Excel or CSV/TSV table here, or click 📁▾</div></div>`;
+  const dropL = window.i18n ? window.i18n.t('tableview.dropzone_left') : 'Drop Excel or CSV/TSV table here, or click 📁▾';
+  const dropR = window.i18n ? window.i18n.t('tableview.dropzone_right') : 'Drop Excel or CSV/TSV table here, or click 📁▾';
+  if (cL) cL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTableFile('left')"><div class="dropzone-icon">📊</div><div>${dropL}</div></div>`;
+  if (cR) cR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTableFile('right')"><div class="dropzone-icon">📊</div><div>${dropR}</div></div>`;
   const bar = document.getElementById('tableSheetsList');
   if (bar) bar.innerHTML = `<button class="table-sheet-tab active">Sheet 1</button>`;
 }
@@ -4352,11 +4435,7 @@ function openFolderSync(left = '', right = '', title = 'Folder Sync') {
   if (inL) inL.value = left || '';
   if (inR) inR.value = right || '';
 
-  const tabTitle = document.getElementById('currentFolderSyncTabTitle');
-  if (tabTitle) {
-    const clean = (title || 'Folder Sync').replace(/^New\s+/, '').replace(/\s*-\s*Folder Sync$/, '');
-    tabTitle.textContent = clean || 'Folder Sync';
-  }
+  setSessionTabTitle('currentFolderSyncTabTitle', 'tab.folder_sync', 'Folder Sync', title);
 
   const tabBtn = document.getElementById('tabFolderSyncBtn');
   if (tabBtn) tabBtn.style.display = 'flex';
@@ -4476,10 +4555,14 @@ async function computeFolderSyncPlan() {
 function renderEmptyFolderSync() {
   const tbody = document.getElementById('folderSyncTableBody');
   if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #888; padding: 40px;">Select Left (Source) and Right (Target) folders to preview sync actions</td></tr>`;
+    const msg = window.i18n ? window.i18n.t('fsync.empty_prompt') : 'Select Left (Source) and Right (Target) folders to preview sync actions';
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #888; padding: 40px;">${msg}</td></tr>`;
   }
   const summary = document.getElementById('syncStatusSummary');
-  if (summary) summary.textContent = '0 actions planned';
+  if (summary) {
+    const tpl = window.i18n ? window.i18n.t('fsync.actions_planned') : '{count} actions planned';
+    summary.textContent = tpl.replace('{count}', '0');
+  }
 }
 
 function renderFolderSyncPlan() {
@@ -4628,11 +4711,7 @@ function openFolderMerge(left = '', base = '', right = '', title = 'Folder Merge
   if (inB) inB.value = base || '';
   if (inR) inR.value = right || '';
 
-  const tabTitle = document.getElementById('currentFolderMergeTabTitle');
-  if (tabTitle) {
-    const clean = (title || 'Folder Merge').replace(/^New\s+/, '').replace(/\s*-\s*Folder Merge$/, '');
-    tabTitle.textContent = clean || 'Folder Merge';
-  }
+  setSessionTabTitle('currentFolderMergeTabTitle', 'tab.folder_merge', 'Folder Merge', title);
 
   const tabBtn = document.getElementById('tabFolderMergeBtn');
   if (tabBtn) tabBtn.style.display = 'flex';
@@ -4716,7 +4795,8 @@ function renderEmptyFolderMerge() {
 
     tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ccc; padding: 40px; line-height: 1.6;">${parts.join('')}${hint}</td></tr>`;
   } else {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #888; padding: 40px;">Select or drop Left (Theirs), Center (Base Ancestor), and Right (Mine) folders to compare</td></tr>`;
+    const emptyMsg = window.i18n ? window.i18n.t('fmerge.empty_prompt') : 'Select 3 folders to run 3-way folder merge';
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #888; padding: 40px;">${emptyMsg}</td></tr>`;
   }
 }
 
@@ -4804,11 +4884,7 @@ function openTextMerge(left = '', base = '', right = '', title = 'Text Merge') {
   if (inB) inB.value = base || '';
   if (inR) inR.value = right || '';
 
-  const tabTitle = document.getElementById('currentTextMergeTabTitle');
-  if (tabTitle) {
-    const clean = (title || 'Text Merge').replace(/^New\s+/, '').replace(/\s*-\s*Text Merge$/, '');
-    tabTitle.textContent = clean || 'Text Merge';
-  }
+  setSessionTabTitle('currentTextMergeTabTitle', 'tab.text_merge', 'Text Merge', title);
 
   const tabBtn = document.getElementById('tabTextMergeBtn');
   if (tabBtn) tabBtn.style.display = 'flex';
@@ -4854,9 +4930,10 @@ function closeTextMergeTab(event) {
 }
 
 function renderEmptyTextMerge() {
+  const dropMsg = window.i18n ? window.i18n.t('tmerge.drop_prompt') : 'Select file or drop here';
   ['tMergeLeftLines', 'tMergeBaseLines', 'tMergeRightLines'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>Select file or drop here</div></div>`;
+    if (el) el.innerHTML = `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
   });
   const out = document.getElementById('tMergeOutputEditor');
   if (out) out.value = '';
@@ -4875,10 +4952,11 @@ function renderPartialThreeWayTextMerge(left, tL, base, tB, right, tR) {
   const dL = document.getElementById('tMergeLeftLines');
   const dB = document.getElementById('tMergeBaseLines');
   const dR = document.getElementById('tMergeRightLines');
+  const dropMsg = window.i18n ? window.i18n.t('tmerge.drop_prompt') : 'Select file or drop here';
 
-  if (dL) dL.innerHTML = left ? renderLines(tL) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>Select file or drop here</div></div>`;
-  if (dB) dB.innerHTML = base ? renderLines(tB) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>Select file or drop here</div></div>`;
-  if (dR) dR.innerHTML = right ? renderLines(tR) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>Select file or drop here</div></div>`;
+  if (dL) dL.innerHTML = left ? renderLines(tL) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
+  if (dB) dB.innerHTML = base ? renderLines(tB) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
+  if (dR) dR.innerHTML = right ? renderLines(tR) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
 
   const out = document.getElementById('tMergeOutputEditor');
   if (out) out.value = '';
@@ -5055,11 +5133,8 @@ let textEditState = {
 
 async function openTextEdit(filePath = '', title = 'Text Edit') {
   textEditState.filePath = filePath || '';
-  const tabTitle = document.getElementById('currentTextEditTabTitle');
-  if (tabTitle) {
-    const basename = filePath ? filePath.split(/[\\/]/).pop() : (title || 'Text Edit');
-    tabTitle.textContent = (basename || 'Text Edit').replace(/^New Document\s*-\s*/, '').replace(/\s*-\s*Text Edit$/, '');
-  }
+  const basename = filePath ? filePath.split(/[\\/]/).pop() : (title || 'Text Edit');
+  setSessionTabTitle('currentTextEditTabTitle', 'tab.text_edit', 'Text Edit', basename);
   const tabBtn = document.getElementById('tabTextEditBtn');
   if (tabBtn) tabBtn.style.display = 'flex';
 
@@ -5882,14 +5957,14 @@ function updateTextTabTitle() {
   const titleEl = document.getElementById('currentTextTabTitle');
   if (!titleEl) return;
   if (!left && !right) {
-    titleEl.textContent = 'Text Compare';
+    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', 'Text Compare');
   } else if (left && right) {
     const nameL = left.split(/[\/\\]/).pop();
     const nameR = right.split(/[\/\\]/).pop();
-    titleEl.textContent = nameL === nameR ? nameL : `${nameL} ↔ ${nameR}`;
+    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', nameL === nameR ? nameL : `${nameL} ↔ ${nameR}`);
   } else {
     const single = (left || right).split(/[\/\\]/).pop();
-    titleEl.textContent = single || 'Text Compare';
+    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', single || 'Text Compare');
   }
   if (appState.activeView === 'text') {
     updateAppHeader();
