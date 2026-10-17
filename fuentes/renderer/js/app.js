@@ -1,6 +1,98 @@
 // DiffCore - Beyond Compare 5 Engine Frontend
 
 // Global Application State
+const DEFAULT_EXCLUSIONS = {
+  enabled: false,
+  excludeFolders: ['.settings', 'target', '.git', 'node_modules', '.idea', 'dist', 'build'],
+  excludeFiles: ['.classpath', '.gitignore', '.project', '*.log', '*.tmp', '.DS_Store', 'Thumbs.db']
+};
+
+function loadExclusionsConfig() {
+  try {
+    const raw = localStorage.getItem('diffcore_exclusions_config');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        enabled: !!parsed.enabled,
+        excludeFolders: Array.isArray(parsed.excludeFolders) ? parsed.excludeFolders : [...DEFAULT_EXCLUSIONS.excludeFolders],
+        excludeFiles: Array.isArray(parsed.excludeFiles) ? parsed.excludeFiles : [...DEFAULT_EXCLUSIONS.excludeFiles]
+      };
+    }
+  } catch {}
+  return {
+    enabled: false,
+    excludeFolders: [...DEFAULT_EXCLUSIONS.excludeFolders],
+    excludeFiles: [...DEFAULT_EXCLUSIONS.excludeFiles]
+  };
+}
+
+function saveExclusionsConfig() {
+  try {
+    localStorage.setItem('diffcore_exclusions_config', JSON.stringify(appState.exclusions));
+  } catch {}
+}
+
+let cachedExclusionMatcher = null;
+function invalidateExclusionMatcher() {
+  cachedExclusionMatcher = null;
+}
+
+function patternToRegex(pat) {
+  const escaped = pat.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.');
+  return new RegExp('^' + escaped + '$', 'i');
+}
+
+function getExclusionMatcher() {
+  if (cachedExclusionMatcher) return cachedExclusionMatcher;
+  if (!appState || !appState.exclusions) return () => false;
+
+  const folderSet = new Set(
+    (appState.exclusions.excludeFolders || []).map(f => f.trim().toLowerCase()).filter(Boolean)
+  );
+
+  const fileExact = new Set();
+  const fileRegexes = [];
+
+  (appState.exclusions.excludeFiles || []).map(f => f.trim()).filter(Boolean).forEach(f => {
+    if (f.includes('*') || f.includes('?')) {
+      fileRegexes.push(patternToRegex(f));
+    } else {
+      fileExact.add(f.toLowerCase());
+    }
+  });
+
+  cachedExclusionMatcher = function isExcluded(relPath, isDir) {
+    if (!relPath) return false;
+    const segments = relPath.split(/[\/\\]+/).filter(Boolean);
+    if (segments.length === 0) return false;
+
+    for (let i = 0; i < segments.length - (isDir ? 0 : 1); i++) {
+      if (folderSet.has(segments[i].toLowerCase())) return true;
+    }
+
+    if (isDir) {
+      if (folderSet.has(segments[segments.length - 1].toLowerCase())) return true;
+      return false;
+    }
+
+    const fileName = segments[segments.length - 1];
+    const fileLower = fileName.toLowerCase();
+    if (fileExact.has(fileLower)) return true;
+
+    for (let i = 0; i < fileRegexes.length; i++) {
+      if (fileRegexes[i].test(fileName)) return true;
+    }
+    return false;
+  };
+
+  return cachedExclusionMatcher;
+}
+
+function isItemExcluded(relPath, isDir) {
+  if (!appState || !appState.exclusions || !appState.exclusions.enabled) return false;
+  return getExclusionMatcher()(relPath, isDir);
+}
+
 let appState = {
   sessions: [],
   autoSaved: [],
@@ -21,6 +113,7 @@ let appState = {
   selectedIndices: new Set(),
   lastClickedIndex: -1,
   currentFilter: localStorage.getItem('diffcore_filter') || 'diffs', // 'all', 'diffs', 'same', 'orphans' (default diffs)
+  exclusions: loadExclusionsConfig(),
   tableSearchQuery: '',
   contextItem: null,
   
@@ -50,6 +143,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Apply persisted or default filter ('diffs')
   setFilter(appState.currentFilter);
+  updateFilterToolbarButton();
 
   // Re-calculate visible virtual window and sync scrollbars on resize
   window.addEventListener('resize', () => {
@@ -1504,9 +1598,13 @@ function buildComparisonTree(rawItems) {
     isOpen: true
   };
 
+  const activeItems = (appState.exclusions && appState.exclusions.enabled)
+    ? rawItems.filter(it => !isItemExcluded(it.relativePath, it.isDirectory))
+    : rawItems;
+
   // 1. Build hierarchy by path segments
-  for (let rIdx = 0; rIdx < rawItems.length; rIdx++) {
-    const item = rawItems[rIdx];
+  for (let rIdx = 0; rIdx < activeItems.length; rIdx++) {
+    const item = activeItems[rIdx];
     const parts = item.relativePath.split(/[\/\\]+/).filter(Boolean);
     let curr = root;
     let accPath = '';
@@ -2858,13 +2956,149 @@ async function touchContextItem(item) {
 
 function excludeContextItem(item) {
   if (!item) return;
-  const filterInput = document.getElementById('nameFilterInput');
-  if (filterInput) {
-    const currentVal = filterInput.value.trim();
-    const pattern = `-${item.name}`;
-    filterInput.value = currentVal ? `${currentVal}; ${pattern}` : pattern;
-    onNameFilterChange();
-    showToast(`Excluded "${item.name}"`, 'info');
+  const isDir = !!item.isDirectory;
+  const name = item.name;
+
+  if (isDir) {
+    if (!appState.exclusions.excludeFolders.includes(name)) {
+      appState.exclusions.excludeFolders.push(name);
+    }
+  } else {
+    if (!appState.exclusions.excludeFiles.includes(name)) {
+      appState.exclusions.excludeFiles.push(name);
+    }
+  }
+
+  appState.exclusions.enabled = true;
+  saveExclusionsConfig();
+  invalidateExclusionMatcher();
+  updateFilterToolbarButton();
+
+  if (appState.comparisonItems.length > 0) {
+    appState.treeRoot = buildComparisonTree(appState.comparisonItems);
+    applyFilterAndRender();
+    updateStatusBar();
+  }
+  showToast(`Excluded ${isDir ? 'folder' : 'file'} "${name}" (filters active)`, 'info');
+}
+
+// --- MODAL: FILE & FOLDER FILTERS (EXCLUSIONS) ---
+function openNameFiltersModal() {
+  const chk = document.getElementById('chkEnableExclusions');
+  const txtFolders = document.getElementById('txtExcludeFolders');
+  const txtFiles = document.getElementById('txtExcludeFiles');
+
+  if (chk) chk.checked = !!(appState.exclusions && appState.exclusions.enabled);
+  if (txtFolders) txtFolders.value = (appState.exclusions.excludeFolders || []).join('; ');
+  if (txtFiles) txtFiles.value = (appState.exclusions.excludeFiles || []).join('; ');
+
+  toggleExclusionControls();
+  const modal = document.getElementById('nameFiltersModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeNameFiltersModal() {
+  const modal = document.getElementById('nameFiltersModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function toggleExclusionControls() {
+  const chk = document.getElementById('chkEnableExclusions');
+  const isEnabled = chk ? chk.checked : false;
+  const fsFolders = document.getElementById('fsExcludeFolders');
+  const fsFiles = document.getElementById('fsExcludeFiles');
+
+  if (fsFolders) fsFolders.style.opacity = isEnabled ? '1' : '0.6';
+  if (fsFiles) fsFiles.style.opacity = isEnabled ? '1' : '0.6';
+}
+
+function addFilterPreset(type) {
+  const txtFolders = document.getElementById('txtExcludeFolders');
+  const txtFiles = document.getElementById('txtExcludeFiles');
+  if (!txtFolders || !txtFiles) return;
+
+  function appendItems(textarea, items) {
+    const current = textarea.value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+    const existing = new Set(current.map(s => s.toLowerCase()));
+    items.forEach(it => {
+      if (!existing.has(it.toLowerCase())) {
+        current.push(it);
+      }
+    });
+    textarea.value = current.join('; ');
+  }
+
+  if (type === 'maven') {
+    appendItems(txtFolders, ['target', 'build', '.gradle']);
+  } else if (type === 'eclipse') {
+    appendItems(txtFolders, ['.settings', '.idea']);
+    appendItems(txtFiles, ['.classpath', '.project']);
+  } else if (type === 'git') {
+    appendItems(txtFolders, ['.git']);
+    appendItems(txtFiles, ['.gitignore', '.gitattributes']);
+  } else if (type === 'node') {
+    appendItems(txtFolders, ['node_modules', 'dist']);
+    appendItems(txtFiles, ['package-lock.json']);
+  } else if (type === 'system') {
+    appendItems(txtFiles, ['.DS_Store', 'Thumbs.db', '*.log', '*.tmp', '*.bak']);
+  }
+}
+
+function resetNameFiltersToDefaults() {
+  const chk = document.getElementById('chkEnableExclusions');
+  const txtFolders = document.getElementById('txtExcludeFolders');
+  const txtFiles = document.getElementById('txtExcludeFiles');
+
+  if (chk) chk.checked = false;
+  if (txtFolders) txtFolders.value = DEFAULT_EXCLUSIONS.excludeFolders.join('; ');
+  if (txtFiles) txtFiles.value = DEFAULT_EXCLUSIONS.excludeFiles.join('; ');
+  toggleExclusionControls();
+}
+
+function saveNameFiltersFromModal() {
+  const chk = document.getElementById('chkEnableExclusions');
+  const txtFolders = document.getElementById('txtExcludeFolders');
+  const txtFiles = document.getElementById('txtExcludeFiles');
+
+  const enabled = chk ? chk.checked : false;
+  const folders = txtFolders
+    ? txtFolders.value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean)
+    : [];
+  const files = txtFiles
+    ? txtFiles.value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean)
+    : [];
+
+  appState.exclusions = {
+    enabled,
+    excludeFolders: folders,
+    excludeFiles: files
+  };
+
+  saveExclusionsConfig();
+  invalidateExclusionMatcher();
+  updateFilterToolbarButton();
+
+  if (appState.comparisonItems.length > 0) {
+    appState.treeRoot = buildComparisonTree(appState.comparisonItems);
+    applyFilterAndRender();
+    updateStatusBar();
+  }
+
+  closeNameFiltersModal();
+  showToast(enabled ? 'Exclusion filters applied' : 'Exclusion filters disabled (all items visible)', 'info');
+}
+
+function updateFilterToolbarButton() {
+  const btn = document.getElementById('btnNameFilters');
+  const dot = document.getElementById('filterActiveDot');
+  const isEnabled = !!(appState.exclusions && appState.exclusions.enabled);
+
+  if (btn) {
+    if (isEnabled) btn.classList.add('active-filter');
+    else btn.classList.remove('active-filter');
+  }
+  if (dot) {
+    dot.style.display = isEnabled ? 'inline-block' : 'none';
   }
 }
 

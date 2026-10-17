@@ -3184,4 +3184,38 @@ body.theme-light .token-directive { color: #af00db; }
   gap: 12px;
 }
 
+/* File & Folder Filters (Exclusions) Modal & Toolbar */
+.filter-active-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 4px #3b82f6;
+}
+
+#btnNameFilters.active-filter {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+
+.preset-btn {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #ccc;
+  border-radius: 3px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.15s;
+}
+
+.preset-btn:hover {
+  background: #3a3a3a;
+  color: #fff;
+  border-color: #666;
+}
+
 
