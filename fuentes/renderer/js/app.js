@@ -5931,11 +5931,14 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   appState.currentTextFile.diffResult = diffResult;
 
   // Render side-by-side aligned diff
+  resetTextCompareScroll();
   renderTextDiff(diffResult);
 
-  const opts = appState.diffOptions || DEFAULT_DIFF_OPTIONS;
+  const opts = appState.diffOptions || loadDiffOptions();
   if (opts.goToFirstDiffOnLoad && diffResult.sections && diffResult.sections.length > 0) {
     setTimeout(() => jumpToSection(0), 60);
+  } else {
+    setTimeout(() => resetTextCompareScroll(), 20);
   }
 
   // Auto-save session ONLY if this is a direct standalone text comparison
@@ -6091,6 +6094,13 @@ async function loadTextFileForSide(side, filePath) {
     );
     appState.currentTextFile.diffResult = diff;
     renderTextDiff(diff);
+
+    const opts = appState.diffOptions || loadDiffOptions();
+    if (opts.goToFirstDiffOnLoad && diff.sections && diff.sections.length > 0) {
+      setTimeout(() => jumpToSection(0), 60);
+    } else {
+      setTimeout(() => resetTextCompareScroll(), 20);
+    }
   } else {
     renderSingleSideText(side);
   }
@@ -6142,6 +6152,13 @@ async function swapSidesText() {
     );
     appState.currentTextFile.diffResult = diff;
     renderTextDiff(diff);
+
+    const opts = appState.diffOptions || loadDiffOptions();
+    if (opts.goToFirstDiffOnLoad && diff.sections && diff.sections.length > 0) {
+      setTimeout(() => jumpToSection(0), 60);
+    } else {
+      setTimeout(() => resetTextCompareScroll(), 20);
+    }
   } else if (appState.currentTextFile.leftFullPath) {
     renderSingleSideText('left');
   } else if (appState.currentTextFile.rightFullPath) {
@@ -7094,11 +7111,6 @@ function renderTextDiff(diffResult) {
 
   updateOverviewViewport();
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
-
-  // Auto-jump to first difference section if any
-  if (sections.length > 0 && !diffResult.isSingleSide) {
-    jumpToSection(0);
-  }
 }
 
 function renderVisibleTextWindow(force = false) {
@@ -7339,6 +7351,23 @@ function setupOverviewRailDrag() {
   });
 }
 
+function resetTextCompareScroll() {
+  const scrollL = document.getElementById('textLeftScroll');
+  const scrollR = document.getElementById('textRightScroll');
+  const scrollG = document.getElementById('textGutterScroll');
+  if (scrollL) { scrollL.scrollTop = 0; scrollL.scrollLeft = 0; }
+  if (scrollR) { scrollR.scrollTop = 0; scrollR.scrollLeft = 0; }
+  if (scrollG) { scrollG.scrollTop = 0; }
+  if (appState.currentTextFile) {
+    appState.currentTextFile.currentSectionIndex = -1;
+  }
+  renderVisibleTextWindow(true);
+  updateOverviewViewport();
+  if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) {
+    textSyncScrollbar.update();
+  }
+}
+
 function jumpToSection(sectionIndex) {
   const diffResult = appState.currentTextFile.diffResult;
   if (!diffResult || !diffResult.sections || !diffResult.sections[sectionIndex]) return;
@@ -7388,13 +7417,18 @@ const DEFAULT_DIFF_OPTIONS = {
 
 function loadDiffOptions() {
   try {
-    const raw = localStorage.getItem('diffcore_diff_options_v2');
-    if (!raw) {
-      localStorage.setItem('diffcore_diff_options_v2', JSON.stringify(DEFAULT_DIFF_OPTIONS));
-      return { ...DEFAULT_DIFF_OPTIONS };
+    const rawV2 = localStorage.getItem('diffcore_diff_options_v2');
+    if (rawV2) {
+      const parsed = JSON.parse(rawV2);
+      return { ...DEFAULT_DIFF_OPTIONS, ...parsed };
     }
-    const parsed = JSON.parse(raw);
-    return { ...DEFAULT_DIFF_OPTIONS, ...parsed };
+    const rawV1 = localStorage.getItem('diffcore_diff_options');
+    if (rawV1) {
+      const parsed = JSON.parse(rawV1);
+      return { ...DEFAULT_DIFF_OPTIONS, ...parsed };
+    }
+    localStorage.setItem('diffcore_diff_options_v2', JSON.stringify(DEFAULT_DIFF_OPTIONS));
+    return { ...DEFAULT_DIFF_OPTIONS };
   } catch (e) {
     return { ...DEFAULT_DIFF_OPTIONS };
   }
@@ -7462,11 +7496,11 @@ function saveNextDiffOptionsFromModal() {
   const chkMsg = document.getElementById('chkShowMessagePanel');
 
   appState.diffOptions = {
-    goToFirstDiffOnLoad: chkFirst ? chkFirst.checked : false,
-    nextDiffAfterCopy: chkNext ? chkNext.checked : false,
-    limitNextDiffToFolder: chkLimit ? chkLimit.checked : false,
-    wrapAroundDiffs: chkWrap ? chkWrap.checked : false,
-    showMessagePanel: chkMsg ? chkMsg.checked : true
+    goToFirstDiffOnLoad: chkFirst ? Boolean(chkFirst.checked) : false,
+    nextDiffAfterCopy: chkNext ? Boolean(chkNext.checked) : false,
+    limitNextDiffToFolder: chkLimit ? Boolean(chkLimit.checked) : false,
+    wrapAroundDiffs: chkWrap ? Boolean(chkWrap.checked) : false,
+    showMessagePanel: chkMsg ? Boolean(chkMsg.checked) : false
   };
 
   saveDiffOptionsConfig();
