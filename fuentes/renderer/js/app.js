@@ -253,6 +253,12 @@ function setupMenuListeners() {
     });
   }
 
+  if (window.api && typeof window.api.onOpenAbout === 'function') {
+    window.api.onOpenAbout(() => {
+      openAboutModal();
+    });
+  }
+
   if (window.api && typeof window.api.onNewTab === 'function') {
     window.api.onNewTab(() => {
       switchView('home');
@@ -290,6 +296,17 @@ function setupMenuListeners() {
     if ((event.metaKey || event.ctrlKey) && event.key === ',') {
       event.preventDefault();
       openNextDiffOptionsModal();
+    } else if (event.key === 'Escape') {
+      const aboutM = document.getElementById('aboutModal');
+      if (aboutM && aboutM.classList.contains('active')) {
+        closeAboutModal();
+        return;
+      }
+      const optM = document.getElementById('nextDiffOptionsModal');
+      if (optM && optM.classList.contains('active')) {
+        closeNextDiffOptionsModal();
+        return;
+      }
     }
   });
 
@@ -7642,6 +7659,34 @@ window.openNextDiffOptionsModal = openNextDiffOptionsModal;
 window.closeNextDiffOptionsModal = closeNextDiffOptionsModal;
 window.resetNextDiffOptionsToDefaults = resetNextDiffOptionsToDefaults;
 window.saveNextDiffOptionsFromModal = saveNextDiffOptionsFromModal;
+
+function openAboutModal() {
+  const modal = document.getElementById('aboutModal');
+  if (modal) {
+    modal.classList.add('active');
+  }
+}
+
+function closeAboutModal() {
+  const modal = document.getElementById('aboutModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+  const lic = document.getElementById('aboutLicenseOverlay');
+  if (lic) lic.style.display = 'none';
+}
+
+function toggleAboutLicense(event) {
+  if (event) event.preventDefault();
+  const lic = document.getElementById('aboutLicenseOverlay');
+  if (lic) {
+    lic.style.display = (lic.style.display === 'none' || !lic.style.display) ? 'flex' : 'none';
+  }
+}
+
+window.openAboutModal = openAboutModal;
+window.closeAboutModal = closeAboutModal;
+window.toggleAboutLicense = toggleAboutLicense;
 
 function navDiff(direction) {
   const diffResult = appState.currentTextFile.diffResult;

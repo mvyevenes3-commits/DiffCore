@@ -82,6 +82,11 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('menu:openSettings', handler);
     return () => ipcRenderer.removeListener('menu:openSettings', handler);
   },
+  onOpenAbout: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:openAbout', handler);
+    return () => ipcRenderer.removeListener('menu:openAbout', handler);
+  },
   onNewTab: (callback) => {
     const handler = () => callback();
     ipcRenderer.on('menu:newTab', handler);

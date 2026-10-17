@@ -1662,6 +1662,91 @@
     </div>
   </div>
 
+  <!-- MODAL: ABOUT DIFFCORE (Beyond Compare 5 style) -->
+  <div class="modal-backdrop" id="aboutModal" onclick="if(event.target === this) closeAboutModal()">
+    <div class="modal-window about-modal-window">
+      <!-- Titlebar with macOS style dots and title -->
+      <div class="about-titlebar">
+        <div class="about-window-dots">
+          <span class="about-dot about-dot-close" title="Close" onclick="closeAboutModal()"></span>
+          <span class="about-dot about-dot-min"></span>
+        </div>
+        <div class="about-window-title" data-i18n="about.title">About DiffCore</div>
+        <button class="about-window-close-x" onclick="closeAboutModal()" title="Close">✕</button>
+      </div>
+
+      <!-- Main Upper Body -->
+      <div class="about-body">
+        <div class="about-hero">
+          <div class="about-logo-wrapper">
+            <img src="assets/icon.png" alt="DiffCore Logo" class="about-logo-img">
+          </div>
+          <div class="about-details">
+            <h1 class="about-app-name">DiffCore</h1>
+            <div class="about-edition" data-i18n="about.edition">64-bit Edition</div>
+            <div class="about-version" data-i18n="about.version">Version 1.0.0 (build 20261017)</div>
+            <div class="about-copyright" data-i18n="about.copyright">Copyright © 2026 Miguel Vergara &amp; Contributors.</div>
+            <div class="about-rights" data-i18n="about.all_rights">All rights reserved.</div>
+          </div>
+        </div>
+
+        <div class="about-eval-row">
+          <label class="about-eval-label">
+            <input type="checkbox" id="chkAboutEvalPro" checked>
+            <span data-i18n="about.pro_features">Evaluate <u>P</u>ro Edition features</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Bottom Darker Bar -->
+      <div class="about-footer">
+        <div class="about-tire-tracks"></div>
+        <div class="about-footer-left">
+          <div class="about-trial-title" data-i18n="about.trial_mode">TRIAL MODE</div>
+          <div class="about-trial-desc" data-i18n="about.trial_days">You have 30 days remaining for evaluation</div>
+        </div>
+        <div class="about-footer-right">
+          <a href="#" class="about-license-link" data-i18n="about.license_agreement" onclick="toggleAboutLicense(event)">License Agreement</a>
+          <button class="about-close-btn" data-i18n="common.close" onclick="closeAboutModal()">Close</button>
+        </div>
+      </div>
+
+      <!-- Inner License Agreement Drawer / Overlay -->
+      <div class="about-license-overlay" id="aboutLicenseOverlay" style="display: none;">
+        <div class="about-license-header">
+          <span data-i18n="about.license_title">DiffCore - End User License Agreement</span>
+          <button class="modal-close-btn" onclick="toggleAboutLicense(event)">✕</button>
+        </div>
+        <div class="about-license-body">
+          <pre class="about-license-text">DiffCore End User License Agreement (EULA)
+
+Copyright (c) 2026 Miguel Vergara &amp; Contributors.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
+        </div>
+        <div class="about-license-footer">
+          <button class="about-close-btn" onclick="toggleAboutLicense(event)" data-i18n="common.close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- FLOATING TOAST NOTIFICATION -->
   <div id="toastNotification" class="toast-notification"></div>
 

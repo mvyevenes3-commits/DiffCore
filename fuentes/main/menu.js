@@ -214,7 +214,14 @@ function buildMenuTemplate(lang, mainWindow) {
     template.push({
       label: 'DiffCore',
       submenu: [
-        { label: t.about, role: 'about' },
+        {
+          label: t.about,
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('menu:openAbout');
+            }
+          }
+        },
         {
           label: t.settings,
           accelerator: 'CmdOrCtrl+,',
@@ -331,7 +338,14 @@ function buildMenuTemplate(lang, mainWindow) {
   template.push({
     label: t.help,
     submenu: [
-      { label: t.about, role: 'about' }
+      {
+        label: t.about,
+        click: () => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('menu:openAbout');
+          }
+        }
+      }
     ]
   });
 
