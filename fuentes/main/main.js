@@ -1,3 +1,4 @@
+process.env.UV_THREADPOOL_SIZE = '64';
 const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -160,6 +161,7 @@ ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath }) =>
 
 // Compare Selection Deep (Modal =? Beyond Compare 5 Parallel Engine)
 ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath, items, method, skipBinary = true }) => {
+  const startTime = performance.now();
   sendLog(`Starting ${method.toUpperCase()} comparison on ${items.length} item(s)...`);
   const total = items.length;
   const results = new Array(total);
@@ -167,7 +169,7 @@ ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath,
   let diffCount = 0;
   let processedCount = 0;
 
-  const CONCURRENCY = 32; // Beyond Compare multi-threaded parallel comparison
+  const CONCURRENCY = 64; // Beyond Compare multi-threaded parallel comparison
   let currentIndex = 0;
   let lastProgressTime = 0;
 
@@ -220,12 +222,14 @@ ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath,
   }
   await Promise.all(workers);
 
-  sendLog(`Comparison finished. Matches: ${matchCount}, Differences: ${diffCount}`);
+  const elapsedSec = ((performance.now() - startTime) / 1000).toFixed(2);
+  sendLog(`Successfully compared ${total.toLocaleString()} items. Completed in ${elapsedSec} seconds. (Matches: ${matchCount}, Differences: ${diffCount})`);
   return {
     success: true,
     method,
     matchCount,
     diffCount,
+    elapsedSec,
     results
   };
 });

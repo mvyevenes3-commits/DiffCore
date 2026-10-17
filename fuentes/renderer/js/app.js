@@ -7302,7 +7302,8 @@ async function executeDeepCompare() {
   }
 
   bar.style.width = '100%';
-  status.textContent = `Finished: ${res.matchCount.toLocaleString()} matched, ${res.diffCount.toLocaleString()} differences.`;
+  const durationText = res.elapsedSec ? ` in ${res.elapsedSec} seconds` : '';
+  status.textContent = `Successfully compared ${itemsToCompare.length.toLocaleString()} items. Completed${durationText}.`;
 
   // Update table statuses based on deep results
   if (res && res.results) {
@@ -7316,7 +7317,7 @@ async function executeDeepCompare() {
     // Re-build hierarchy tree so difference propagation bubbles up to folders
     appState.treeRoot = buildComparisonTree(appState.comparisonItems);
     applyFilterAndRender();
-    showToast(`Deep compare completed: ${res.matchCount} same, ${res.diffCount} diffs.`, 'info');
+    showToast(`Compared ${itemsToCompare.length.toLocaleString()} items${durationText}: ${res.matchCount.toLocaleString()} same, ${res.diffCount.toLocaleString()} diffs.`, 'info');
   }
 
   setTimeout(() => {
