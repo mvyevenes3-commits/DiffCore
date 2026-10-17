@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 
 // CRC32 calculation table
 const CRC32_TABLE = new Int32Array(256);
@@ -12,6 +13,9 @@ for (let i = 0; i < 256; i++) {
 }
 
 function calculateCRC32(buffer) {
+  if (zlib.crc32) {
+    return (zlib.crc32(buffer) >>> 0).toString(16).toUpperCase().padStart(8, '0');
+  }
   let crc = -1;
   for (let i = 0; i < buffer.length; i++) {
     crc = CRC32_TABLE[(crc ^ buffer[i]) & 0xff] ^ (crc >>> 8);
@@ -328,6 +332,88 @@ async function compareFolderTreesAsync(leftDir, rightDir) {
 }
 
 /**
+ * Ultra-fast Beyond Compare 5 Streaming Binary Comparison (64KB chunks)
+ * Short-circuits immediately on the very first byte mismatch.
+ */
+async function areFilesEqualBinaryStreamAsync(f1, f2, size) {
+  if (size === 0) return true;
+  let fh1 = null;
+  let fh2 = null;
+  try {
+    fh1 = await fs.promises.open(f1, 'r');
+    fh2 = await fs.promises.open(f2, 'r');
+    const CHUNK_SIZE = 65536; // 64KB
+    const buf1 = Buffer.allocUnsafe(CHUNK_SIZE);
+    const buf2 = Buffer.allocUnsafe(CHUNK_SIZE);
+    let position = 0;
+
+    while (position < size) {
+      const toRead = Math.min(CHUNK_SIZE, size - position);
+      const [r1, r2] = await Promise.all([
+        fh1.read(buf1, 0, toRead, position),
+        fh2.read(buf2, 0, toRead, position)
+      ]);
+
+      if (r1.bytesRead !== r2.bytesRead) return false;
+      if (r1.bytesRead === 0) break;
+
+      if (!buf1.subarray(0, r1.bytesRead).equals(buf2.subarray(0, r2.bytesRead))) {
+        return false; // Instant exit on first difference
+      }
+
+      position += r1.bytesRead;
+    }
+    return true;
+  } catch {
+    return false;
+  } finally {
+    if (fh1) await fh1.close().catch(() => {});
+    if (fh2) await fh2.close().catch(() => {});
+  }
+}
+
+/**
+ * Ultra-fast CRC32 calculation with hardware-accelerated zlib
+ */
+async function calculateFileCRC32Async(filePath, size) {
+  if (size === 0) return '00000000';
+  if (size <= 10485760) {
+    // Up to 10MB: direct fast buffer read
+    const buf = await fs.promises.readFile(filePath);
+    return calculateCRC32(buf);
+  }
+
+  // Large files (> 10MB): streaming rolling CRC32
+  let fh = null;
+  try {
+    fh = await fs.promises.open(filePath, 'r');
+    const CHUNK_SIZE = 65536;
+    const buf = Buffer.allocUnsafe(CHUNK_SIZE);
+    let position = 0;
+    let crc = undefined;
+
+    while (position < size) {
+      const toRead = Math.min(CHUNK_SIZE, size - position);
+      const r = await fh.read(buf, 0, toRead, position);
+      if (r.bytesRead === 0) break;
+      const slice = buf.subarray(0, r.bytesRead);
+      crc = zlib.crc32 ? zlib.crc32(slice, crc) : null;
+      position += r.bytesRead;
+    }
+
+    if (crc !== undefined && crc !== null) {
+      return (crc >>> 0).toString(16).toUpperCase().padStart(8, '0');
+    }
+    const fullBuf = await fs.promises.readFile(filePath);
+    return calculateCRC32(fullBuf);
+  } catch {
+    return null;
+  } finally {
+    if (fh) await fh.close().catch(() => {});
+  }
+}
+
+/**
  * Deep Comparison: CRC, Binary or Rules-based
  */
 function compareFilesDeep(leftFullPath, rightFullPath, method = 'rules', skipBinary = true) {
@@ -418,6 +504,121 @@ function compareFilesDeep(leftFullPath, rightFullPath, method = 'rules', skipBin
       match,
       method: 'binary_fallback'
     };
+  }
+}
+
+/**
+ * Beyond Compare 5 Deep File Comparison Engine (Async & Non-blocking)
+ */
+async function compareFilesDeepAsync(leftFullPath, rightFullPath, method = 'rules', skipBinary = true, knownLeftSize, knownRightSize) {
+  try {
+    let leftSize = knownLeftSize;
+    let rightSize = knownRightSize;
+
+    if (typeof leftSize !== 'number' || typeof rightSize !== 'number') {
+      const [statL, statR] = await Promise.all([
+        fs.promises.stat(leftFullPath).catch(() => null),
+        fs.promises.stat(rightFullPath).catch(() => null)
+      ]);
+      if (!statL || !statR) {
+        return { status: 'missing', match: false };
+      }
+      leftSize = statL.size;
+      rightSize = statR.size;
+    }
+
+    // Size mismatch short-circuit: for binary and crc, differing sizes NEVER match
+    if (method === 'binary' || method === 'crc') {
+      if (leftSize !== rightSize) {
+        return { status: 'different', match: false, reason: 'Size mismatch', method };
+      }
+      if (leftSize === 0) {
+        return { status: 'identical', match: true, crcLeft: '00000000', crcRight: '00000000', method };
+      }
+    }
+
+    if (method === 'binary') {
+      const match = await areFilesEqualBinaryStreamAsync(leftFullPath, rightFullPath, leftSize);
+      return {
+        status: match ? 'identical' : 'different',
+        match,
+        method: 'binary'
+      };
+    }
+
+    if (method === 'crc') {
+      const [crcLeft, crcRight] = await Promise.all([
+        calculateFileCRC32Async(leftFullPath, leftSize),
+        calculateFileCRC32Async(rightFullPath, rightSize)
+      ]);
+      const match = (crcLeft && crcRight && crcLeft === crcRight);
+      return {
+        status: match ? 'identical' : 'different',
+        match,
+        crcLeft,
+        crcRight,
+        method: 'crc'
+      };
+    }
+
+    // Rules-based:
+    // Fast path 1: If sizes are identical, test binary stream first
+    if (leftSize === rightSize) {
+      const isBinEq = await areFilesEqualBinaryStreamAsync(leftFullPath, rightFullPath, leftSize);
+      if (isBinEq) {
+        return {
+          status: 'identical',
+          match: true,
+          method: 'rules'
+        };
+      }
+    }
+
+    // Fast check for binary files if skipBinary is enabled
+    if (skipBinary) {
+      const ext = path.extname(leftFullPath).toLowerCase();
+      const binaryExts = new Set([
+        '.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.tar', '.gz',
+        '.jar', '.war', '.ear', '.class', '.exe', '.dll', '.dylib', '.so',
+        '.mp3', '.mp4', '.avi', '.mov', '.woff', '.woff2', '.ttf', '.eot'
+      ]);
+      if (binaryExts.has(ext)) {
+        return {
+          status: 'different',
+          match: false,
+          method: 'binary_skipped'
+        };
+      }
+    }
+
+    // Text comparison (Rules: normalize CRLF vs LF and trim trailing whitespace)
+    try {
+      const [textLeft, textRight] = await Promise.all([
+        fs.promises.readFile(leftFullPath, 'utf8'),
+        fs.promises.readFile(rightFullPath, 'utf8')
+      ]);
+      const normL = textLeft.replace(/\r\n/g, '\n').trim();
+      const normR = textRight.replace(/\r\n/g, '\n').trim();
+      const match = normL === normR;
+      return {
+        status: match ? 'identical' : 'different',
+        match,
+        method: 'rules'
+      };
+    } catch {
+      // Fallback if not utf8 text
+      if (leftSize !== rightSize) {
+        return { status: 'different', match: false, method: 'binary_fallback' };
+      }
+      const match = await areFilesEqualBinaryStreamAsync(leftFullPath, rightFullPath, leftSize);
+      return {
+        status: match ? 'identical' : 'different',
+        match,
+        method: 'binary_fallback'
+      };
+    }
+  } catch (err) {
+    return { status: 'different', match: false, error: err.message };
   }
 }
 
@@ -789,6 +990,7 @@ module.exports = {
   compareFolderTrees,
   compareFolderTreesAsync,
   compareFilesDeep,
+  compareFilesDeepAsync,
   calculateCRC32,
   computeAlignedDiff,
   compareFolderMergeTrees,

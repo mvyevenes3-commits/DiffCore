@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { compareFolderTrees, compareFolderTreesAsync, compareFilesDeep, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
+const { compareFolderTrees, compareFolderTreesAsync, compareFilesDeep, compareFilesDeepAsync, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
 const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
 
@@ -158,26 +158,67 @@ ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath }) =>
   }
 });
 
-// Compare Selection Deep (Modal =?)
-ipcMain.handle('diff:compareSelectionDeep', async (_event, { leftPath, rightPath, items, method, skipBinary = true }) => {
+// Compare Selection Deep (Modal =? Beyond Compare 5 Parallel Engine)
+ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath, items, method, skipBinary = true }) => {
   sendLog(`Starting ${method.toUpperCase()} comparison on ${items.length} item(s)...`);
-  const results = [];
+  const total = items.length;
+  const results = new Array(total);
   let matchCount = 0;
   let diffCount = 0;
+  let processedCount = 0;
 
-  for (const item of items) {
-    const fullLeft = path.join(leftPath, item.relativePath);
-    const fullRight = path.join(rightPath, item.relativePath);
+  const CONCURRENCY = 32; // Beyond Compare multi-threaded parallel comparison
+  let currentIndex = 0;
+  let lastProgressTime = 0;
 
-    const comp = compareFilesDeep(fullLeft, fullRight, method, skipBinary);
-    if (comp.match) matchCount++;
-    else diffCount++;
+  async function worker() {
+    while (currentIndex < total) {
+      const idx = currentIndex++;
+      const item = items[idx];
+      const fullLeft = path.join(leftPath, item.relativePath);
+      const fullRight = path.join(rightPath, item.relativePath);
 
-    results.push({
-      relativePath: item.relativePath,
-      ...comp
-    });
+      const knownLeftSize = (item.left && typeof item.left.size === 'number') ? item.left.size : undefined;
+      const knownRightSize = (item.right && typeof item.right.size === 'number') ? item.right.size : undefined;
+
+      const comp = await compareFilesDeepAsync(fullLeft, fullRight, method, skipBinary, knownLeftSize, knownRightSize);
+      if (comp.match) matchCount++;
+      else diffCount++;
+
+      results[idx] = {
+        relativePath: item.relativePath,
+        ...comp
+      };
+
+      processedCount++;
+
+      // Throttle progress events to ~35ms to ensure high-FPS smooth UI without IPC overhead
+      const now = Date.now();
+      if (now - lastProgressTime > 35 || processedCount === total) {
+        lastProgressTime = now;
+        const percentage = Math.round((processedCount / total) * 100);
+        try {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send('diff:compareProgress', {
+              current: processedCount,
+              total,
+              percentage,
+              currentFile: item.relativePath,
+              matchCount,
+              diffCount
+            });
+          }
+        } catch {}
+      }
+    }
   }
+
+  const workerCount = Math.min(CONCURRENCY, Math.max(1, total));
+  const workers = [];
+  for (let i = 0; i < workerCount; i++) {
+    workers.push(worker());
+  }
+  await Promise.all(workers);
 
   sendLog(`Comparison finished. Matches: ${matchCount}, Differences: ${diffCount}`);
   return {

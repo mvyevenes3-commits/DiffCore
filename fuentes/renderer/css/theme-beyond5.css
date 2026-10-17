@@ -1,5 +1,6 @@
 /* Beyond Compare 5 - Dark Theme Official Palette */
 :root {
+  color-scheme: dark;
   --bg-main: #181818;
   --bg-panel: #1f1f1f;
   --bg-header: #2b2b2b;
@@ -989,6 +990,91 @@ body.theme-light .tab-add-btn:hover {
   font-family: var(--font-mono);
   font-size: 11px;
   color: #888;
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: #3e3e3e #141414;
+}
+
+/* Custom Dark Scrollbar for Log Console (Beyond Compare 5) */
+.log-content::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+  background-color: #141414;
+}
+
+.log-content::-webkit-scrollbar-track {
+  background: #141414;
+  border-left: 1px solid #232323;
+}
+
+.log-content::-webkit-scrollbar-thumb {
+  background: #3e3e3e;
+  border-radius: 3px;
+  border: 3px solid #141414;
+}
+
+.log-content::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+.log-content::-webkit-scrollbar-thumb:active {
+  background: #686868;
+}
+
+.log-content::-webkit-scrollbar-corner {
+  background: #141414;
+}
+
+/* Stepper buttons (Arrows) styled dark */
+.log-content::-webkit-scrollbar-button:single-button {
+  background-color: #1a1a1a;
+  display: block;
+  border-style: solid;
+  height: 14px;
+  width: 14px;
+  border-color: #232323;
+}
+
+.log-content::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-width: 0 0 1px 1px;
+  background: #1a1a1a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="%23888"><polygon points="12,5 4,19 20,19"/></svg>') no-repeat center center;
+}
+
+.log-content::-webkit-scrollbar-button:single-button:vertical:decrement:hover {
+  background-color: #282828;
+}
+
+.log-content::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-width: 1px 0 0 1px;
+  background: #1a1a1a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="%23888"><polygon points="12,19 4,5 20,5"/></svg>') no-repeat center center;
+}
+
+.log-content::-webkit-scrollbar-button:single-button:vertical:increment:hover {
+  background-color: #282828;
+}
+
+body.theme-light .log-content {
+  color-scheme: light;
+  scrollbar-color: #c0c0c0 #f0f0f0;
+}
+
+body.theme-light .log-content::-webkit-scrollbar {
+  background-color: #f0f0f0;
+}
+
+body.theme-light .log-content::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-left: 1px solid #ddd;
+}
+
+body.theme-light .log-content::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 3px solid #f0f0f0;
+}
+
+body.theme-light .log-content::-webkit-scrollbar-button:single-button {
+  background-color: #e4e4e4;
+  border-color: #ddd;
 }
 
 .log-entry {

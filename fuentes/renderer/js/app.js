@@ -7261,8 +7261,7 @@ async function executeDeepCompare() {
   const status = document.getElementById('deepCompareStatusText');
 
   progress.style.display = 'block';
-  status.textContent = `Running ${method.toUpperCase()} comparison...`;
-  bar.style.width = '30%';
+  bar.style.width = '0%';
 
   const targetItems = getSelectedOrAllComparisonItems();
   const itemsToCompare = targetItems.filter(it => !it.isDirectory && it.left && it.right);
@@ -7277,19 +7276,36 @@ async function executeDeepCompare() {
     return;
   }
 
-  const res = await window.api.compareSelectionDeep(
-    appState.leftPath,
-    appState.rightPath,
-    itemsToCompare,
-    method,
-    skipBinary
-  );
+  status.textContent = `Starting ${method.toUpperCase()} comparison on ${itemsToCompare.length.toLocaleString()} file(s)...`;
+
+  const unlistenProgress = (window.api && typeof window.api.onCompareProgress === 'function')
+    ? window.api.onCompareProgress((data) => {
+        if (data && typeof data.percentage === 'number') {
+          bar.style.width = `${Math.min(100, Math.max(0, data.percentage))}%`;
+          const currentFileName = data.currentFile ? ` (${data.currentFile.split('/').pop()})` : '';
+          status.textContent = `Comparing ${data.current.toLocaleString()} of ${data.total.toLocaleString()} (${data.percentage}%)${currentFileName}`;
+        }
+      })
+    : null;
+
+  let res;
+  try {
+    res = await window.api.compareSelectionDeep(
+      appState.leftPath,
+      appState.rightPath,
+      itemsToCompare,
+      method,
+      skipBinary
+    );
+  } finally {
+    if (unlistenProgress) unlistenProgress();
+  }
 
   bar.style.width = '100%';
-  status.textContent = `Finished: ${res.matchCount} matched, ${res.diffCount} differences.`;
+  status.textContent = `Finished: ${res.matchCount.toLocaleString()} matched, ${res.diffCount.toLocaleString()} differences.`;
 
   // Update table statuses based on deep results
-  if (res.results) {
+  if (res && res.results) {
     const resultMap = new Map(res.results.map(r => [r.relativePath, r]));
     appState.comparisonItems.forEach(it => {
       const match = resultMap.get(it.relativePath);

@@ -73,5 +73,10 @@ contextBridge.exposeInMainWorld('api', {
   
   // Listeners
   onLogMessage: (callback) => ipcRenderer.on('log:message', (_event, msg) => callback(msg)),
-  onCliLaunch: (callback) => ipcRenderer.on('cli:launch', (_event, data) => callback(data))
+  onCliLaunch: (callback) => ipcRenderer.on('cli:launch', (_event, data) => callback(data)),
+  onCompareProgress: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('diff:compareProgress', handler);
+    return () => ipcRenderer.removeListener('diff:compareProgress', handler);
+  }
 });
