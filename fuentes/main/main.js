@@ -77,8 +77,14 @@ function createWindow() {
 function sendLog(text) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     const now = new Date();
-    const timeStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getFullYear()).slice(-2)} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-    mainWindow.webContents.send('log:message', `[${timeStr}] ${text}`);
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = String(now.getFullYear()).slice(-2);
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timeStr = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    mainWindow.webContents.send('log:message', `${timeStr} ${text}`);
   }
 }
 
@@ -162,7 +168,6 @@ ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath }) =>
 // Compare Selection Deep (Modal =? Beyond Compare 5 Parallel Engine)
 ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath, items, method, skipBinary = true }) => {
   const startTime = performance.now();
-  sendLog(`Starting ${method.toUpperCase()} comparison on ${items.length} item(s)...`);
   const total = items.length;
   const results = new Array(total);
   let matchCount = 0;
@@ -177,15 +182,25 @@ ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath,
     while (currentIndex < total) {
       const idx = currentIndex++;
       const item = items[idx];
-      const fullLeft = path.join(leftPath, item.relativePath);
-      const fullRight = path.join(rightPath, item.relativePath);
 
-      const knownLeftSize = (item.left && typeof item.left.size === 'number') ? item.left.size : undefined;
-      const knownRightSize = (item.right && typeof item.right.size === 'number') ? item.right.size : undefined;
+      let comp;
+      if (!item.left || !item.right) {
+        comp = {
+          status: item.left ? 'orphan_left' : 'orphan_right',
+          match: false
+        };
+        diffCount++;
+      } else {
+        const fullLeft = path.join(leftPath, item.relativePath);
+        const fullRight = path.join(rightPath, item.relativePath);
 
-      const comp = await compareFilesDeepAsync(fullLeft, fullRight, method, skipBinary, knownLeftSize, knownRightSize);
-      if (comp.match) matchCount++;
-      else diffCount++;
+        const knownLeftSize = (item.left && typeof item.left.size === 'number') ? item.left.size : undefined;
+        const knownRightSize = (item.right && typeof item.right.size === 'number') ? item.right.size : undefined;
+
+        comp = await compareFilesDeepAsync(fullLeft, fullRight, method, skipBinary, knownLeftSize, knownRightSize);
+        if (comp.match) matchCount++;
+        else diffCount++;
+      }
 
       results[idx] = {
         relativePath: item.relativePath,
@@ -223,7 +238,8 @@ ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath,
   await Promise.all(workers);
 
   const elapsedSec = ((performance.now() - startTime) / 1000).toFixed(2);
-  sendLog(`Successfully compared ${total.toLocaleString()} items. Completed in ${elapsedSec} seconds. (Matches: ${matchCount}, Differences: ${diffCount})`);
+  const elapsedFormatted = elapsedSec.replace('.', ',');
+  sendLog(`Successfully compared ${total.toLocaleString('es-ES')} items. Completed in ${elapsedFormatted} seconds.`);
   return {
     success: true,
     method,

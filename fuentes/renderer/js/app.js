@@ -7193,7 +7193,45 @@ function getSelectedOrAllComparisonItems() {
       });
     }
   }
-  return appState.comparisonItems;
+
+  // When no rows are explicitly selected, align comparison scope with Beyond Compare 5:
+  // evaluate the items matching the active filter and search query
+  const filter = appState.currentFilter || 'diffs';
+  const query = appState.tableSearchQuery;
+
+  let items = appState.comparisonItems;
+
+  if (filter === 'diffs') {
+    items = items.filter(it => {
+      if (it.isDirectory) {
+        const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
+        return node ? node.hasDiff : (it.hasDiff || it.status === 'different');
+      }
+      return it.status === 'different' || it.status === 'orphan_left' || it.status === 'orphan_right';
+    });
+  } else if (filter === 'same') {
+    items = items.filter(it => {
+      if (it.isDirectory) {
+        const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
+        return node ? node.hasSame : (it.hasSame || it.status === 'identical');
+      }
+      return it.status === 'identical';
+    });
+  } else if (filter === 'orphans') {
+    items = items.filter(it => {
+      if (it.isDirectory) {
+        const node = appState.treeNodeMap ? appState.treeNodeMap.get(it.relativePath) : null;
+        return node ? node.hasOrphan : (it.hasOrphan || it.status === 'orphan_left' || it.status === 'orphan_right');
+      }
+      return it.status === 'orphan_left' || it.status === 'orphan_right';
+    });
+  }
+
+  if (query) {
+    items = items.filter(it => it.relativePath.toLowerCase().includes(query) || it.name.toLowerCase().includes(query));
+  }
+
+  return items;
 }
 
 // --- MODAL: DEEP COMPARE [=? Compare] ---
@@ -7215,19 +7253,29 @@ function openDeepCompareModal() {
     }
   });
 
-  document.getElementById('modalLeftFiles').textContent = leftFiles;
-  document.getElementById('modalLeftFolders').textContent = leftFolders;
+  document.getElementById('modalLeftFiles').textContent = leftFiles.toLocaleString('es-ES');
+  document.getElementById('modalLeftFolders').textContent = leftFolders.toLocaleString('es-ES');
   document.getElementById('modalLeftBytes').textContent = formatBytes(leftBytes);
 
-  document.getElementById('modalRightFiles').textContent = rightFiles;
-  document.getElementById('modalRightFolders').textContent = rightFolders;
+  document.getElementById('modalRightFiles').textContent = rightFiles.toLocaleString('es-ES');
+  document.getElementById('modalRightFolders').textContent = rightFolders.toLocaleString('es-ES');
   document.getElementById('modalRightBytes').textContent = formatBytes(rightBytes);
 
   const legend = document.querySelector('#deepCompareModal legend');
   if (legend) {
-    legend.textContent = isSelectionActive
-      ? `Selection (${appState.selectedIndices.size} item${appState.selectedIndices.size > 1 ? 's' : ''} selected)`
-      : 'Session Selection (All items)';
+    if (isSelectionActive) {
+      legend.textContent = `Selection (${appState.selectedIndices.size} item${appState.selectedIndices.size > 1 ? 's' : ''} selected)`;
+    } else if (appState.currentFilter && appState.currentFilter !== 'all') {
+      const filterLabel = {
+        'diffs': 'Show Differences',
+        'same': 'Show Same',
+        'orphans': 'Show Orphans'
+      }[appState.currentFilter] || appState.currentFilter;
+      const fileCount = items.filter(it => !it.isDirectory).length;
+      legend.textContent = `Filtered View (${fileCount.toLocaleString('es-ES')} files - ${filterLabel})`;
+    } else {
+      legend.textContent = 'Session Selection (All items)';
+    }
   }
 
   // Restore saved Auto-close preference (default true)
@@ -7264,7 +7312,7 @@ async function executeDeepCompare() {
   bar.style.width = '0%';
 
   const targetItems = getSelectedOrAllComparisonItems();
-  const itemsToCompare = targetItems.filter(it => !it.isDirectory && it.left && it.right);
+  const itemsToCompare = targetItems.filter(it => !it.isDirectory);
 
   if (itemsToCompare.length === 0) {
     status.textContent = 'No matching files to compare in selection.';
@@ -7276,14 +7324,14 @@ async function executeDeepCompare() {
     return;
   }
 
-  status.textContent = `Starting ${method.toUpperCase()} comparison on ${itemsToCompare.length.toLocaleString()} file(s)...`;
+  status.textContent = `Starting ${method.toUpperCase()} comparison on ${itemsToCompare.length.toLocaleString('es-ES')} file(s)...`;
 
   const unlistenProgress = (window.api && typeof window.api.onCompareProgress === 'function')
     ? window.api.onCompareProgress((data) => {
         if (data && typeof data.percentage === 'number') {
           bar.style.width = `${Math.min(100, Math.max(0, data.percentage))}%`;
           const currentFileName = data.currentFile ? ` (${data.currentFile.split('/').pop()})` : '';
-          status.textContent = `Comparing ${data.current.toLocaleString()} of ${data.total.toLocaleString()} (${data.percentage}%)${currentFileName}`;
+          status.textContent = `Comparing ${data.current.toLocaleString('es-ES')} of ${data.total.toLocaleString('es-ES')} (${data.percentage}%)${currentFileName}`;
         }
       })
     : null;
@@ -7302,8 +7350,8 @@ async function executeDeepCompare() {
   }
 
   bar.style.width = '100%';
-  const durationText = res.elapsedSec ? ` in ${res.elapsedSec} seconds` : '';
-  status.textContent = `Successfully compared ${itemsToCompare.length.toLocaleString()} items. Completed${durationText}.`;
+  const durationText = res.elapsedSec ? ` in ${res.elapsedSec.replace('.', ',')} seconds` : '';
+  status.textContent = `Successfully compared ${itemsToCompare.length.toLocaleString('es-ES')} items. Completed${durationText}.`;
 
   // Update table statuses based on deep results
   if (res && res.results) {
@@ -7311,13 +7359,17 @@ async function executeDeepCompare() {
     appState.comparisonItems.forEach(it => {
       const match = resultMap.get(it.relativePath);
       if (match) {
-        it.status = match.match ? 'identical' : 'different';
+        if (match.status === 'orphan_left' || match.status === 'orphan_right') {
+          it.status = match.status;
+        } else {
+          it.status = match.match ? 'identical' : 'different';
+        }
       }
     });
     // Re-build hierarchy tree so difference propagation bubbles up to folders
     appState.treeRoot = buildComparisonTree(appState.comparisonItems);
     applyFilterAndRender();
-    showToast(`Compared ${itemsToCompare.length.toLocaleString()} items${durationText}: ${res.matchCount.toLocaleString()} same, ${res.diffCount.toLocaleString()} diffs.`, 'info');
+    showToast(`Compared ${itemsToCompare.length.toLocaleString('es-ES')} items${durationText}: ${res.matchCount.toLocaleString('es-ES')} same, ${res.diffCount.toLocaleString('es-ES')} diffs.`, 'info');
   }
 
   setTimeout(() => {
