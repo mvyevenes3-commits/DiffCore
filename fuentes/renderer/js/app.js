@@ -145,6 +145,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   setFilter(appState.currentFilter);
   updateFilterToolbarButton();
 
+  const btnFilters = document.getElementById('btnNameFilters');
+  if (btnFilters) {
+    btnFilters.addEventListener('click', (e) => {
+      e.preventDefault();
+      openNameFiltersModal();
+    });
+  }
+
   // Re-calculate visible virtual window and sync scrollbars on resize
   window.addEventListener('resize', () => {
     if (appState.activeView === 'folder') {
@@ -2989,17 +2997,23 @@ function openNameFiltersModal() {
   const txtFiles = document.getElementById('txtExcludeFiles');
 
   if (chk) chk.checked = !!(appState.exclusions && appState.exclusions.enabled);
-  if (txtFolders) txtFolders.value = (appState.exclusions.excludeFolders || []).join('; ');
-  if (txtFiles) txtFiles.value = (appState.exclusions.excludeFiles || []).join('; ');
+  if (txtFolders) txtFolders.value = ((appState.exclusions && appState.exclusions.excludeFolders) || []).join('; ');
+  if (txtFiles) txtFiles.value = ((appState.exclusions && appState.exclusions.excludeFiles) || []).join('; ');
 
   toggleExclusionControls();
   const modal = document.getElementById('nameFiltersModal');
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
 }
 
 function closeNameFiltersModal() {
   const modal = document.getElementById('nameFiltersModal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
 }
 
 function toggleExclusionControls() {
@@ -3101,6 +3115,14 @@ function updateFilterToolbarButton() {
     dot.style.display = isEnabled ? 'inline-block' : 'none';
   }
 }
+
+// Global window exposure for HTML onclick attributes
+window.openNameFiltersModal = openNameFiltersModal;
+window.closeNameFiltersModal = closeNameFiltersModal;
+window.toggleExclusionControls = toggleExclusionControls;
+window.addFilterPreset = addFilterPreset;
+window.resetNameFiltersToDefaults = resetNameFiltersToDefaults;
+window.saveNameFiltersFromModal = saveNameFiltersFromModal;
 
 async function createNewFolderInContext(item, clickedSide) {
   if (!item) return;
