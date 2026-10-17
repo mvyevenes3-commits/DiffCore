@@ -213,6 +213,9 @@
       'modal.report_format': 'Report Format',
       'modal.report_layout': 'Layout',
       'modal.save_confirm_msg': 'Save changes to file?',
+      'modal.save_confirm_left': 'Save changes to left file?',
+      'modal.save_confirm_right': 'Save changes to right file?',
+      'modal.save_confirm_both': 'Save changes to files?',
       'modal.save_confirm_title': 'Save Changes',
 
       // Toasts
@@ -565,6 +568,9 @@
       'modal.report_format': 'Formato del Informe',
       'modal.report_layout': 'Disposición',
       'modal.save_confirm_msg': '¿Guardar los cambios en el archivo?',
+      'modal.save_confirm_left': '¿Guardar los cambios en el archivo izquierdo?',
+      'modal.save_confirm_right': '¿Guardar los cambios en el archivo derecho?',
+      'modal.save_confirm_both': '¿Guardar los cambios en los archivos?',
       'modal.save_confirm_title': 'Guardar Cambios',
 
       // Toasts
@@ -917,6 +923,9 @@
       'modal.report_format': 'Formato do Relatório',
       'modal.report_layout': 'Layout',
       'modal.save_confirm_msg': 'Salvar alterações no arquivo?',
+      'modal.save_confirm_left': 'Salvar alterações no arquivo esquerdo?',
+      'modal.save_confirm_right': 'Salvar alterações no arquivo direito?',
+      'modal.save_confirm_both': 'Salvar alterações nos arquivos?',
       'modal.save_confirm_title': 'Salvar Alterações',
 
       // Toasts
@@ -1269,6 +1278,9 @@
       'modal.report_format': 'Format du Rapport',
       'modal.report_layout': 'Disposition',
       'modal.save_confirm_msg': 'Enregistrer les modifications du fichier ?',
+      'modal.save_confirm_left': 'Enregistrer les modifications du fichier gauche ?',
+      'modal.save_confirm_right': 'Enregistrer les modifications du fichier droit ?',
+      'modal.save_confirm_both': 'Enregistrer les modifications des fichiers ?',
       'modal.save_confirm_title': 'Enregistrer les Modifications',
 
       // Toasts
@@ -1621,6 +1633,9 @@
       'modal.report_format': 'Formato Rapporto',
       'modal.report_layout': 'Disposizione',
       'modal.save_confirm_msg': 'Salvare le modifiche al file?',
+      'modal.save_confirm_left': 'Salvare le modifiche al file sinistro?',
+      'modal.save_confirm_right': 'Salvare le modifiche al file destro?',
+      'modal.save_confirm_both': 'Salvare le modifiche ai file?',
       'modal.save_confirm_title': 'Salva Modifiche',
 
       // Toasts
@@ -1973,6 +1988,9 @@
       'modal.report_format': 'Формат отчета',
       'modal.report_layout': 'Макет',
       'modal.save_confirm_msg': 'Сохранить изменения в файле?',
+      'modal.save_confirm_left': 'Сохранить изменения в левом файле?',
+      'modal.save_confirm_right': 'Сохранить изменения в правом файле?',
+      'modal.save_confirm_both': 'Сохранить изменения в файлах?',
       'modal.save_confirm_title': 'Сохранение изменений',
 
       // Toasts

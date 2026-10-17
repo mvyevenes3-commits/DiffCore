@@ -1394,6 +1394,29 @@ function closeAllComparisonTabsAndGoHome() {
   switchView('home');
 }
 
+function getSaveConfirmPromptKey(isLeftDirty, isRightDirty) {
+  if (isLeftDirty && isRightDirty) return 'modal.save_confirm_both';
+  if (isLeftDirty) return 'modal.save_confirm_left';
+  if (isRightDirty) return 'modal.save_confirm_right';
+  return 'modal.save_confirm_msg';
+}
+
+function getSaveConfirmPromptMessage(isLeftDirty, isRightDirty) {
+  const key = getSaveConfirmPromptKey(isLeftDirty, isRightDirty);
+  return window.i18n ? window.i18n.t(key) : 'Save changes to file?';
+}
+
+function showSaveConfirmModal(isLeftDirty, isRightDirty) {
+  const modal = document.getElementById('saveConfirmModal');
+  const msg = document.getElementById('saveConfirmMessage');
+  const promptKey = getSaveConfirmPromptKey(isLeftDirty, isRightDirty);
+  if (msg) {
+    msg.setAttribute('data-i18n', promptKey);
+    msg.textContent = window.i18n ? window.i18n.t(promptKey) : 'Save changes to file?';
+  }
+  if (modal) modal.classList.add('active');
+}
+
 function handleToolbarHomeClick() {
   const currentView = appState.activeView;
   const tabFolderBtn = document.getElementById('tabFolderBtn');
@@ -1407,15 +1430,7 @@ function handleToolbarHomeClick() {
       const isRightDirty = file.originalRightContent !== undefined && file.rightContent !== file.originalRightContent;
 
       if (isLeftDirty || isRightDirty) {
-        let side = 'file';
-        if (isLeftDirty && isRightDirty) side = 'files';
-        else if (isLeftDirty) side = 'left file';
-        else if (isRightDirty) side = 'right file';
-
-        const modal = document.getElementById('saveConfirmModal');
-        const msg = document.getElementById('saveConfirmMessage');
-        if (msg) msg.textContent = `Save changes to ${side}?`;
-        if (modal) modal.classList.add('active');
+        showSaveConfirmModal(isLeftDirty, isRightDirty);
 
         pendingCloseAction = async (decision) => {
           if (decision === 'yes') {
@@ -1467,15 +1482,7 @@ function handleToolbarHomeClick() {
     const isRightDirty = file.originalRightContent !== undefined && file.rightContent !== file.originalRightContent;
 
     if (isLeftDirty || isRightDirty) {
-      let side = 'file';
-      if (isLeftDirty && isRightDirty) side = 'files';
-      else if (isLeftDirty) side = 'left file';
-      else if (isRightDirty) side = 'right file';
-
-      const modal = document.getElementById('saveConfirmModal');
-      const msg = document.getElementById('saveConfirmMessage');
-      if (msg) msg.textContent = `Save changes to ${side}?`;
-      if (modal) modal.classList.add('active');
+      showSaveConfirmModal(isLeftDirty, isRightDirty);
 
       pendingCloseAction = async (decision) => {
         if (decision === 'yes') {
@@ -1519,15 +1526,7 @@ function closeTextCompareWithPrompt() {
   const isRightDirty = file.originalRightContent !== undefined && file.rightContent !== file.originalRightContent;
 
   if (isLeftDirty || isRightDirty) {
-    let side = 'file';
-    if (isLeftDirty && isRightDirty) side = 'files';
-    else if (isLeftDirty) side = 'left file';
-    else if (isRightDirty) side = 'right file';
-
-    const modal = document.getElementById('saveConfirmModal');
-    const msg = document.getElementById('saveConfirmMessage');
-    if (msg) msg.textContent = `Save changes to ${side}?`;
-    if (modal) modal.classList.add('active');
+    showSaveConfirmModal(isLeftDirty, isRightDirty);
 
     pendingCloseAction = async (decision) => {
       if (decision === 'yes') {
