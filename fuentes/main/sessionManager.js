@@ -192,11 +192,16 @@ function recordAutoSavedSession(sessionData) {
       }
     }
 
+    const norm = (p) => (p || '').replace(/\\/g, '/').replace(/\/+$/, '');
     const baseL = path.basename(leftPath) || leftPath;
     const baseR = path.basename(rightPath) || rightPath;
     let sessName = name;
     if (!sessName || sessName === 'Folder Compare' || sessName === 'Text Compare') {
-      if (baseL && baseR) {
+      const savedList = loadDiffCoreSessions();
+      const matchSaved = savedList.find(s => s.type === type && norm(s.leftPath) === norm(leftPath) && norm(s.rightPath) === norm(rightPath));
+      if (matchSaved && matchSaved.name) {
+        sessName = matchSaved.name;
+      } else if (baseL && baseR) {
         sessName = (baseL === baseR) ? baseL : `${baseL} <--> ${baseR}`;
       } else {
         sessName = baseL || baseR || 'Untitled';
@@ -207,8 +212,15 @@ function recordAutoSavedSession(sessionData) {
     const pad = (n) => String(n).padStart(2, '0');
     const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-    // Remove any previous entry with identical type and paths to bring it to top
-    list = list.filter(s => !(s.type === type && s.leftPath === leftPath && s.rightPath === rightPath));
+    // Remove any previous entry with identical type and paths (or same name) to bring it to top
+    list = list.filter(s => {
+      const sameType = s.type === type;
+      if (!sameType) return true;
+      const samePaths = (norm(s.leftPath) === norm(leftPath) && norm(s.rightPath) === norm(rightPath));
+      const invertedPaths = (norm(s.leftPath) === norm(rightPath) && norm(s.rightPath) === norm(leftPath));
+      const sameName = sessName && s.name && s.name.toLowerCase() === sessName.toLowerCase();
+      return !samePaths && !invertedPaths && !sameName;
+    });
 
     const newSess = {
       id: 'dc-auto-' + Date.now().toString(36),
@@ -225,6 +237,14 @@ function recordAutoSavedSession(sessionData) {
     if (list.length > 100) list = list.slice(0, 100);
 
     fs.writeFileSync(DIFFCORE_AUTOSAVED_FILE, JSON.stringify(list, null, 2), 'utf8');
+
+    // Unmark any tombstone so active/opened sessions are never hidden
+    unmarkDeletedSession(newSess.id, sessName);
+    if (baseL) unmarkDeletedSession(null, baseL);
+    if (baseR) unmarkDeletedSession(null, baseR);
+
+    // Also update saved session lastModified if it matches a saved session
+    touchSavedSessionTimestamp(sessName, leftPath, rightPath, type, nowStr);
 
     // Also update Beyond Compare 5 BCSessions.xml if accessible
     updateBCSessionsXmlAutoSaved(newSess);
@@ -310,6 +330,44 @@ const recordDeletedSessionId = (id, name) => {
   } catch {}
 };
 
+const unmarkDeletedSession = (id, name) => {
+  try {
+    const set = loadDeletedSessionIds();
+    let changed = false;
+    if (id && set.has(id)) { set.delete(id); changed = true; }
+    if (name) {
+      if (set.has(name)) { set.delete(name); changed = true; }
+      if (set.has('name:' + name)) { set.delete('name:' + name); changed = true; }
+    }
+    if (changed) {
+      fs.writeFileSync(DIFFCORE_DELETED_FILE, JSON.stringify([...set], null, 2), 'utf8');
+    }
+  } catch {}
+};
+
+function touchSavedSessionTimestamp(name, leftPath, rightPath, type, nowStr) {
+  try {
+    if (fs.existsSync(DIFFCORE_SESSIONS_FILE)) {
+      let list = JSON.parse(fs.readFileSync(DIFFCORE_SESSIONS_FILE, 'utf8'));
+      let modified = false;
+      const norm = (p) => (p || '').replace(/\\/g, '/').replace(/\/+$/, '');
+      for (const s of list) {
+        const sameName = (name && s.name && s.name.toLowerCase() === name.toLowerCase());
+        const samePaths = (s.type === type && norm(s.leftPath) === norm(leftPath) && norm(s.rightPath) === norm(rightPath));
+        if (sameName || samePaths) {
+          s.lastModified = nowStr;
+          modified = true;
+        }
+      }
+      if (modified) {
+        fs.writeFileSync(DIFFCORE_SESSIONS_FILE, JSON.stringify(list, null, 2), 'utf8');
+      }
+    }
+  } catch (err) {
+    console.warn('Error updating saved session timestamp:', err);
+  }
+}
+
 /**
  * Load all sessions (Beyond Compare + DiffCore native)
  */
@@ -322,23 +380,29 @@ function getAllSessions() {
   const diffCoreAutoSaved = loadDiffCoreAutoSaved();
 
   const deletedSet = loadDeletedSessionIds();
+  const norm = (p) => (p || '').replace(/\\/g, '/').replace(/\/+$/, '');
 
   // Deduplicate and combine auto-saved:
   // DiffCore autoSaved items come first (newest comparisons),
   // followed by BC5 autoSaved items if not already present.
   const autoMap = new Map();
+  const nameMap = new Map();
 
   diffCoreAutoSaved.forEach(s => {
-    if (!deletedSet.has(s.id) && !deletedSet.has('name:' + s.name)) {
-      const key = `${s.type}:${s.leftPath}=>${s.rightPath}`;
+    if (!deletedSet.has(s.id)) {
+      const key = `${s.type}:${norm(s.leftPath)}=>${norm(s.rightPath)}`;
       autoMap.set(key, s);
+      if (s.name) {
+        nameMap.set(`${s.type}:${s.name.toLowerCase()}`, s);
+      }
     }
   });
 
   bcAutoSaved.forEach(s => {
     if (!deletedSet.has(s.id) && !deletedSet.has('name:' + s.name)) {
-      const key = `${s.type}:${s.leftPath}=>${s.rightPath}`;
-      if (!autoMap.has(key)) {
+      const key = `${s.type}:${norm(s.leftPath)}=>${norm(s.rightPath)}`;
+      const nameKey = `${s.type}:${(s.name || '').toLowerCase()}`;
+      if (!autoMap.has(key) && !nameMap.has(nameKey)) {
         autoMap.set(key, s);
       }
     }

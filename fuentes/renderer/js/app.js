@@ -427,8 +427,11 @@ function renderSessionsTree() {
     appState.expandedSessionGroups.add('auto-saved');
     dateGroupsMap.forEach((_, gName) => appState.expandedSessionGroups.add(gName));
   } else {
-    // If Today has no items, expand the first available date group as fallback
-    if (!dateGroupsMap.has('Today') && dateGroupsMap.size > 0) {
+    if (dateGroupsMap.has('Today')) {
+      appState.expandedSessionGroups.add('Today');
+      appState.expandedSessionGroups.add('auto-saved');
+    } else if (dateGroupsMap.size > 0) {
+      // If Today has no items, expand the first available date group as fallback
       const firstAvailable = Array.from(dateGroupsMap.keys())[0];
       appState.expandedSessionGroups.add(firstAvailable);
     }
@@ -667,6 +670,25 @@ function launchSelectedSession() {
   if (!appState.selectedSession) return;
   const sess = appState.selectedSession;
   const type = sess.type || 'folder_compare';
+
+  // Immediately touch and record session into Today's auto-saved history
+  if (sess.leftPath || sess.rightPath) {
+    const sName = (sess.name && sess.name !== 'Folder Compare' && sess.name !== 'Text Compare') ? sess.name : undefined;
+    window.api.recordAutoSavedSession({
+      id: sess.id,
+      name: sName,
+      type: type,
+      leftPath: sess.leftPath || '',
+      rightPath: sess.rightPath || ''
+    }).then(() => {
+      if (appState.expandedSessionGroups) {
+        appState.expandedSessionGroups.add('Today');
+        appState.expandedSessionGroups.add('auto-saved');
+      }
+      reloadSessions();
+    }).catch(err => console.warn('AutoSave error:', err));
+  }
+
   if (type === 'text_compare') {
     openTextCompare(sess.leftPath, sess.rightPath, sess.name);
   } else if (type === 'table_compare') {
@@ -1695,11 +1717,21 @@ async function runFolderComparison() {
 
     // Auto-save folder comparison session to history
     if (left && right) {
+      const sessName = (appState.activeFolderSession && appState.activeFolderSession.name && appState.activeFolderSession.name !== 'Folder Compare')
+        ? appState.activeFolderSession.name
+        : ((appState.selectedSession && appState.selectedSession.name && appState.selectedSession.name !== 'Folder Compare') ? appState.selectedSession.name : undefined);
       window.api.recordAutoSavedSession({
+        name: sessName,
         type: 'folder_compare',
         leftPath: left,
         rightPath: right
-      }).then(() => reloadSessions()).catch(err => console.warn('AutoSave error:', err));
+      }).then(() => {
+        if (appState.expandedSessionGroups) {
+          appState.expandedSessionGroups.add('Today');
+          appState.expandedSessionGroups.add('auto-saved');
+        }
+        reloadSessions();
+      }).catch(err => console.warn('AutoSave error:', err));
     }
   } else {
     appendLog(`Comparison failed: ${result.error}`);
