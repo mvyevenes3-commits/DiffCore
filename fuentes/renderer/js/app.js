@@ -6010,8 +6010,8 @@ function setTextFilter(filter) {
   for (let i = 0; i < rowsL.length; i++) {
     const rowL = rowsL[i];
     const rowR = rowsR[i];
-    const isDiff = rowL.classList.contains('diff-code') || rowL.classList.contains('diff-comment') || rowL.classList.contains('ghost-hatched') ||
-                   (rowR && (rowR.classList.contains('diff-code') || rowR.classList.contains('diff-comment') || rowR.classList.contains('ghost-hatched')));
+    const isDiff = rowL.classList.contains('diff-code') || rowL.classList.contains('diff-comment') || rowL.classList.contains('diff-whitespace') || rowL.classList.contains('ghost-hatched') ||
+                   (rowR && (rowR.classList.contains('diff-code') || rowR.classList.contains('diff-comment') || rowR.classList.contains('diff-whitespace') || rowR.classList.contains('ghost-hatched')));
 
     let show = true;
     if (filter === 'diffs') {
@@ -6897,7 +6897,7 @@ function renderTextDiff(diffResult) {
         const heightPct = Math.max(1.8, (rowSpan / totalRows) * 100);
 
         const marker = document.createElement('div');
-        marker.className = 'overview-marker';
+        marker.className = sec.isWhitespaceDiff ? 'overview-marker marker-whitespace' : 'overview-marker';
         marker.style.top = `${topPct}%`;
         marker.style.height = `${heightPct}%`;
         marker.title = `Difference section ${sec.index + 1} (${rowSpan} lines) - Click to jump directly`;
@@ -6991,7 +6991,8 @@ function renderVisibleTextWindow(force = false) {
         rowHtmlL = `<div class="text-line-row ghost-hatched" id="row-l-${i}"><div class="text-line-num">${btnHtmlL}</div><div class="text-line-content"></div></div>`;
       } else {
         const isCommL = row.isCommentL;
-        const clsL = isCommL ? 'diff-comment' : 'diff-code';
+        const isWsL = row.isWhitespaceDiff;
+        const clsL = isWsL ? 'diff-whitespace' : (isCommL ? 'diff-comment' : 'diff-code');
         rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${btnHtmlL}${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, true, isCommL)}</div></div>`;
       }
       cacheL.set(i, rowHtmlL);
@@ -7007,7 +7008,8 @@ function renderVisibleTextWindow(force = false) {
         rowHtmlR = `<div class="text-line-row ghost-hatched" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
       } else {
         const isCommR = row.isCommentR;
-        const clsR = isCommR ? 'diff-comment' : 'diff-code';
+        const isWsR = row.isWhitespaceDiff;
+        const clsR = isWsR ? 'diff-whitespace' : (isCommR ? 'diff-comment' : 'diff-code');
         rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content">${highlightSyntax(row.rightText, lang, true, isCommR)}</div></div>`;
       }
       cacheR.set(i, rowHtmlR);

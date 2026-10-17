@@ -716,6 +716,16 @@ function computeAlignedDiff(textLeft, textRight) {
         const isCommentL = leftTxt.trim().startsWith('//') || leftTxt.trim().startsWith('/*') || leftTxt.trim().startsWith('*');
         const isCommentR = rightTxt.trim().startsWith('//') || rightTxt.trim().startsWith('/*') || rightTxt.trim().startsWith('*');
 
+        // Check if the difference is whitespace-only (indentation, trailing spaces, tabs vs spaces)
+        let isWhitespaceDiff = false;
+        if (hasLeft && hasRight) {
+          const normLeft = leftTxt.replace(/\t/g, ' ').replace(/\s+/g, ' ').trim();
+          const normRight = rightTxt.replace(/\t/g, ' ').replace(/\s+/g, ' ').trim();
+          if (normLeft === normRight) {
+            isWhitespaceDiff = true;
+          }
+        }
+
         rows.push({
           type: 'diff',
           diffType: sectionType,
@@ -723,6 +733,7 @@ function computeAlignedDiff(textLeft, textRight) {
           isGhostR: !hasRight,
           isCommentL,
           isCommentR,
+          isWhitespaceDiff,
           leftNum: hasLeft ? lineNumL++ : null,
           leftText: hasLeft ? leftTxt : null,
           rightNum: hasRight ? lineNumR++ : null,
@@ -732,11 +743,20 @@ function computeAlignedDiff(textLeft, textRight) {
         });
       }
 
+      let sectionAllWhitespace = rows.length > startRow;
+      for (let rIdx = startRow; rIdx < rows.length; rIdx++) {
+        if (!rows[rIdx].isWhitespaceDiff) {
+          sectionAllWhitespace = false;
+          break;
+        }
+      }
+
       sections.push({
         index: sectionIdx,
         startRow,
         endRow: rows.length - 1,
         type: sectionType,
+        isWhitespaceDiff: sectionAllWhitespace,
         origStartLeft,
         leftLineCount: remLines.length,
         origStartRight,

@@ -2617,6 +2617,27 @@ body.theme-light .sync-vscrollbar-thumb.active {
   color: #8ac0fc !important;
 }
 
+/* Beyond Compare 5 Whitespace Diff: Deep Navy */
+.text-line-row.diff-whitespace {
+  background: #0f2647 !important;
+  border: none !important;
+  outline: none !important;
+}
+.text-line-row.diff-whitespace .text-line-num {
+  background: #183354 !important;
+  color: #8ac0fc !important;
+  font-weight: 700;
+  border-right: 1px solid #274775 !important;
+}
+.text-line-row.diff-whitespace .text-line-content {
+  color: #8ac0fc;
+}
+
+.overview-marker.marker-whitespace {
+  background: #3b82f6 !important;
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.8) !important;
+}
+
 /* --- VS CODE SYNTAX HIGHLIGHTING (Dark+ & Light+) --- */
 .token-keyword { color: #569cd6; font-weight: 500; }
 .token-control { color: #c586c0; font-weight: 500; }
@@ -2657,6 +2678,17 @@ body.theme-light .text-line-row.diff-comment .text-line-num {
   border-right: 1px solid #80ccff !important;
 }
 body.theme-light .text-line-row.diff-comment .text-line-content {
+  color: #0550ae;
+}
+body.theme-light .text-line-row.diff-whitespace {
+  background: #ddf4ff !important;
+}
+body.theme-light .text-line-row.diff-whitespace .text-line-num {
+  background: #b6e3ff !important;
+  color: #0969da !important;
+  border-right: 1px solid #80ccff !important;
+}
+body.theme-light .text-line-row.diff-whitespace .text-line-content {
   color: #0550ae;
 }
 
