@@ -7165,17 +7165,17 @@ function renderVisibleTextWindow(force = false) {
       let btnHtmlL = '';
       if (secStartMap.has(i)) {
         const sec = secStartMap.get(i);
-        btnHtmlL = `<div class="line-gutter-action to-right" title="Copy section ${sec.index + 1} to Right (take Left version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_right')">▶</div>`;
+        btnHtmlL = `<div class="diff-arrow-btn to-right" title="Copy section ${sec.index + 1} to Right (take Left version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_right')">▶</div>`;
       }
       if (row.type === 'same') {
-        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-action"></div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
       } else if (row.isGhostL) {
-        rowHtmlL = `<div class="text-line-row ghost-hatched" id="row-l-${i}"><div class="text-line-num">${btnHtmlL}</div><div class="text-line-content"></div></div>`;
+        rowHtmlL = `<div class="text-line-row ghost-hatched" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
       } else {
         const isCommL = row.isCommentL;
         const isWsL = row.isWhitespaceDiff;
         const clsL = isWsL ? 'diff-whitespace' : (isCommL ? 'diff-comment' : 'diff-code');
-        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${btnHtmlL}${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, true, isCommL)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, true, isCommL)}</div></div>`;
       }
       cacheL.set(i, rowHtmlL);
     }
