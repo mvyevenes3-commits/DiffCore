@@ -74,14 +74,15 @@ function readTextFile(filePath, maxBytes = 10 * 1024 * 1024) {
     if (stat.size > maxBytes) {
       return { success: false, error: `File too large (${(stat.size / 1024 / 1024).toFixed(1)} MB)` };
     }
-    const buffer = fs.readFileSync(filePath);
-    // Detect basic encoding
-    const content = buffer.toString('utf8');
-    const lines = content.split(/\r\n|\r|\n/);
+    const content = fs.readFileSync(filePath, 'utf8');
+    let lineCount = 1;
+    for (let i = 0; i < content.length; i++) {
+      if (content.charCodeAt(i) === 10) lineCount++;
+    }
     return {
       success: true,
       content,
-      lineCount: lines.length,
+      lineCount,
       size: stat.size,
       mtime: stat.mtime,
       mtimeMs: stat.mtimeMs

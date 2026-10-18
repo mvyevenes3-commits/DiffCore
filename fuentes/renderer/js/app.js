@@ -10036,34 +10036,43 @@ async function executeDeepCompare() {
     localStorage.setItem('diffcore_auto_close', String(autoClose));
   } catch {}
 
-  const progress = document.getElementById('deepCompareProgress');
-  const bar = document.getElementById('deepProgressBar');
-  const status = document.getElementById('deepCompareStatusText');
-
-  progress.style.display = 'block';
-  bar.style.width = '0%';
-
   const targetItems = getSelectedOrAllComparisonItems();
   const itemsToCompare = targetItems.filter(it => !it.isDirectory);
 
   if (itemsToCompare.length === 0) {
-    status.textContent = 'No matching files to compare in selection.';
-    bar.style.width = '100%';
-    setTimeout(() => {
-      closeDeepCompareModal();
-      showToast('No matching files to compare in selection.', 'info');
-    }, 1000);
+    closeDeepCompareModal();
+    showToast(window.i18n ? window.i18n.t('modal.no_matching_files', 'No matching files to compare in selection.') : 'No matching files to compare in selection.', 'info');
     return;
   }
 
-  status.textContent = `Starting ${method.toUpperCase()} comparison on ${itemsToCompare.length.toLocaleString('es-ES')} file(s)...`;
+  // Close modal immediately like Beyond Compare 5
+  if (autoClose) {
+    closeDeepCompareModal();
+  } else {
+    const progress = document.getElementById('deepCompareProgress');
+    const bar = document.getElementById('deepProgressBar');
+    const status = document.getElementById('deepCompareStatusText');
+    if (progress) progress.style.display = 'block';
+    if (bar) bar.style.width = '0%';
+    if (status) status.textContent = `Starting ${method.toUpperCase()} comparison on ${itemsToCompare.length.toLocaleString('es-ES')} file(s)...`;
+  }
+
+  setEngineStatus('busy');
+  const statusSummary = document.getElementById('folderStatusSummary');
+  const prevSummaryText = statusSummary ? statusSummary.textContent : '';
 
   const unlistenProgress = (window.api && typeof window.api.onCompareProgress === 'function')
     ? window.api.onCompareProgress((data) => {
         if (data && typeof data.percentage === 'number') {
-          bar.style.width = `${Math.min(100, Math.max(0, data.percentage))}%`;
           const currentFileName = data.currentFile ? ` (${data.currentFile.split('/').pop()})` : '';
-          status.textContent = `Comparing ${data.current.toLocaleString('es-ES')} of ${data.total.toLocaleString('es-ES')} (${data.percentage}%)${currentFileName}`;
+          const progText = `Comparing contents (${method}): ${data.current.toLocaleString('es-ES')}/${data.total.toLocaleString('es-ES')} (${data.percentage}%)${currentFileName}`;
+          if (statusSummary) statusSummary.textContent = progText;
+          if (!autoClose) {
+            const bar = document.getElementById('deepProgressBar');
+            const status = document.getElementById('deepCompareStatusText');
+            if (bar) bar.style.width = `${Math.min(100, Math.max(0, data.percentage))}%`;
+            if (status) status.textContent = progText;
+          }
         }
       })
     : null;
@@ -10079,11 +10088,10 @@ async function executeDeepCompare() {
     );
   } finally {
     if (unlistenProgress) unlistenProgress();
+    setEngineStatus('ready');
   }
 
-  bar.style.width = '100%';
-  const durationText = res.elapsedSec ? ` in ${res.elapsedSec.replace('.', ',')} seconds` : '';
-  status.textContent = `Successfully compared ${itemsToCompare.length.toLocaleString('es-ES')} items. Completed${durationText}.`;
+  const durationText = res.elapsedSec ? ` in ${res.elapsedSec.replace('.', ',')}s` : '';
 
   // Update table statuses based on deep results
   if (res && res.results) {
@@ -10101,14 +10109,17 @@ async function executeDeepCompare() {
     // Re-build hierarchy tree so difference propagation bubbles up to folders
     appState.treeRoot = buildComparisonTree(appState.comparisonItems);
     applyFilterAndRender();
-    showToast(`Compared ${itemsToCompare.length.toLocaleString('es-ES')} items${durationText}: ${res.matchCount.toLocaleString('es-ES')} same, ${res.diffCount.toLocaleString('es-ES')} diffs.`, 'info');
+    const resultMsg = `Compared ${itemsToCompare.length.toLocaleString('es-ES')} items${durationText}: ${res.matchCount.toLocaleString('es-ES')} same, ${res.diffCount.toLocaleString('es-ES')} diffs.`;
+    showToast(resultMsg, 'info');
+    appendLog(resultMsg);
   }
 
-  setTimeout(() => {
-    if (document.getElementById('chkAutoClose').checked) {
-      closeDeepCompareModal();
-    }
-  }, 400);
+  if (!autoClose) {
+    const bar = document.getElementById('deepProgressBar');
+    const status = document.getElementById('deepCompareStatusText');
+    if (bar) bar.style.width = '100%';
+    if (status) status.textContent = `Successfully compared ${itemsToCompare.length.toLocaleString('es-ES')} items. Completed${durationText}.`;
+  }
 }
 
 // --- STATUS BAR UPDATES ---

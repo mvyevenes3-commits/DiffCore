@@ -804,25 +804,32 @@ async function compareFilesDeepAsync(leftFullPath, rightFullPath, method = 'rule
   }
 }
 
-function stringSimilarity(s1, s2) {
-  if (s1 === s2) return 1.0;
-  const t1 = (s1 || '').trim();
-  const t2 = (s2 || '').trim();
-  if (t1 === t2) return 1.0;
-  if (!t1 || !t2) return 0.0;
-  const w1 = t1.match(/\w+/g) || [];
-  const w2 = t2.match(/\w+/g) || [];
-  if (w1.length === 0 || w2.length === 0) return 0.0;
-  const map2 = {};
-  for (const w of w2) map2[w] = (map2[w] || 0) + 1;
+function fastSimilarity(tok1, tok2) {
+  if (tok1.str === tok2.str) return 1.0;
+  if (!tok1.str || !tok2.str) return 0.0;
+  if (tok1.words.length === 0 || tok2.words.length === 0) return 0.0;
+  const map2 = new Map(tok2.freq);
   let matches = 0;
-  for (const w of w1) {
-    if (map2[w] > 0) {
+  for (let k = 0; k < tok1.words.length; k++) {
+    const w = tok1.words[k];
+    const c = map2.get(w);
+    if (c > 0) {
       matches++;
-      map2[w]--;
+      map2.set(w, c - 1);
     }
   }
-  return (2 * matches) / (w1.length + w2.length);
+  return (2 * matches) / (tok1.words.length + tok2.words.length);
+}
+
+function preTokenize(line) {
+  const str = (line || '').trim();
+  const words = str.match(/\w+/g) || [];
+  const freq = new Map();
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    freq.set(w, (freq.get(w) || 0) + 1);
+  }
+  return { str, words, freq };
 }
 
 function alignLinesWithinBlock(remLines, addLines) {
@@ -832,8 +839,21 @@ function alignLinesWithinBlock(remLines, addLines) {
   if (m === 0) return remLines.map(l => ({ left: l, right: null }));
   if (n === m) return remLines.map((l, idx) => ({ left: l, right: addLines[idx] }));
 
-  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
-  const traceback = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  // For large blocks, fast linear pairing to prevent freeze
+  if (n > 60 || m > 60) {
+    const minLen = Math.min(n, m);
+    const res = [];
+    for (let k = 0; k < minLen; k++) res.push({ left: remLines[k], right: addLines[k] });
+    for (let k = minLen; k < n; k++) res.push({ left: remLines[k], right: null });
+    for (let k = minLen; k < m; k++) res.push({ left: null, right: addLines[k] });
+    return res;
+  }
+
+  const remTok = remLines.map(preTokenize);
+  const addTok = addLines.map(preTokenize);
+
+  const dp = Array.from({ length: n + 1 }, () => new Float32Array(m + 1));
+  const traceback = Array.from({ length: n + 1 }, () => new Uint8Array(m + 1));
 
   const GAP_PENALTY = -0.15;
   for (let i = 1; i <= n; i++) {
@@ -847,7 +867,7 @@ function alignLinesWithinBlock(remLines, addLines) {
 
   for (let i = 1; i <= n; i++) {
     for (let j = 1; j <= m; j++) {
-      const sim = stringSimilarity(remLines[i - 1], addLines[j - 1]);
+      const sim = fastSimilarity(remTok[i - 1], addTok[j - 1]);
       const matchScore = sim >= 0.35 ? sim * 2.0 : (sim > 0 ? sim : -0.2);
 
       const scoreDiag = dp[i - 1][j - 1] + matchScore;
@@ -887,7 +907,7 @@ function alignLinesWithinBlock(remLines, addLines) {
 /**
  * Beyond Compare 5 High-Precision Myers Diff Line Alignment Engine
  * Features:
- * - Smart token & whitespace-normalized anchor detection (Myers / diffArrays)
+ * - Smart token & whitespace-normalized anchor detection (Myers / diffLines)
  * - Fine-grained Needleman-Wunsch alignment inside modified blocks
  * - Distinct whitespace diff classification (Blue context matching Beyond Compare)
  * - Character-level word/token diff highlighting
@@ -919,17 +939,8 @@ function computeAlignedDiff(textLeft, textRight) {
   const linesL = normL.split('\n');
   const linesR = normR.split('\n');
 
-  function normalizeForAnchor(str) {
-    return str.trim().replace(/\s+/g, ' ').replace(/\s*([(){}[\];,:=])\s*/g, '$1');
-  }
-
-  // Myers diff on line arrays with normalized anchor matching (blank lines must not anchor)
-  const chunks = Diff.diffArrays(linesL, linesR, {
-    comparator: (a, b) => {
-      if (a.trim() === '' || b.trim() === '') return false;
-      return normalizeForAnchor(a) === normalizeForAnchor(b);
-    }
-  });
+  // High-performance Myers line diff with whitespace tolerance
+  const chunks = Diff.diffLines(normL, normR, { ignoreWhitespace: true });
 
   const rows = [];
   let lineNumL = 1;
@@ -953,17 +964,22 @@ function computeAlignedDiff(textLeft, textRight) {
     let rightChunks = null;
 
     if (hasLeft && hasRight) {
-      const parts = Diff.diffWordsWithSpace(leftTxt, rightTxt);
-      leftChunks = [];
-      rightChunks = [];
-      for (let p = 0; p < parts.length; p++) {
-        const part = parts[p];
-        if (part.added) rightChunks.push({ text: part.value, isDiff: true });
-        else if (part.removed) leftChunks.push({ text: part.value, isDiff: true });
-        else {
-          leftChunks.push({ text: part.value, isDiff: false });
-          rightChunks.push({ text: part.value, isDiff: false });
+      if (leftTxt.length <= 1500 && rightTxt.length <= 1500) {
+        const parts = Diff.diffWordsWithSpace(leftTxt, rightTxt);
+        leftChunks = [];
+        rightChunks = [];
+        for (let p = 0; p < parts.length; p++) {
+          const part = parts[p];
+          if (part.added) rightChunks.push({ text: part.value, isDiff: true });
+          else if (part.removed) leftChunks.push({ text: part.value, isDiff: true });
+          else {
+            leftChunks.push({ text: part.value, isDiff: false });
+            rightChunks.push({ text: part.value, isDiff: false });
+          }
         }
+      } else {
+        leftChunks = [{ text: leftTxt, isDiff: true }];
+        rightChunks = [{ text: rightTxt, isDiff: true }];
       }
     } else if (hasLeft) {
       leftChunks = [{ text: leftTxt, isDiff: true }];
@@ -994,13 +1010,19 @@ function computeAlignedDiff(textLeft, textRight) {
     });
   }
 
+  function getChunkLines(val) {
+    if (!val) return [];
+    const trimmed = val.endsWith('\n') ? val.slice(0, -1) : val;
+    return trimmed.split('\n');
+  }
+
   let i = 0;
   while (i < chunks.length) {
     const chunk = chunks[i];
 
     if (!chunk.added && !chunk.removed) {
       // Anchored matching lines
-      const count = chunk.value.length;
+      const count = chunk.count !== undefined ? chunk.count : getChunkLines(chunk.value).length;
       for (let k = 0; k < count; k++) {
         const curL = linesL[lineNumL - 1];
         const curR = linesR[lineNumR - 1];
@@ -1031,8 +1053,8 @@ function computeAlignedDiff(textLeft, textRight) {
         i++;
       }
 
-      const remLines = rem ? rem.value : [];
-      const addLines = add ? add.value : [];
+      const remLines = rem ? getChunkLines(rem.value) : [];
+      const addLines = add ? getChunkLines(add.value) : [];
       const aligned = alignLinesWithinBlock(remLines, addLines);
 
       for (let k = 0; k < aligned.length; k++) {
@@ -1072,6 +1094,7 @@ function computeAlignedDiff(textLeft, textRight) {
       }
     }
   }
+
 
   // Build unified, contiguous Beyond Compare style difference sections:
   // Groups contiguous diff rows together into one section.
