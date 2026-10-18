@@ -8021,7 +8021,7 @@ function setupAllDragAndDrop() {
 }
 
 // --- HIGH-PERFORMANCE VIRTUAL SCROLLING ENGINE FOR TEXT COMPARE (Beyond Compare 5) ---
-const TEXT_ROW_HEIGHT = 20;
+const TEXT_ROW_HEIGHT = 16;
 let virtualTextState = {
   lastRenderedStart: -1,
   lastRenderedEnd: -1,
@@ -8080,7 +8080,7 @@ function renderTextDiff(diffResult) {
     if (r.leftText && r.leftText.length > maxChars) maxChars = r.leftText.length;
     if (r.rightText && r.rightText.length > maxChars) maxChars = r.rightText.length;
   }
-  const maxLineWidthPx = Math.max(900, Math.ceil(maxChars * 8.6 + 100));
+  const maxLineWidthPx = Math.max(900, Math.ceil(maxChars * 7.4 + 80));
 
   // Initialize Virtual Scrolling State
   virtualTextState.currentDiffResult = diffResult;
@@ -8352,7 +8352,7 @@ function renderVisibleTextWindow(force = false) {
 
           leftGutterHtml += `<div class="diff-arrow-btn" style="top:${topPx + 1}px;" title="Copy section ${sec.index + 1} to Right (take Left version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_right')">▶</div>`;
           if (spanRows > 1) {
-            leftGutterHtml += `<div class="diff-bracket-left" style="top:${topPx + 17}px; height:${heightPx - 18}px;"></div>`;
+            leftGutterHtml += `<div class="diff-bracket-left" style="top:${topPx + 14}px; height:${heightPx - 15}px;"></div>`;
           }
         }
       }
@@ -8374,7 +8374,7 @@ function renderVisibleTextWindow(force = false) {
 
           gutterHtml += `<div class="diff-arrow-btn" style="top:${topPx + 1}px;" title="Copy section ${sec.index + 1} to Left side (take right version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_left')">◀</div>`;
           if (spanRows > 1) {
-            gutterHtml += `<div class="diff-bracket-right" style="top:${topPx + 17}px; height:${heightPx - 18}px;"></div>`;
+            gutterHtml += `<div class="diff-bracket-right" style="top:${topPx + 14}px; height:${heightPx - 15}px;"></div>`;
           }
         }
       }
