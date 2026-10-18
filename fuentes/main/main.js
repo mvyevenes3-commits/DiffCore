@@ -176,11 +176,11 @@ ipcMain.handle('dialog:selectFile', async (_event, defaultPath) => {
   return null;
 });
 
-// Compare Folders (Fast Tree Walk)
-ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath }) => {
+// Compare Folders (Fast Tree Walk with Beyond Compare Rules)
+ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath, rules }) => {
   sendLog(`Load comparison: ${leftPath || '(none)'} <-> ${rightPath || '(none)'}`);
   try {
-    const items = await compareFolderTreesAsync(leftPath, rightPath);
+    const items = await compareFolderTreesAsync(leftPath, rightPath, rules);
     return { success: true, items };
   } catch (err) {
     sendLog(`Error comparing folders: ${err.message}`);

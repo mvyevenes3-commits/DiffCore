@@ -45,6 +45,9 @@ function scanDirectory(dirPath, relativeRoot = '', acc = []) {
           const stats = fs.statSync(fullPath);
           size = stats.size;
           mtime = stats.mtime;
+          mode = stats.mode;
+          uid = stats.uid;
+          gid = stats.gid;
         } else {
           mtime = new Date();
         }
@@ -55,7 +58,10 @@ function scanDirectory(dirPath, relativeRoot = '', acc = []) {
           fullPath: fullPath,
           isDirectory: isDir,
           size: size,
-          mtime: mtime
+          mtime: mtime,
+          mode: mode || 0,
+          uid: uid ?? 0,
+          gid: gid ?? 0
         });
 
         if (isDir) {
@@ -109,7 +115,10 @@ async function scanDirectoryAsync(dirPath, relativeRoot = '', acc = []) {
                 fullPath: fullPath,
                 isDirectory: false,
                 size: stats.size,
-                mtime: stats.mtime
+                mtime: stats.mtime,
+                mode: stats.mode || 0,
+                uid: stats.uid ?? 0,
+                gid: stats.gid ?? 0
               });
             })
             .catch(() => {})
@@ -254,21 +263,60 @@ function compareFolderTrees(leftDir, rightDir) {
 
 /**
  * High-performance non-blocking asynchronous Beyond Compare 5 Folder Compare Engine
+ * Powered by Beyond Compare Rules (Quick tests & File opening comparisons)
  */
-async function compareFolderTreesAsync(leftDir, rightDir) {
+async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
   const [leftItems, rightItems] = await Promise.all([
     leftDir ? scanDirectoryAsync(leftDir, '', []) : Promise.resolve([]),
     rightDir ? scanDirectoryAsync(rightDir, '', []) : Promise.resolve([])
   ]);
 
+  const compareFileSize = rules.compareFileSize !== false;
+  const compareTimestamps = rules.compareTimestamps !== false;
+  const timestampTolerance = (typeof rules.timestampTolerance === 'number' && !isNaN(rules.timestampTolerance)) ? rules.timestampTolerance : 2;
+  const toleranceMs = timestampTolerance * 1000;
+  const ignoreDST = !!rules.ignoreDST;
+  const ignoreTimezone = !!rules.ignoreTimezone;
+  const compareFilenameCase = !!rules.compareFilenameCase;
+  const alignDifferentExtensions = !!rules.alignDifferentExtensions;
+  const alignUnicodeNorm = rules.alignUnicodeNorm !== false;
+  const comparePermissions = !!rules.comparePermissions;
+  const compareOwner = !!rules.compareOwner;
+  const compareGroup = !!rules.compareGroup;
+  const compareContents = !!rules.compareContents;
+  const contentMethod = rules.contentMethod || 'rules';
+  const skipIfQuickSame = !!rules.skipIfQuickSame;
+  const overrideQuickTests = rules.overrideQuickTests !== false;
+
+  const normalizePath = (p) => alignUnicodeNorm ? p.normalize('NFC') : p;
+
   const leftMap = new Map();
+  const leftItemsByNorm = [];
   for (let i = 0; i < leftItems.length; i++) {
-    leftMap.set(leftItems[i].relativePath, leftItems[i]);
+    const item = leftItems[i];
+    const nPath = normalizePath(item.relativePath);
+    item.normalizedPath = nPath;
+    leftMap.set(nPath, item);
+    leftItemsByNorm.push(item);
   }
 
   const rightMap = new Map();
+  const rightItemsByNorm = [];
   for (let i = 0; i < rightItems.length; i++) {
-    rightMap.set(rightItems[i].relativePath, rightItems[i]);
+    const item = rightItems[i];
+    const nPath = normalizePath(item.relativePath);
+    item.normalizedPath = nPath;
+    rightMap.set(nPath, item);
+    rightItemsByNorm.push(item);
+  }
+
+  // Case-insensitive lookup map if compareFilenameCase is false
+  const rightCaseMap = new Map();
+  if (!compareFilenameCase) {
+    for (let i = 0; i < rightItemsByNorm.length; i++) {
+      const it = rightItemsByNorm[i];
+      rightCaseMap.set(it.normalizedPath.toLowerCase(), it);
+    }
   }
 
   const allRelPaths = new Set([...leftMap.keys(), ...rightMap.keys()]);
@@ -278,8 +326,12 @@ async function compareFolderTreesAsync(leftDir, rightDir) {
 
   for (let pIdx = 0; pIdx < sortedPaths.length; pIdx++) {
     const relPath = sortedPaths[pIdx];
-    const left = leftMap.get(relPath);
-    const right = rightMap.get(relPath);
+    let left = leftMap.get(relPath);
+    let right = rightMap.get(relPath);
+
+    if (!right && !compareFilenameCase && left) {
+      right = rightCaseMap.get(relPath.toLowerCase());
+    }
 
     let status = 'identical'; // 'identical', 'different', 'orphan_left', 'orphan_right'
 
@@ -292,17 +344,84 @@ async function compareFolderTreesAsync(leftDir, rightDir) {
       if (left.isDirectory !== right.isDirectory) {
         status = 'different';
       } else if (!left.isDirectory) {
-        if (left.size !== right.size) {
-          status = 'different';
+        let quickMatches = true;
+
+        // 1. File size test
+        if (compareFileSize) {
+          if (left.size !== right.size) {
+            quickMatches = false;
+          }
+        }
+
+        // 2. Timestamps test
+        if (quickMatches && compareTimestamps) {
+          const t1 = left.mtime ? (left.mtime instanceof Date ? left.mtime.getTime() : new Date(left.mtime).getTime()) : 0;
+          const t2 = right.mtime ? (right.mtime instanceof Date ? right.mtime.getTime() : new Date(right.mtime).getTime()) : 0;
+          const diffMs = Math.abs(t1 - t2);
+
+          let timeMatches = false;
+          if (diffMs <= toleranceMs) {
+            timeMatches = true;
+          } else if (ignoreDST && Math.abs(diffMs - 3600000) <= toleranceMs) {
+            timeMatches = true;
+          } else if (ignoreTimezone) {
+            const rem = diffMs % 3600000;
+            if (rem <= toleranceMs || (3600000 - rem) <= toleranceMs) {
+              timeMatches = true;
+            }
+          }
+
+          if (!timeMatches) {
+            quickMatches = false;
+          }
+        }
+
+        // 3. Unix metadata tests
+        if (quickMatches && comparePermissions) {
+          const m1 = (left.mode || 0) & 0o777;
+          const m2 = (right.mode || 0) & 0o777;
+          if (m1 !== m2) quickMatches = false;
+        }
+
+        if (quickMatches && compareOwner) {
+          if ((left.uid ?? -1) !== (right.uid ?? -1)) quickMatches = false;
+        }
+
+        if (quickMatches && compareGroup) {
+          if ((left.gid ?? -1) !== (right.gid ?? -1)) quickMatches = false;
+        }
+
+        // 4. File content test (if requested)
+        if (!compareContents) {
+          status = quickMatches ? 'identical' : 'different';
         } else {
-          // Beyond Compare 5 Quick Compare:
-          // If sizes and timestamps match within 2s, identical (zero disk read)
-          const timeDiff = Math.abs((left.mtime ? left.mtime.getTime() : 0) - (right.mtime ? right.mtime.getTime() : 0));
-          if (timeDiff <= 2000) {
+          if (skipIfQuickSame && quickMatches) {
             status = 'identical';
           } else {
-            // Fast sample check
-            status = areFilesFastEqual(left.fullPath, right.fullPath, left.size) ? 'identical' : 'different';
+            let contentMatch = false;
+            try {
+              if (contentMethod === 'binary') {
+                contentMatch = await areFilesEqualBinaryStreamAsync(left.fullPath, right.fullPath, left.size);
+              } else if (contentMethod === 'crc') {
+                const [c1, c2] = await Promise.all([
+                  calculateFileCRC32Async(left.fullPath, left.size),
+                  calculateFileCRC32Async(right.fullPath, right.size)
+                ]);
+                contentMatch = (c1 && c2 && c1 === c2);
+              } else {
+                // rules
+                const deepComp = await compareFilesDeepAsync(left.fullPath, right.fullPath, 'rules', false, left.size, right.size);
+                contentMatch = deepComp.match;
+              }
+            } catch {
+              contentMatch = false;
+            }
+
+            if (contentMatch) {
+              status = (overrideQuickTests || quickMatches) ? 'identical' : 'different';
+            } else {
+              status = 'different';
+            }
           }
         }
       }
@@ -316,13 +435,19 @@ async function compareFolderTreesAsync(leftDir, rightDir) {
       left: left ? {
         name: left.name,
         size: left.size,
-        modified: left.mtime ? left.mtime.toISOString() : null,
+        modified: left.mtime ? (left.mtime instanceof Date ? left.mtime.toISOString() : String(left.mtime)) : null,
+        mode: left.mode,
+        uid: left.uid,
+        gid: left.gid,
         fullPath: left.fullPath
       } : null,
       right: right ? {
         name: right.name,
         size: right.size,
-        modified: right.mtime ? right.mtime.toISOString() : null,
+        modified: right.mtime ? (right.mtime instanceof Date ? right.mtime.toISOString() : String(right.mtime)) : null,
+        mode: right.mode,
+        uid: right.uid,
+        gid: right.gid,
         fullPath: right.fullPath
       } : null
     });

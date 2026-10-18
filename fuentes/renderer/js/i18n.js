@@ -460,7 +460,32 @@
       'modal.session_name': 'Session Name',
       'modal.left_folder': 'Left Folder',
       'modal.right_folder': 'Right Folder',
-      'modal.save_session': 'Save Session'
+      'modal.save_session': 'Save Session',
+
+      // Folder Compare Rules Modal
+      'rules.title': 'Folder Compare - Rules',
+      'rules.quick_tests': 'Quick tests:',
+      'rules.compare_file_size': 'Compare file size',
+      'rules.compare_timestamps': 'Compare timestamps',
+      'rules.second_tolerance': 'second tolerance',
+      'rules.ignore_dst': 'Ignore daylight saving difference (1 hour)',
+      'rules.ignore_timezone': 'Ignore timezone differences',
+      'rules.compare_filename_case': 'Compare filename case',
+      'rules.align_different_extensions': 'Align filenames with different extensions',
+      'rules.align_unicode': 'Align filenames with different Unicode normalization forms',
+      'rules.compare_unix_metadata': 'Compare Unix metadata:',
+      'rules.compare_permissions': 'Compare permissions',
+      'rules.compare_owner': 'Compare owner',
+      'rules.compare_group': 'Compare group',
+      'rules.requires_opening_files': 'Requires opening files:',
+      'rules.compare_contents': 'Compare contents:',
+      'rules.crc_comparison': 'CRC comparison',
+      'rules.binary_comparison': 'Binary comparison',
+      'rules.rules_based_comparison': 'Rules-based comparison',
+      'rules.skip_if_quick_same': 'Skip if quick tests indicate files are the same',
+      'rules.override_quick_results': 'Override quick test results',
+      'rules.use_for_this_view_only': 'Use for this view only',
+      'rules.update_session_defaults': 'Also update session defaults'
     },
 
     es: {
@@ -904,7 +929,32 @@
       'modal.session_name': 'Nombre de la Sesión',
       'modal.left_folder': 'Carpeta Izquierda',
       'modal.right_folder': 'Carpeta Derecha',
-      'modal.save_session': 'Guardar Sesión'
+      'modal.save_session': 'Guardar Sesión',
+
+      // Folder Compare Rules Modal
+      'rules.title': 'Reglas - Comparación de carpetas',
+      'rules.quick_tests': 'Pruebas rápidas:',
+      'rules.compare_file_size': 'Comparar tamaño de archivo',
+      'rules.compare_timestamps': 'Comparar marcas de tiempo',
+      'rules.second_tolerance': 'segundos de tolerancia',
+      'rules.ignore_dst': 'Ignorar diferencia de horario de verano (1 hora)',
+      'rules.ignore_timezone': 'Ignorar diferencias de zona horaria',
+      'rules.compare_filename_case': 'Comparar mayúsculas y minúsculas en nombres',
+      'rules.align_different_extensions': 'Alinear nombres de archivo con diferentes extensiones',
+      'rules.align_unicode': 'Alinear nombres con diferentes formas de normalización Unicode',
+      'rules.compare_unix_metadata': 'Comparar metadatos Unix:',
+      'rules.compare_permissions': 'Comparar permisos',
+      'rules.compare_owner': 'Comparar propietario',
+      'rules.compare_group': 'Comparar grupo',
+      'rules.requires_opening_files': 'Requiere abrir archivos:',
+      'rules.compare_contents': 'Comparar contenidos:',
+      'rules.crc_comparison': 'Comparación CRC',
+      'rules.binary_comparison': 'Comparación binaria',
+      'rules.rules_based_comparison': 'Comparación basada en reglas',
+      'rules.skip_if_quick_same': 'Omitir si las pruebas rápidas indican que los archivos son iguales',
+      'rules.override_quick_results': 'Anular resultados de pruebas rápidas',
+      'rules.use_for_this_view_only': 'Usar solo para esta vista',
+      'rules.update_session_defaults': 'Actualizar también los valores predeterminados de la sesión'
     },
 
     'pt-BR': {
@@ -1348,7 +1398,32 @@
       'modal.session_name': 'Nome da Sessão',
       'modal.left_folder': 'Pasta Esquerda',
       'modal.right_folder': 'Pasta Direita',
-      'modal.save_session': 'Salvar Sessão'
+      'modal.save_session': 'Salvar Sessão',
+
+      // Folder Compare Rules Modal
+      'rules.title': 'Regras - Comparação de Pastas',
+      'rules.quick_tests': 'Testes rápidos:',
+      'rules.compare_file_size': 'Comparar tamanho do arquivo',
+      'rules.compare_timestamps': 'Comparar carimbos de data/hora',
+      'rules.second_tolerance': 'segundos de tolerância',
+      'rules.ignore_dst': 'Ignorar diferença de horário de verão (1 hora)',
+      'rules.ignore_timezone': 'Ignorar diferenças de fuso horário',
+      'rules.compare_filename_case': 'Comparar maiúsculas/minúsculas no nome',
+      'rules.align_different_extensions': 'Alinhar arquivos com extensões diferentes',
+      'rules.align_unicode': 'Alinhar nomes com diferentes formas de normalização Unicode',
+      'rules.compare_unix_metadata': 'Comparar metadatos Unix:',
+      'rules.compare_permissions': 'Comparar permissões',
+      'rules.compare_owner': 'Comparar proprietário',
+      'rules.compare_group': 'Comparar grupo',
+      'rules.requires_opening_files': 'Requer abertura de arquivos:',
+      'rules.compare_contents': 'Comparar conteúdos:',
+      'rules.crc_comparison': 'Comparação CRC',
+      'rules.binary_comparison': 'Comparação binária',
+      'rules.rules_based_comparison': 'Comparação baseada em regras',
+      'rules.skip_if_quick_same': 'Ignorar se os testes rápidos indicarem arquivos iguais',
+      'rules.override_quick_results': 'Substituir resultados dos testes rápidos',
+      'rules.use_for_this_view_only': 'Usar apenas para esta exibição',
+      'rules.update_session_defaults': 'Também atualizar os padrões da sessão'
     },
 
     fr: {
@@ -1792,7 +1867,32 @@
       'modal.session_name': 'Nom de la session',
       'modal.left_folder': 'Dossier Gauche',
       'modal.right_folder': 'Dossier Droit',
-      'modal.save_session': 'Enregistrer la session'
+      'modal.save_session': 'Enregistrer la session',
+
+      // Folder Compare Rules Modal
+      'rules.title': 'Règles - Comparaison de dossiers',
+      'rules.quick_tests': 'Tests rapides :',
+      'rules.compare_file_size': 'Comparer la taille du fichier',
+      'rules.compare_timestamps': 'Comparer les horodatages',
+      'rules.second_tolerance': 'secondes de tolérance',
+      'rules.ignore_dst': "Ignorer la différence d'heure d'été (1 heure)",
+      'rules.ignore_timezone': 'Ignorer les différences de fuseau horaire',
+      'rules.compare_filename_case': 'Respecter la casse des noms de fichiers',
+      'rules.align_different_extensions': 'Aligner les noms avec différentes extensions',
+      'rules.align_unicode': 'Aligner les noms avec différentes formes de normalisation Unicode',
+      'rules.compare_unix_metadata': 'Comparer les métadonnées Unix :',
+      'rules.compare_permissions': 'Comparer les autorisations',
+      'rules.compare_owner': 'Comparer le propriétaire',
+      'rules.compare_group': 'Comparer le groupe',
+      'rules.requires_opening_files': "Nécessite l'ouverture des fichiers :",
+      'rules.compare_contents': 'Comparer les contenus :',
+      'rules.crc_comparison': 'Comparaison CRC',
+      'rules.binary_comparison': 'Comparaison binaire',
+      'rules.rules_based_comparison': 'Comparaison basée sur des règles',
+      'rules.skip_if_quick_same': 'Ignorer si les tests rapides indiquent des fichiers identiques',
+      'rules.override_quick_results': 'Remplacer les résultats des tests rapides',
+      'rules.use_for_this_view_only': 'Utiliser pour cette vue uniquement',
+      'rules.update_session_defaults': 'Mettre également à jour les paramètres de session par défaut'
     },
 
     it: {
@@ -2236,7 +2336,32 @@
       'modal.session_name': 'Nome Sessione',
       'modal.left_folder': 'Cartella Sinistra',
       'modal.right_folder': 'Cartella Destra',
-      'modal.save_session': 'Salva Sessione'
+      'modal.save_session': 'Salva Sessione',
+
+      // Folder Compare Rules Modal
+      'rules.title': 'Regole - Confronto cartelle',
+      'rules.quick_tests': 'Test rapidi:',
+      'rules.compare_file_size': 'Confronta dimensione file',
+      'rules.compare_timestamps': 'Confronta timestamp',
+      'rules.second_tolerance': 'secondi di tolleranza',
+      'rules.ignore_dst': "Ignora differenza ora legale (1 ora)",
+      'rules.ignore_timezone': 'Ignora differenze di fuso orario',
+      'rules.compare_filename_case': 'Confronta maiuscole/minuscole dei file',
+      'rules.align_different_extensions': 'Allinea nomi di file con estensioni diverse',
+      'rules.align_unicode': 'Allinea nomi con diverse forme di normalizzazione Unicode',
+      'rules.compare_unix_metadata': 'Confronta metadati Unix:',
+      'rules.compare_permissions': 'Confronta permessi',
+      'rules.compare_owner': 'Confronta proprietario',
+      'rules.compare_group': 'Confronta gruppo',
+      'rules.requires_opening_files': "Richiede l'apertura dei file:",
+      'rules.compare_contents': 'Confronta contenuti:',
+      'rules.crc_comparison': 'Confronto CRC',
+      'rules.binary_comparison': 'Confronto binario',
+      'rules.rules_based_comparison': 'Confronto basato su regole',
+      'rules.skip_if_quick_same': 'Salta se i test rapidi indicano che i file sono identici',
+      'rules.override_quick_results': 'Sovrascrivi i risultati dei test rapidi',
+      'rules.use_for_this_view_only': 'Usa solo per questa vista',
+      'rules.update_session_defaults': 'Aggiorna anche i valori predefiniti della sessione'
     },
 
     ru: {
@@ -2680,7 +2805,32 @@
       'modal.session_name': 'Имя сессии',
       'modal.left_folder': 'Левая папка',
       'modal.right_folder': 'Правая папка',
-      'modal.save_session': 'Сохранить сессию'
+      'modal.save_session': 'Сохранить сессию',
+
+      // Folder Compare Rules Modal
+      'rules.title': 'Правила - Сравнение папок',
+      'rules.quick_tests': 'Быстрые тесты:',
+      'rules.compare_file_size': 'Сравнивать размер файлов',
+      'rules.compare_timestamps': 'Сравнивать временные метки',
+      'rules.second_tolerance': 'сек. погрешность',
+      'rules.ignore_dst': 'Игнорировать летнее время (1 час)',
+      'rules.ignore_timezone': 'Игнорировать часовые пояса',
+      'rules.compare_filename_case': 'Учитывать регистр имен файлов',
+      'rules.align_different_extensions': 'Выравнивать имена с разными расширениями',
+      'rules.align_unicode': 'Выравнивать имена с разной нормализацией Unicode',
+      'rules.compare_unix_metadata': 'Сравнивать метаданные Unix:',
+      'rules.compare_permissions': 'Сравнивать права доступа',
+      'rules.compare_owner': 'Сравнивать владельца',
+      'rules.compare_group': 'Сравнивать группу',
+      'rules.requires_opening_files': 'Требуется открытие файлов:',
+      'rules.compare_contents': 'Сравнивать содержимое:',
+      'rules.crc_comparison': 'Сравнение по CRC',
+      'rules.binary_comparison': 'Бинарное сравнение',
+      'rules.rules_based_comparison': 'Сравнение по правилам',
+      'rules.skip_if_quick_same': 'Пропускать, если быстрые тесты показали идентичность',
+      'rules.override_quick_results': 'Переопределять результаты быстрых тестов',
+      'rules.use_for_this_view_only': 'Использовать только для этого вида',
+      'rules.update_session_defaults': 'Также обновить настройки сессии по умолчанию'
     }
   };
 

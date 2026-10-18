@@ -1209,7 +1209,8 @@ async function runSingleSideFolder(loadedSide) {
   appendLog(`Load folder: ${p}`);
   const result = await window.api.compareFolders(
     loadedSide === 'left' ? p : '',
-    loadedSide === 'right' ? p : ''
+    loadedSide === 'right' ? p : '',
+    getActiveFolderRules()
   );
 
   if (result.success) {
@@ -2051,7 +2052,7 @@ async function runFolderComparison() {
   setEngineStatus('busy');
   let result;
   try {
-    result = await window.api.compareFolders(left, right);
+    result = await window.api.compareFolders(left, right, getActiveFolderRules());
   } finally {
     setEngineStatus('ready');
   }
@@ -8555,6 +8556,167 @@ function getSelectedOrAllComparisonItems() {
   }
 
   return baseItems;
+}
+
+// --- BEYOND COMPARE 5: FOLDER RULES MODAL (Image 1 replica) ---
+const DEFAULT_FOLDER_RULES = {
+  compareFileSize: true,
+  compareTimestamps: true,
+  timestampTolerance: 2,
+  ignoreDST: false,
+  ignoreTimezone: false,
+  compareFilenameCase: false,
+  alignDifferentExtensions: false,
+  alignUnicodeNorm: true,
+  comparePermissions: false,
+  compareOwner: false,
+  compareGroup: false,
+  compareContents: false,
+  contentMethod: 'rules', // 'crc', 'binary', 'rules'
+  skipIfQuickSame: false,
+  overrideQuickTests: true
+};
+
+function getActiveFolderRules() {
+  if (appState.folderRules) {
+    return appState.folderRules;
+  }
+  try {
+    const saved = localStorage.getItem('diffcore_folder_rules_defaults');
+    if (saved) {
+      appState.folderRules = { ...DEFAULT_FOLDER_RULES, ...JSON.parse(saved) };
+      return appState.folderRules;
+    }
+  } catch {}
+
+  appState.folderRules = { ...DEFAULT_FOLDER_RULES };
+  return appState.folderRules;
+}
+
+function openFolderRulesModal() {
+  const rules = getActiveFolderRules();
+
+  const setChk = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!val;
+  };
+
+  setChk('chkRuleFileSize', rules.compareFileSize !== false);
+  setChk('chkRuleTimestamps', rules.compareTimestamps !== false);
+  
+  const tolEl = document.getElementById('ruleTimestampTolerance');
+  if (tolEl) tolEl.value = (typeof rules.timestampTolerance === 'number') ? rules.timestampTolerance : 2;
+
+  setChk('chkRuleIgnoreDST', rules.ignoreDST);
+  setChk('chkRuleIgnoreTimezone', rules.ignoreTimezone);
+  setChk('chkRuleFilenameCase', rules.compareFilenameCase);
+  setChk('chkRuleAlignExt', rules.alignDifferentExtensions);
+  setChk('chkRuleUnicodeNorm', rules.alignUnicodeNorm !== false);
+
+  setChk('chkRulePermissions', rules.comparePermissions);
+  setChk('chkRuleOwner', rules.compareOwner);
+  setChk('chkRuleGroup', rules.compareGroup);
+
+  setChk('chkRuleCompareContents', rules.compareContents);
+  
+  const m = rules.contentMethod || 'rules';
+  const radio = document.querySelector(`input[name="ruleContentMethod"][value="${m}"]`);
+  if (radio) radio.checked = true;
+
+  setChk('chkRuleSkipIfQuickSame', rules.skipIfQuickSame);
+  setChk('chkRuleOverrideQuickTests', rules.overrideQuickTests !== false);
+
+  const scopeSel = document.getElementById('ruleScopeSelect');
+  if (scopeSel) scopeSel.value = 'view';
+
+  toggleTimestampRules();
+  toggleContentRules();
+
+  const modal = document.getElementById('folderRulesModal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeFolderRulesModal() {
+  const modal = document.getElementById('folderRulesModal');
+  if (modal) modal.classList.remove('active');
+}
+
+function toggleTimestampRules() {
+  const tsChk = document.getElementById('chkRuleTimestamps');
+  const group = document.getElementById('groupTimestampOptions');
+  const isEnabled = tsChk ? tsChk.checked : true;
+  if (group) {
+    if (isEnabled) {
+      group.classList.remove('disabled');
+    } else {
+      group.classList.add('disabled');
+    }
+    const inputs = group.querySelectorAll('input');
+    inputs.forEach(inp => inp.disabled = !isEnabled);
+  }
+}
+
+function toggleContentRules() {
+  const contChk = document.getElementById('chkRuleCompareContents');
+  const group = document.getElementById('groupContentOptions');
+  const isEnabled = contChk ? contChk.checked : false;
+  if (group) {
+    if (isEnabled) {
+      group.classList.remove('disabled');
+    } else {
+      group.classList.add('disabled');
+    }
+    const inputs = group.querySelectorAll('input');
+    inputs.forEach(inp => inp.disabled = !isEnabled);
+  }
+}
+
+function applyFolderRules() {
+  const getChk = (id, def = false) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : def;
+  };
+
+  const tolEl = document.getElementById('ruleTimestampTolerance');
+  const tolVal = tolEl ? parseInt(tolEl.value, 10) : 2;
+
+  const selRadio = document.querySelector('input[name="ruleContentMethod"]:checked');
+  const contentMethod = selRadio ? selRadio.value : 'rules';
+
+  const newRules = {
+    compareFileSize: getChk('chkRuleFileSize', true),
+    compareTimestamps: getChk('chkRuleTimestamps', true),
+    timestampTolerance: isNaN(tolVal) ? 2 : Math.max(0, tolVal),
+    ignoreDST: getChk('chkRuleIgnoreDST', false),
+    ignoreTimezone: getChk('chkRuleIgnoreTimezone', false),
+    compareFilenameCase: getChk('chkRuleFilenameCase', false),
+    alignDifferentExtensions: getChk('chkRuleAlignExt', false),
+    alignUnicodeNorm: getChk('chkRuleUnicodeNorm', true),
+    comparePermissions: getChk('chkRulePermissions', false),
+    compareOwner: getChk('chkRuleOwner', false),
+    compareGroup: getChk('chkRuleGroup', false),
+    compareContents: getChk('chkRuleCompareContents', false),
+    contentMethod: contentMethod,
+    skipIfQuickSame: getChk('chkRuleSkipIfQuickSame', false),
+    overrideQuickTests: getChk('chkRuleOverrideQuickTests', true)
+  };
+
+  appState.folderRules = newRules;
+
+  const scopeSel = document.getElementById('ruleScopeSelect');
+  if (scopeSel && scopeSel.value === 'session') {
+    try {
+      localStorage.setItem('diffcore_folder_rules_defaults', JSON.stringify(newRules));
+    } catch {}
+  }
+
+  closeFolderRulesModal();
+  showToast('Reglas actualizadas', 'info');
+
+  // If a comparison is currently active, rerun comparison with new rules
+  if ((appState.lastComparedLeft || appState.leftPath) && (appState.lastComparedRight || appState.rightPath)) {
+    runFolderComparison();
+  }
 }
 
 // --- MODAL: DEEP COMPARE [=? Compare] ---

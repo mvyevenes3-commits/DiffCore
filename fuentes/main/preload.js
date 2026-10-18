@@ -18,7 +18,7 @@ contextBridge.exposeInMainWorld('api', {
   selectFile: (defaultPath) => ipcRenderer.invoke('dialog:selectFile', defaultPath),
   
   // Folder Comparison
-  compareFolders: (leftPath, rightPath) => ipcRenderer.invoke('diff:compareFolders', { leftPath, rightPath }),
+  compareFolders: (leftPath, rightPath, rules) => ipcRenderer.invoke('diff:compareFolders', { leftPath, rightPath, rules }),
   
   // Deep Compare Modal Action (=?)
   compareSelectionDeep: (leftPath, rightPath, items, method, skipBinary) => 

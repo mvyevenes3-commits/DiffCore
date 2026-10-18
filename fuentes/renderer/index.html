@@ -465,8 +465,8 @@
           <span class="icon" style="font-size: 16px;">≈</span>
           <span class="label" data-i18n="toolbar.minor">Minor</span>
         </button>
-        <button class="tb-btn" title="Rules" data-i18n-title="toolbar.rules_tip" onclick="openDeepCompareModal()">
-          <span class="icon">⚖️</span>
+        <button class="tb-btn" id="btnFolderRules" title="Rules" data-i18n-title="toolbar.rules_tip" onclick="openFolderRulesModal()">
+          <span class="icon"><span class="dc-icon dc-icon-referee"></span></span>
           <span class="label" data-i18n="toolbar.rules">Rules</span>
         </button>
         <button class="tb-btn" id="btnDeepCompare" title="Compare Contents [=?]" data-i18n-title="toolbar.specs_tip" onclick="openDeepCompareModal()">
@@ -1425,6 +1425,139 @@
 
   <!-- CONTEXT MENU FOR ROWS (Image 1 Folder / Image 2 File) -->
   <div class="context-menu" id="folderContextMenu"></div>
+
+  <!-- MODAL: FOLDER RULES (Beyond Compare Rules Modal) -->
+  <div class="modal-backdrop" id="folderRulesModal" onclick="if(event.target === this) closeFolderRulesModal()">
+    <div class="modal-window bc-rules-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="icon"><span class="dc-icon dc-icon-referee"></span></span>
+          <span data-i18n="rules.title">Folder Compare - Rules</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeFolderRulesModal()">✕</button>
+      </div>
+
+      <div class="modal-body bc-rules-body">
+        <!-- Section 1: Quick tests -->
+        <div class="rules-section-title" data-i18n="rules.quick_tests">Quick tests:</div>
+        <div class="rules-quick-grid">
+          <!-- Left Column -->
+          <div class="rules-col">
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleFileSize" checked>
+              <span data-i18n="rules.compare_file_size">Compare file size</span>
+            </label>
+
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleTimestamps" checked onchange="toggleTimestampRules()">
+              <span data-i18n="rules.compare_timestamps">Compare timestamps</span>
+            </label>
+
+            <!-- Indented timestamp options -->
+            <div class="rules-sub-group" id="groupTimestampOptions">
+              <div class="rules-tolerance-row">
+                <input type="number" id="ruleTimestampTolerance" value="2" min="0" max="86400" step="1" class="rules-num-input">
+                <span data-i18n="rules.second_tolerance">second tolerance</span>
+              </div>
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRuleIgnoreDST">
+                <span data-i18n="rules.ignore_dst">Ignore daylight saving difference (1 hour)</span>
+              </label>
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRuleIgnoreTimezone">
+                <span data-i18n="rules.ignore_timezone">Ignore timezone differences</span>
+              </label>
+            </div>
+
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleFilenameCase">
+              <span data-i18n="rules.compare_filename_case">Compare filename case</span>
+            </label>
+
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleAlignExt">
+              <span data-i18n="rules.align_different_extensions">Align filenames with different extensions</span>
+            </label>
+
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleUnicodeNorm" checked>
+              <span data-i18n="rules.align_unicode">Align filenames with different Unicode normalization forms</span>
+            </label>
+          </div>
+
+          <!-- Right Column: Unix metadata -->
+          <div class="rules-col">
+            <div class="rules-sub-title" data-i18n="rules.compare_unix_metadata">Compare Unix metadata:</div>
+            <div class="rules-metadata-group">
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRulePermissions">
+                <span data-i18n="rules.compare_permissions">Compare permissions</span>
+              </label>
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRuleOwner">
+                <span data-i18n="rules.compare_owner">Compare owner</span>
+              </label>
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRuleGroup">
+                <span data-i18n="rules.compare_group">Compare group</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="rules-divider"></div>
+
+        <!-- Section 2: Requires opening files -->
+        <div class="rules-section-title" data-i18n="rules.requires_opening_files">Requires opening files:</div>
+        <div class="rules-opening-group">
+          <label class="rules-checkbox-label">
+            <input type="checkbox" id="chkRuleCompareContents" onchange="toggleContentRules()">
+            <span data-i18n="rules.compare_contents">Compare contents:</span>
+          </label>
+
+          <!-- Indented content options -->
+          <div class="rules-sub-group" id="groupContentOptions">
+            <div class="rules-radio-list">
+              <label class="rules-radio-label">
+                <input type="radio" name="ruleContentMethod" value="crc">
+                <span data-i18n="rules.crc_comparison">CRC comparison</span>
+              </label>
+              <label class="rules-radio-label">
+                <input type="radio" name="ruleContentMethod" value="binary">
+                <span data-i18n="rules.binary_comparison">Binary comparison</span>
+              </label>
+              <label class="rules-radio-label">
+                <input type="radio" name="ruleContentMethod" value="rules" checked>
+                <span data-i18n="rules.rules_based_comparison">Rules-based comparison</span>
+              </label>
+            </div>
+
+            <label class="rules-checkbox-label" style="margin-top: 6px;">
+              <input type="checkbox" id="chkRuleSkipIfQuickSame">
+              <span data-i18n="rules.skip_if_quick_same">Skip if quick tests indicate files are the same</span>
+            </label>
+          </div>
+
+          <label class="rules-checkbox-label" style="margin-top: 8px;">
+            <input type="checkbox" id="chkRuleOverrideQuickTests" checked>
+            <span data-i18n="rules.override_quick_results">Override quick test results</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Footer: scope dropdown on the left, buttons on the right -->
+      <div class="modal-footer rules-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <select id="ruleScopeSelect" class="rules-scope-select">
+          <option value="view" data-i18n="rules.use_for_this_view_only">Use for this view only</option>
+          <option value="session" data-i18n="rules.update_session_defaults">Also update session defaults</option>
+        </select>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-secondary" onclick="closeFolderRulesModal()" data-i18n="common.cancel">Cancel</button>
+          <button class="btn-primary" onclick="applyFolderRules()" data-i18n="common.ok">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: DEEP COMPARE [=? Compare] (Image 1) -->
   <div class="modal-backdrop" id="deepCompareModal">
