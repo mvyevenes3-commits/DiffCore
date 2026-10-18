@@ -6025,6 +6025,32 @@ function highlightSyntax(line, lang = 'generic', isDiff = false, isComment = fal
   return result;
 }
 
+/**
+ * Beyond Compare 5 High-Visibility Intra-Line Difference Formatter
+ * Renders exact changed words/characters in bright red (.diff-inline-diff)
+ * and identical matching segments in crisp contrasting text (.diff-inline-same).
+ */
+function renderDiffLineContent(chunks, fullText, lang = 'generic', cls = 'diff-code', isComment = false) {
+  if (fullText === null || fullText === undefined) return '';
+
+  if (!chunks || chunks.length === 0) {
+    chunks = [{ text: fullText, isDiff: true }];
+  }
+
+  let html = '';
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    if (!chunk.text) continue;
+    const escaped = escapeHtml(chunk.text);
+    if (chunk.isDiff) {
+      html += `<span class="diff-inline-diff">${escaped}</span>`;
+    } else {
+      html += `<span class="diff-inline-same">${escaped}</span>`;
+    }
+  }
+  return html;
+}
+
 async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'Text Compare', isChildCompare = false) {
   appState.currentTextFile = {
     relativePath: label,
@@ -7363,7 +7389,7 @@ function renderVisibleTextWindow(force = false) {
         const isCommL = row.isCommentL;
         const isWsL = row.isWhitespaceDiff;
         const clsL = isWsL ? 'diff-whitespace' : (isCommL ? 'diff-comment' : 'diff-code');
-        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, true, isCommL)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${renderDiffLineContent(row.leftChunks, row.leftText, lang, clsL, isCommL)}</div></div>`;
       }
       cacheL.set(i, rowHtmlL);
     }
@@ -7380,7 +7406,7 @@ function renderVisibleTextWindow(force = false) {
         const isCommR = row.isCommentR;
         const isWsR = row.isWhitespaceDiff;
         const clsR = isWsR ? 'diff-whitespace' : (isCommR ? 'diff-comment' : 'diff-code');
-        rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content">${highlightSyntax(row.rightText, lang, true, isCommR)}</div></div>`;
+        rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content">${renderDiffLineContent(row.rightChunks, row.rightText, lang, clsR, isCommR)}</div></div>`;
       }
       cacheR.set(i, rowHtmlR);
     }

@@ -2673,7 +2673,20 @@ body.theme-light .sync-vscrollbar-thumb.active {
   border-right: 1px solid #6b2525 !important;
 }
 .text-line-row.diff-code .text-line-content {
-  color: #ff9999;
+  color: #e2e8f0;
+}
+
+/* Beyond Compare 5 Intra-Line Difference Highlighting (Dark Theme) */
+.diff-inline-diff {
+  color: #ff3333 !important;
+  font-weight: 700;
+  background: rgba(255, 50, 50, 0.28);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 60, 60, 0.45);
+}
+
+.diff-inline-same {
+  color: #e2e8f0 !important;
 }
 
 /* Beyond Compare 5 Comment Diff: Deep Navy */
@@ -2693,7 +2706,7 @@ body.theme-light .sync-vscrollbar-thumb.active {
   border-right: 1px solid #274775 !important;
 }
 .text-line-row.diff-comment .text-line-content {
-  color: #8ac0fc;
+  color: #c9d1d9;
 }
 .text-line-row.diff-comment .token-comment {
   color: #8ac0fc !important;
@@ -2716,7 +2729,21 @@ body.theme-light .sync-vscrollbar-thumb.active {
   border-right: 1px solid #274775 !important;
 }
 .text-line-row.diff-whitespace .text-line-content {
-  color: #8ac0fc;
+  color: #c9d1d9;
+}
+
+.text-line-row.diff-comment .diff-inline-diff,
+.text-line-row.diff-whitespace .diff-inline-diff {
+  color: #58a6ff !important;
+  font-weight: 700;
+  background: rgba(56, 139, 253, 0.28);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(56, 139, 253, 0.45);
+}
+
+.text-line-row.diff-comment .diff-inline-same,
+.text-line-row.diff-whitespace .diff-inline-same {
+  color: #c9d1d9 !important;
 }
 
 .overview-marker.marker-whitespace {
@@ -2757,8 +2784,21 @@ body.theme-light .text-line-row.diff-code .text-line-action {
   border-right: 1px solid #ffb8c0 !important;
 }
 body.theme-light .text-line-row.diff-code .text-line-content {
-  color: #a40e26;
+  color: #24292f;
 }
+
+body.theme-light .diff-inline-diff {
+  color: #cf222e !important;
+  font-weight: 700;
+  background: rgba(207, 34, 46, 0.20);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(207, 34, 46, 0.35);
+}
+
+body.theme-light .diff-inline-same {
+  color: #24292f !important;
+}
+
 body.theme-light .text-line-row.diff-comment {
   background: #ddf4ff !important;
 }
@@ -2772,7 +2812,7 @@ body.theme-light .text-line-row.diff-comment .text-line-action {
   border-right: 1px solid #80ccff !important;
 }
 body.theme-light .text-line-row.diff-comment .text-line-content {
-  color: #0550ae;
+  color: #1f2328;
 }
 body.theme-light .text-line-row.diff-whitespace {
   background: #ddf4ff !important;
@@ -2787,7 +2827,21 @@ body.theme-light .text-line-row.diff-whitespace .text-line-action {
   border-right: 1px solid #80ccff !important;
 }
 body.theme-light .text-line-row.diff-whitespace .text-line-content {
-  color: #0550ae;
+  color: #1f2328;
+}
+
+body.theme-light .text-line-row.diff-comment .diff-inline-diff,
+body.theme-light .text-line-row.diff-whitespace .diff-inline-diff {
+  color: #0969da !important;
+  font-weight: 700;
+  background: rgba(9, 105, 218, 0.20);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(9, 105, 218, 0.35);
+}
+
+body.theme-light .text-line-row.diff-comment .diff-inline-same,
+body.theme-light .text-line-row.diff-whitespace .diff-inline-same {
+  color: #1f2328 !important;
 }
 
 body.theme-light .text-line-action {

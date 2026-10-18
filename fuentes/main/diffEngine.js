@@ -638,6 +638,86 @@ async function compareFilesDeepAsync(leftFullPath, rightFullPath, method = 'rule
   }
 }
 
+function stringSimilarity(s1, s2) {
+  if (s1 === s2) return 1.0;
+  const t1 = (s1 || '').trim();
+  const t2 = (s2 || '').trim();
+  if (t1 === t2) return 1.0;
+  if (!t1 || !t2) return 0.0;
+  const w1 = t1.match(/\w+/g) || [];
+  const w2 = t2.match(/\w+/g) || [];
+  if (w1.length === 0 || w2.length === 0) return 0.0;
+  const map2 = {};
+  for (const w of w2) map2[w] = (map2[w] || 0) + 1;
+  let matches = 0;
+  for (const w of w1) {
+    if (map2[w] > 0) {
+      matches++;
+      map2[w]--;
+    }
+  }
+  return (2 * matches) / (w1.length + w2.length);
+}
+
+function alignLinesWithinBlock(remLines, addLines) {
+  const n = remLines.length;
+  const m = addLines.length;
+  if (n === 0) return addLines.map(r => ({ left: null, right: r }));
+  if (m === 0) return remLines.map(l => ({ left: l, right: null }));
+  if (n === 1 && m === 1) return [{ left: remLines[0], right: addLines[0] }];
+
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  const traceback = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+
+  const GAP_PENALTY = -0.15;
+  for (let i = 1; i <= n; i++) {
+    dp[i][0] = i * GAP_PENALTY;
+    traceback[i][0] = 2;
+  }
+  for (let j = 1; j <= m; j++) {
+    dp[0][j] = j * GAP_PENALTY;
+    traceback[0][j] = 3;
+  }
+
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      const sim = stringSimilarity(remLines[i - 1], addLines[j - 1]);
+      const matchScore = sim >= 0.35 ? sim * 2.0 : (sim > 0 ? sim : -0.2);
+
+      const scoreDiag = dp[i - 1][j - 1] + matchScore;
+      const scoreUp = dp[i - 1][j] + GAP_PENALTY;
+      const scoreLeft = dp[i][j - 1] + GAP_PENALTY;
+
+      if (scoreDiag >= scoreUp && scoreDiag >= scoreLeft) {
+        dp[i][j] = scoreDiag;
+        traceback[i][j] = 1;
+      } else if (scoreUp >= scoreLeft) {
+        dp[i][j] = scoreUp;
+        traceback[i][j] = 2;
+      } else {
+        dp[i][j] = scoreLeft;
+        traceback[i][j] = 3;
+      }
+    }
+  }
+
+  const aligned = [];
+  let i = n, j = m;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && traceback[i][j] === 1) {
+      aligned.unshift({ left: remLines[i - 1], right: addLines[j - 1] });
+      i--; j--;
+    } else if (i > 0 && (j === 0 || traceback[i][j] === 2)) {
+      aligned.unshift({ left: remLines[i - 1], right: null });
+      i--;
+    } else {
+      aligned.unshift({ left: null, right: addLines[j - 1] });
+      j--;
+    }
+  }
+  return aligned;
+}
+
 /**
  * Beyond Compare 5 High-Precision Myers Diff Line Alignment Engine
  */
@@ -695,7 +775,6 @@ function computeAlignedDiff(textLeft, textRight) {
       const addLines = addedChunk ? addedChunk.value.split('\n') : [];
       if (addLines.length > 0 && addLines[addLines.length - 1] === '') addLines.pop();
 
-      const maxLen = Math.max(remLines.length, addLines.length);
       const startRow = rows.length;
       const sectionIdx = sections.length;
 
@@ -706,15 +785,18 @@ function computeAlignedDiff(textLeft, textRight) {
       const origStartLeft = lineNumL;
       const origStartRight = lineNumR;
 
-      for (let k = 0; k < maxLen; k++) {
-        const hasLeft = k < remLines.length;
-        const hasRight = k < addLines.length;
+      const alignedLines = alignLinesWithinBlock(remLines, addLines);
 
-        const leftTxt = hasLeft ? remLines[k] : '';
-        const rightTxt = hasRight ? addLines[k] : '';
+      for (let k = 0; k < alignedLines.length; k++) {
+        const pair = alignedLines[k];
+        const hasLeft = pair.left !== null;
+        const hasRight = pair.right !== null;
 
-        const isCommentL = leftTxt.trim().startsWith('//') || leftTxt.trim().startsWith('/*') || leftTxt.trim().startsWith('*');
-        const isCommentR = rightTxt.trim().startsWith('//') || rightTxt.trim().startsWith('/*') || rightTxt.trim().startsWith('*');
+        const leftTxt = hasLeft ? pair.left : '';
+        const rightTxt = hasRight ? pair.right : '';
+
+        const isCommentL = hasLeft && (leftTxt.trim().startsWith('//') || leftTxt.trim().startsWith('/*') || leftTxt.trim().startsWith('*'));
+        const isCommentR = hasRight && (rightTxt.trim().startsWith('//') || rightTxt.trim().startsWith('/*') || rightTxt.trim().startsWith('*'));
 
         // Check if the difference is whitespace-only (indentation, trailing spaces, tabs vs spaces)
         let isWhitespaceDiff = false;
@@ -724,6 +806,31 @@ function computeAlignedDiff(textLeft, textRight) {
           if (normLeft === normRight) {
             isWhitespaceDiff = true;
           }
+        }
+
+        // Intra-line difference chunks (word / token level)
+        let leftChunks = null;
+        let rightChunks = null;
+
+        if (hasLeft && hasRight) {
+          const parts = Diff.diffWordsWithSpace(leftTxt, rightTxt);
+          leftChunks = [];
+          rightChunks = [];
+          for (let p = 0; p < parts.length; p++) {
+            const part = parts[p];
+            if (part.added) {
+              rightChunks.push({ text: part.value, isDiff: true });
+            } else if (part.removed) {
+              leftChunks.push({ text: part.value, isDiff: true });
+            } else {
+              leftChunks.push({ text: part.value, isDiff: false });
+              rightChunks.push({ text: part.value, isDiff: false });
+            }
+          }
+        } else if (hasLeft) {
+          leftChunks = [{ text: leftTxt, isDiff: true }];
+        } else if (hasRight) {
+          rightChunks = [{ text: rightTxt, isDiff: true }];
         }
 
         rows.push({
@@ -736,8 +843,10 @@ function computeAlignedDiff(textLeft, textRight) {
           isWhitespaceDiff,
           leftNum: hasLeft ? lineNumL++ : null,
           leftText: hasLeft ? leftTxt : null,
+          leftChunks,
           rightNum: hasRight ? lineNumR++ : null,
           rightText: hasRight ? rightTxt : null,
+          rightChunks,
           sectionIndex: sectionIdx,
           isSectionStart: (k === 0)
         });
