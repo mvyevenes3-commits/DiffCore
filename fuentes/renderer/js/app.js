@@ -6497,11 +6497,13 @@ function renderEmptyTextCompare() {
   const containerL = document.getElementById('textLeftLines');
   const containerR = document.getElementById('textRightLines');
   const gutter = document.getElementById('textCenterGutter');
+  const leftGutter = document.getElementById('textLeftGutter');
   const badge = document.getElementById('textDiffBadge');
   const metaL = document.getElementById('textLeftMeta');
   const metaR = document.getElementById('textRightMeta');
 
   if (gutter) gutter.innerHTML = '';
+  if (leftGutter) leftGutter.innerHTML = '';
   const dropL = window.i18n ? window.i18n.t('text.dropzone_left') : 'Drop left file here, or click 📁 to browse';
   const dropR = window.i18n ? window.i18n.t('text.dropzone_right') : 'Drop right file here, or click 📁 to browse';
   if (containerL) {
@@ -6525,8 +6527,10 @@ function renderSingleSideText(loadedSide) {
   const containerL = document.getElementById('textLeftLines');
   const containerR = document.getElementById('textRightLines');
   const gutter = document.getElementById('textCenterGutter');
+  const leftGutter = document.getElementById('textLeftGutter');
   const badge = document.getElementById('textDiffBadge');
   if (gutter) gutter.innerHTML = '';
+  if (leftGutter) leftGutter.innerHTML = '';
 
   const path = loadedSide === 'left' ? appState.currentTextFile.leftFullPath : appState.currentTextFile.rightFullPath;
   const lang = detectLanguage(path);
@@ -7528,6 +7532,7 @@ function renderTextDiff(diffResult) {
   const containerL = document.getElementById('textLeftLines');
   const containerR = document.getElementById('textRightLines');
   const gutter = document.getElementById('textCenterGutter');
+  const leftGutter = document.getElementById('textLeftGutter');
   const rail = document.getElementById('textOverviewRail');
   const markersContainer = document.getElementById('overviewMarkersContainer') || rail;
   const badge = document.getElementById('textDiffBadge');
@@ -7578,24 +7583,13 @@ function renderTextDiff(diffResult) {
   virtualTextState.lang = lang;
   virtualTextState.cacheL.clear();
   virtualTextState.cacheR.clear();
-  virtualTextState.secStartMap.clear();
-  if (!virtualTextState.secSpanMap) virtualTextState.secSpanMap = new Map();
-  virtualTextState.secSpanMap.clear();
-
-  for (let sIdx = 0; sIdx < sections.length; sIdx++) {
-    const sec = sections[sIdx];
-    virtualTextState.secStartMap.set(sec.startRow, sec);
-    for (let r = sec.startRow; r <= sec.endRow; r++) {
-      virtualTextState.secSpanMap.set(r, sec);
-    }
-  }
-
   const totalHeight = totalRows * TEXT_ROW_HEIGHT;
   containerL.style.height = `${totalHeight}px`;
   containerR.style.height = `${totalHeight}px`;
   containerL.style.minWidth = `${maxLineWidthPx}px`;
   containerR.style.minWidth = `${maxLineWidthPx}px`;
   if (gutter) gutter.style.height = `${totalHeight}px`;
+  if (leftGutter) leftGutter.style.height = `${totalHeight}px`;
 
   // Render initial visible window instantly (< 5ms)
   renderVisibleTextWindow(true);
@@ -7683,7 +7677,6 @@ function renderVisibleTextWindow(force = false) {
 
   const rows = diffResult.rows || [];
   const lang = virtualTextState.lang;
-  const secStartMap = virtualTextState.secStartMap;
   const cacheL = virtualTextState.cacheL;
   const cacheR = virtualTextState.cacheR;
 
@@ -7697,31 +7690,16 @@ function renderVisibleTextWindow(force = false) {
     // Check cached HTML for left row
     let rowHtmlL = cacheL.get(i);
     if (!rowHtmlL) {
-      let btnHtmlL = '';
-      if (secStartMap.has(i)) {
-        const sec = secStartMap.get(i);
-        btnHtmlL = `<div class="diff-arrow-btn to-right" title="Copy section ${sec.index + 1} to Right (take Left version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_right')">▶</div>`;
-        if (sec.endRow > sec.startRow) {
-          btnHtmlL += `<div class="diff-bracket-down"></div>`;
-        }
-      } else if (virtualTextState.secSpanMap && virtualTextState.secSpanMap.has(i)) {
-        const sec = virtualTextState.secSpanMap.get(i);
-        if (i === sec.endRow) {
-          btnHtmlL = `<div class="diff-bracket-end"></div>`;
-        } else {
-          btnHtmlL = `<div class="diff-bracket-mid"></div>`;
-        }
-      }
       if (row.type === 'same') {
-        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
       } else if (row.isGhostL) {
         const ghostClsL = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
-        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
+        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
       } else {
         const isCommL = row.isCommentL;
         const isWsL = row.isWhitespaceDiff;
         const clsL = isWsL ? 'diff-whitespace' : (isCommL ? 'diff-comment' : 'diff-code');
-        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${renderDiffLineContent(row.leftChunks, row.leftText, lang, clsL, isCommL)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${renderDiffLineContent(row.leftChunks, row.leftText, lang, clsL, isCommL)}</div></div>`;
       }
       cacheL.set(i, rowHtmlL);
     }
@@ -7764,20 +7742,45 @@ function renderVisibleTextWindow(force = false) {
     containerR.innerHTML = htmlR;
   }
 
+  // Render ONLY visible left gutter action arrows & brackets
+  const leftGutter = document.getElementById('textLeftGutter');
+  if (leftGutter) {
+    const sections = diffResult.sections || [];
+    let leftGutterHtml = '';
+    if (!diffResult.isSingleSide) {
+      for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+        const sec = sections[sIdx];
+        if (sec.endRow >= startIndex - 10 && sec.startRow <= endIndex + 10) {
+          const topPx = sec.startRow * TEXT_ROW_HEIGHT;
+          const spanRows = sec.endRow - sec.startRow + 1;
+          const heightPx = spanRows * TEXT_ROW_HEIGHT;
+
+          leftGutterHtml += `<div class="diff-arrow-btn" style="top:${topPx + 1}px;" title="Copy section ${sec.index + 1} to Right (take Left version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_right')">▶</div>`;
+          if (spanRows > 1) {
+            leftGutterHtml += `<div class="diff-bracket-left" style="top:${topPx + 17}px; height:${heightPx - 18}px;"></div>`;
+          }
+        }
+      }
+    }
+    leftGutter.innerHTML = leftGutterHtml;
+  }
+
   // Render ONLY visible center gutter action arrows & brackets
   if (gutter) {
     const sections = diffResult.sections || [];
     let gutterHtml = '';
-    for (let sIdx = 0; sIdx < sections.length; sIdx++) {
-      const sec = sections[sIdx];
-      if (sec.endRow >= startIndex - 10 && sec.startRow <= endIndex + 10) {
-        const topPx = sec.startRow * TEXT_ROW_HEIGHT;
-        const spanRows = sec.endRow - sec.startRow + 1;
-        const heightPx = spanRows * TEXT_ROW_HEIGHT;
+    if (!diffResult.isSingleSide) {
+      for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+        const sec = sections[sIdx];
+        if (sec.endRow >= startIndex - 10 && sec.startRow <= endIndex + 10) {
+          const topPx = sec.startRow * TEXT_ROW_HEIGHT;
+          const spanRows = sec.endRow - sec.startRow + 1;
+          const heightPx = spanRows * TEXT_ROW_HEIGHT;
 
-        gutterHtml += `<div class="diff-arrow-btn" style="top:${topPx + 1}px;" title="Copy section ${sec.index + 1} to Left side (take right version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_left')">◀</div>`;
-        if (spanRows > 1) {
-          gutterHtml += `<div class="diff-bracket-right" style="top:${topPx + 17}px; height:${heightPx - 18}px;"></div>`;
+          gutterHtml += `<div class="diff-arrow-btn" style="top:${topPx + 1}px;" title="Copy section ${sec.index + 1} to Left side (take right version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_left')">◀</div>`;
+          if (spanRows > 1) {
+            gutterHtml += `<div class="diff-bracket-right" style="top:${topPx + 17}px; height:${heightPx - 18}px;"></div>`;
+          }
         }
       }
     }
@@ -7798,6 +7801,7 @@ function handleOverviewRailClick(event) {
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
+  const scrollLeftG = document.getElementById('textLeftGutterScroll');
   
   const clientH = scrollL ? scrollL.clientHeight : 400;
   const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
@@ -7818,6 +7822,7 @@ function handleOverviewRailClick(event) {
   if (scrollL) scrollL.scrollTop = targetTop;
   if (scrollR) scrollR.scrollTop = targetTop;
   if (scrollG) scrollG.scrollTop = targetTop;
+  if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
   renderVisibleTextWindow(true);
   updateOverviewViewport();
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
@@ -7840,6 +7845,7 @@ function setupOverviewRailDrag() {
     const scrollL = document.getElementById('textLeftScroll');
     const scrollR = document.getElementById('textRightScroll');
     const scrollG = document.getElementById('textGutterScroll');
+    const scrollLeftG = document.getElementById('textLeftGutterScroll');
 
     const clientH = scrollL ? scrollL.clientHeight : 400;
     const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
@@ -7856,6 +7862,7 @@ function setupOverviewRailDrag() {
     if (scrollL) scrollL.scrollTop = targetTop;
     if (scrollR) scrollR.scrollTop = targetTop;
     if (scrollG) scrollG.scrollTop = targetTop;
+    if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
 
     renderVisibleTextWindow();
     updateOverviewViewport();
@@ -7896,9 +7903,11 @@ function resetTextCompareScroll() {
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
+  const scrollLeftG = document.getElementById('textLeftGutterScroll');
   if (scrollL) { scrollL.scrollTop = 0; scrollL.scrollLeft = 0; }
   if (scrollR) { scrollR.scrollTop = 0; scrollR.scrollLeft = 0; }
   if (scrollG) { scrollG.scrollTop = 0; }
+  if (scrollLeftG) { scrollLeftG.scrollTop = 0; }
   if (appState.currentTextFile) {
     appState.currentTextFile.currentSectionIndex = -1;
   }
@@ -7919,6 +7928,7 @@ function jumpToSection(sectionIndex) {
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
+  const scrollLeftG = document.getElementById('textLeftGutterScroll');
 
   const clientH = scrollL ? scrollL.clientHeight : 400;
   const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
@@ -7942,6 +7952,7 @@ function jumpToSection(sectionIndex) {
   if (scrollL) scrollL.scrollTop = targetTop;
   if (scrollR) scrollR.scrollTop = targetTop;
   if (scrollG) scrollG.scrollTop = targetTop;
+  if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
   renderVisibleTextWindow(true);
   updateOverviewViewport();
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
@@ -8150,13 +8161,14 @@ function setupTextSyncScroll() {
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
+  const scrollLeftG = document.getElementById('textLeftGutterScroll');
   const panes = document.querySelector('#textView .text-compare-panes') || document.querySelector('.text-compare-panes');
   if (!scrollL || !scrollR) return;
 
   textSyncScrollbar = createSyncVScrollbar({
     leftScroll: scrollL,
     rightScroll: scrollR,
-    extraScrolls: scrollG ? [scrollG] : [],
+    extraScrolls: [scrollG, scrollLeftG].filter(Boolean),
     leftTrack: document.getElementById('textLeftVScroll'),
     leftThumb: document.getElementById('textLeftVThumb'),
     rightTrack: document.getElementById('textRightVScroll'),
@@ -8196,6 +8208,7 @@ function setupTextSyncScroll() {
       scrollL.scrollTop = newTop;
       scrollR.scrollTop = newTop;
       if (scrollG) scrollG.scrollTop = newTop;
+      if (scrollLeftG) scrollLeftG.scrollTop = newTop;
 
       scrollL.scrollLeft = newLeft;
       scrollR.scrollLeft = newLeft;
@@ -8222,6 +8235,7 @@ function syncTextScroll(source) {
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
   const scrollG = document.getElementById('textGutterScroll');
+  const scrollLeftG = document.getElementById('textLeftGutterScroll');
   if (!scrollL || !scrollR) return;
 
   const src = (source === 'left') ? scrollL : scrollR;
@@ -8238,6 +8252,9 @@ function syncTextScroll(source) {
   target.scrollLeft = src.scrollLeft;
   if (scrollG) {
     scrollG.scrollTop = src.scrollTop;
+  }
+  if (scrollLeftG) {
+    scrollLeftG.scrollTop = src.scrollTop;
   }
 
   renderVisibleTextWindow();

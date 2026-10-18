@@ -2622,6 +2622,26 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   width: 100%;
 }
 
+.text-left-gutter-scroll {
+  width: 33px;
+  flex-shrink: 0;
+  background: #1e2126;
+  border-right: 1px solid #2e323b;
+  overflow: hidden;
+  position: relative;
+  overflow-anchor: none !important;
+  user-select: none;
+  box-sizing: border-box;
+}
+body.theme-light .text-left-gutter-scroll {
+  background: #f0f2f5;
+  border-right-color: #d0d7de;
+}
+#textLeftGutter {
+  position: relative;
+  width: 100%;
+}
+
 .diff-arrow-btn {
   position: absolute;
   left: 3px;
@@ -2647,6 +2667,7 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   box-shadow: 0 0 8px rgba(245, 176, 37, 0.8);
 }
 
+.diff-bracket-left,
 .diff-bracket-right {
   position: absolute;
   left: 15px;
@@ -2655,41 +2676,6 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   border-bottom: 2px solid #f5b025;
   pointer-events: none;
   box-sizing: border-box;
-  z-index: 5;
-}
-
-.diff-bracket-down {
-  position: absolute;
-  bottom: 0;
-  left: 15px;
-  width: 2px;
-  height: 2px;
-  background: #f5b025;
-  pointer-events: none;
-  z-index: 5;
-}
-
-.diff-bracket-mid {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 15px;
-  width: 2px;
-  background: #f5b025;
-  pointer-events: none;
-  z-index: 5;
-}
-
-.diff-bracket-end {
-  position: absolute;
-  top: 0;
-  left: 15px;
-  width: 10px;
-  height: 10px;
-  border-left: 2px solid #f5b025;
-  border-bottom: 2px solid #f5b025;
-  box-sizing: border-box;
-  pointer-events: none;
   z-index: 5;
 }
 
@@ -3054,12 +3040,6 @@ body.theme-light .sync-vscrollbar-thumb.active {
   align-items: center;
   justify-content: center;
   padding: 0;
-}
-
-#textLeftLines .text-line-num {
-  position: sticky;
-  left: 32px;
-  z-index: 5;
 }
 
 .text-line-action .diff-arrow-btn,
@@ -3572,7 +3552,8 @@ body.theme-light .lang-opt:hover {
   border-right: none !important;
   border-bottom: 2px solid var(--border-color);
 }
-.text-compare-panes.over-under-layout .text-center-gutter-wrapper {
+.text-compare-panes.over-under-layout .text-center-gutter-wrapper,
+.text-compare-panes.over-under-layout .text-left-gutter-scroll {
   display: none !important;
 }
 
