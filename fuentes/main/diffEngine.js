@@ -2,6 +2,15 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
+const BINARY_EXTENSIONS = new Set([
+  '.png', '.jpg', '.jpeg', '.gif', '.ico', '.bmp', '.webp', '.svgz',
+  '.pdf', '.zip', '.tar', '.gz', '.bz2', '.xz', '.7z', '.rar',
+  '.jar', '.war', '.ear', '.class', '.exe', '.dll', '.dylib', '.so',
+  '.mp3', '.mp4', '.avi', '.mov', '.m4a', '.flac', '.wav', '.ogg',
+  '.woff', '.woff2', '.ttf', '.eot', '.otf',
+  '.iso', '.dmg', '.bin', '.dat', '.db', '.sqlite', '.sqlite3', '.pyc', '.o', '.a'
+]);
+
 // CRC32 calculation table
 const CRC32_TABLE = new Int32Array(256);
 for (let i = 0; i < 256; i++) {
@@ -458,7 +467,7 @@ async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
             contentMatch = (c1 && c2 && c1 === c2);
           } else {
             // rules
-            const deepComp = await compareFilesDeepAsync(left.fullPath, right.fullPath, 'rules', false, left.size, right.size);
+            const deepComp = await compareFilesDeepAsync(left.fullPath, right.fullPath, 'rules', true, left.size, right.size);
             contentMatch = deepComp.match;
           }
         } catch {
@@ -743,29 +752,42 @@ async function compareFilesDeepAsync(leftFullPath, rightFullPath, method = 'rule
       }
     }
 
-    // Fast check for binary files if skipBinary is enabled
-    if (skipBinary) {
-      const ext = path.extname(leftFullPath).toLowerCase();
-      const binaryExts = new Set([
-        '.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.tar', '.gz',
-        '.jar', '.war', '.ear', '.class', '.exe', '.dll', '.dylib', '.so',
-        '.mp3', '.mp4', '.avi', '.mov', '.woff', '.woff2', '.ttf', '.eot'
-      ]);
-      if (binaryExts.has(ext)) {
-        return {
-          status: 'different',
-          match: false,
-          method: 'binary_skipped'
-        };
-      }
+    // Fast check for binary extensions (skips parsing compiled binaries or images as UTF-8)
+    const extL = path.extname(leftFullPath).toLowerCase();
+    const extR = path.extname(rightFullPath).toLowerCase();
+    if (BINARY_EXTENSIONS.has(extL) || BINARY_EXTENSIONS.has(extR)) {
+      return {
+        status: 'different',
+        match: false,
+        method: 'binary_skipped'
+      };
+    }
+
+    // Fast check: CRLF vs LF can only differ by at most 1 byte per newline
+    // If the size difference is large, they can never match under rules
+    if (Math.abs(leftSize - rightSize) > Math.min(leftSize, rightSize) + 512) {
+      return {
+        status: 'different',
+        match: false,
+        method: 'rules_size_mismatch'
+      };
     }
 
     // Text comparison (Rules: normalize CRLF vs LF and trim trailing whitespace)
     try {
+      if (leftSize > 10485760 || rightSize > 10485760) {
+        return { status: 'different', match: false, method: 'size_limit_skipped' };
+      }
+
       const [textLeft, textRight] = await Promise.all([
         fs.promises.readFile(leftFullPath, 'utf8'),
         fs.promises.readFile(rightFullPath, 'utf8')
       ]);
+
+      if (textLeft.includes('\0') || textRight.includes('\0')) {
+        return { status: 'different', match: false, method: 'binary_skipped' };
+      }
+
       const normL = textLeft.replace(/\r\n/g, '\n').trim();
       const normR = textRight.replace(/\r\n/g, '\n').trim();
       const match = normL === normR;
@@ -775,16 +797,7 @@ async function compareFilesDeepAsync(leftFullPath, rightFullPath, method = 'rule
         method: 'rules'
       };
     } catch {
-      // Fallback if not utf8 text
-      if (leftSize !== rightSize) {
-        return { status: 'different', match: false, method: 'binary_fallback' };
-      }
-      const match = await areFilesEqualBinaryStreamAsync(leftFullPath, rightFullPath, leftSize);
-      return {
-        status: match ? 'identical' : 'different',
-        match,
-        method: 'binary_fallback'
-      };
+      return { status: 'different', match: false, method: 'binary_fallback' };
     }
   } catch (err) {
     return { status: 'different', match: false, error: err.message };

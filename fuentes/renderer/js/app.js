@@ -1060,6 +1060,7 @@ function openFolderCompare(left = '', right = '', sessionName = 'Folder Compare'
   appState.lastComparedRight = '';
   appState.comparisonItems = [];
   appState.treeRoot = null;
+  clearFolderCompareDOM();
 
   const inL = document.getElementById('leftPathInput');
   const inR = document.getElementById('rightPathInput');
@@ -1166,6 +1167,44 @@ function renderEmptyFolderCompare(sessionName = 'New Folder Compare') {
   if (sRD) sRD.textContent = 'Editing disabled';
 
   appendLog('Load comparison: <-->');
+}
+
+function clearFolderCompareDOM() {
+  const leftBody = document.getElementById('leftTableBody');
+  const rightBody = document.getElementById('rightTableBody');
+  if (leftBody) leftBody.innerHTML = '';
+  if (rightBody) rightBody.innerHTML = '';
+  const statusSummary = document.getElementById('folderStatusSummary');
+  if (statusSummary) statusSummary.textContent = '0 files, 0 folders';
+  virtualScrollState.lastRenderedStart = -1;
+  virtualScrollState.lastRenderedEnd = -1;
+}
+
+function clearTextCompareDOM() {
+  const containerL = document.getElementById('textLeftLines');
+  const containerR = document.getElementById('textRightLines');
+  const gutter = document.getElementById('textCenterGutter');
+  const leftGutter = document.getElementById('textLeftGutter');
+  const badge = document.getElementById('textDiffBadge');
+  const metaL = document.getElementById('textLeftMeta');
+  const metaR = document.getElementById('textRightMeta');
+
+  if (gutter) gutter.innerHTML = '';
+  if (leftGutter) leftGutter.innerHTML = '';
+  if (badge) badge.style.display = 'none';
+  if (metaL) metaL.textContent = '';
+  if (metaR) metaR.textContent = '';
+
+  if (containerL) {
+    containerL.innerHTML = '';
+    containerL.style.position = '';
+    containerL.style.display = '';
+  }
+  if (containerR) {
+    containerR.innerHTML = '';
+    containerR.style.position = '';
+    containerR.style.display = '';
+  }
 }
 
 // --- PATH SANITIZATION & FLUID INPUT HANDLING ---
@@ -1770,6 +1809,7 @@ function closeAllComparisonTabsAndGoHome() {
   appState.currentTextFile = null;
   const dynContainer = document.getElementById('dynamicTextTabs');
   if (dynContainer) dynContainer.innerHTML = '';
+  clearTextCompareDOM();
 
   // Clear active and selected sessions
   appState.activeFolderSession = null;
@@ -1801,6 +1841,7 @@ function closeAllComparisonTabsAndGoHome() {
   const treeR = document.getElementById('folderTreeRight');
   if (treeL) treeL.innerHTML = '';
   if (treeR) treeR.innerHTML = '';
+  clearFolderCompareDOM();
   appState.folderItems = [];
   appState.visibleFlatList = [];
 
@@ -1884,6 +1925,7 @@ function closeFolderTab(event) {
   appState.lastComparedRight = '';
   appState.comparisonItems = [];
   appState.treeRoot = null;
+  clearFolderCompareDOM();
   if (appState.selectedSession && appState.selectedSession.id === 'active-folder') {
     appState.selectedSession = null;
     clearSessionDetails();
@@ -6741,6 +6783,7 @@ function executeCloseTextSession(sessionId) {
       appState.activeTextSessionId = null;
       appState.currentTextFile = null;
       renderDynamicTextTabs();
+      clearTextCompareDOM();
       if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
       switchToRemainingTabOrHome();
     }
@@ -6821,6 +6864,7 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
     appState.activeFolderSession = null;
   }
 
+  clearTextCompareDOM();
   renderDynamicTextTabs();
   switchView('text');
 
@@ -6844,9 +6888,11 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
     return;
   }
 
-  // Case 4: Both files specified -> read and compare
-  const resLeft = await window.api.readTextFile(leftFullPath);
-  const resRight = await window.api.readTextFile(rightFullPath);
+  // Case 4: Both files specified -> read in parallel and compare
+  const [resLeft, resRight] = await Promise.all([
+    window.api.readTextFile(leftFullPath),
+    window.api.readTextFile(rightFullPath)
+  ]);
 
   const contentLeft = resLeft.success ? (resLeft.content || '') : '';
   const contentRight = resRight.success ? (resRight.content || '') : '';
