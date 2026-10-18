@@ -349,6 +349,14 @@ function setupWindowClickHandlers() {
         langMenu.style.display = 'none';
       }
     }
+    const leftPathBox = document.getElementById('leftPathBox');
+    if (leftPathBox && !leftPathBox.contains(event.target)) {
+      closeRecentFoldersDropdown('left');
+    }
+    const rightPathBox = document.getElementById('rightPathBox');
+    if (rightPathBox && !rightPathBox.contains(event.target)) {
+      closeRecentFoldersDropdown('right');
+    }
   });
 }
 
@@ -1018,7 +1026,20 @@ function handleFolderPathPaste(event, side) {
 }
 
 function handleFolderPathKeydown(event, side) {
+  if (event.key === 'ArrowDown') {
+    const dd = document.getElementById(`${side}PathHistoryDropdown`);
+    if (!dd || dd.style.display !== 'block') {
+      event.preventDefault();
+      togglePathHistoryDropdown(side, event);
+      return;
+    }
+  } else if (event.key === 'Escape') {
+    closeRecentFoldersDropdown(side);
+    return;
+  }
+
   if (event.key === 'Enter') {
+    closeRecentFoldersDropdown(side);
     cancelSingleSideScan();
     const inL = document.getElementById('leftPathInput');
     const inR = document.getElementById('rightPathInput');
@@ -1028,6 +1049,9 @@ function handleFolderPathKeydown(event, side) {
     const pathR = inR ? inR.value : '';
     appState.leftPath = pathL;
     appState.rightPath = pathR;
+
+    if (pathL) recordRecentFolderPath(pathL);
+    if (pathR) recordRecentFolderPath(pathR);
 
     if (pathL && pathR) {
       runFolderComparison();
@@ -1736,35 +1760,153 @@ function goUpFolder(side) {
   runFolderComparison();
 }
 
-function showPathHistory(side) {
-  const recentPaths = Array.from(new Set(
-    appState.sessions.concat(appState.autoSaved)
-      .map(s => side === 'left' ? s.leftPath : s.rightPath)
-      .filter(Boolean)
-  ));
-  if (recentPaths.length === 0) {
-    alert('No recent paths found.');
-    return;
+// --- BEYOND COMPARE 5 RECENT FOLDER COMPARISONS COMBOBOX ENGINE ---
+function getRecentFolderPaths() {
+  const result = [];
+  const seen = new Set();
+
+  function addPath(p) {
+    if (!p || typeof p !== 'string') return;
+    const clean = p.trim();
+    if (!clean || seen.has(clean)) return;
+    seen.add(clean);
+    result.push(clean);
   }
-  const chosen = prompt(`Recent ${side.toUpperCase()} paths:\n\n` + recentPaths.slice(0, 8).map((p, i) => `${i + 1}: ${p}`).join('\n') + '\n\nEnter number (1-' + Math.min(recentPaths.length, 8) + '):');
-  if (chosen) {
-    const idx = parseInt(chosen.trim(), 10) - 1;
-    if (recentPaths[idx]) {
-      if (side === 'left') {
-        document.getElementById('leftPathInput').value = recentPaths[idx];
-        appState.leftPath = recentPaths[idx];
-      } else {
-        document.getElementById('rightPathInput').value = recentPaths[idx];
-        appState.rightPath = recentPaths[idx];
+
+  // 1. Manually recorded recent folder paths
+  try {
+    const stored = JSON.parse(localStorage.getItem('diffcore_recent_folder_paths') || '[]');
+    if (Array.isArray(stored)) {
+      stored.forEach(addPath);
+    }
+  } catch (e) {
+    console.warn('Error reading diffcore_recent_folder_paths:', e);
+  }
+
+  // 2. Currently active folder paths
+  if (appState.leftPath) addPath(appState.leftPath);
+  if (appState.rightPath) addPath(appState.rightPath);
+
+  // 3. AutoSaved sessions (most recent comparisons first)
+  if (Array.isArray(appState.autoSaved)) {
+    for (let i = 0; i < appState.autoSaved.length; i++) {
+      const s = appState.autoSaved[i];
+      if (!s.type || s.type === 'folder_compare') {
+        if (s.leftPath) addPath(s.leftPath);
+        if (s.rightPath) addPath(s.rightPath);
       }
-      runFolderComparison();
     }
   }
+
+  // 4. Saved sessions
+  if (Array.isArray(appState.sessions)) {
+    for (let i = 0; i < appState.sessions.length; i++) {
+      const s = appState.sessions[i];
+      if (!s.type || s.type === 'folder_compare') {
+        if (s.leftPath) addPath(s.leftPath);
+        if (s.rightPath) addPath(s.rightPath);
+      }
+    }
+  }
+
+  return result.slice(0, 30);
+}
+
+function recordRecentFolderPath(path) {
+  if (!path || typeof path !== 'string') return;
+  const clean = path.trim();
+  if (!clean) return;
+  try {
+    let stored = JSON.parse(localStorage.getItem('diffcore_recent_folder_paths') || '[]');
+    if (!Array.isArray(stored)) stored = [];
+    stored = stored.filter(p => p !== clean);
+    stored.unshift(clean);
+    if (stored.length > 30) stored = stored.slice(0, 30);
+    localStorage.setItem('diffcore_recent_folder_paths', JSON.stringify(stored));
+  } catch (e) {
+    console.warn('Error saving diffcore_recent_folder_paths:', e);
+  }
+}
+
+function togglePathHistoryDropdown(side, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  const otherSide = side === 'left' ? 'right' : 'left';
+  closeRecentFoldersDropdown(otherSide);
+
+  const dropdown = document.getElementById(`${side}PathHistoryDropdown`);
+  if (!dropdown) return;
+
+  const isVisible = dropdown.style.display === 'block';
+  if (isVisible) {
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  const paths = getRecentFolderPaths();
+  if (paths.length === 0) {
+    const emptyMsg = window.i18n ? window.i18n.t('sessions.no_recent_folders', 'No recent comparisons found') : 'No recent comparisons found';
+    dropdown.innerHTML = `<div class="path-history-empty">${emptyMsg}</div>`;
+  } else {
+    dropdown.innerHTML = paths.map((p) => {
+      const escaped = escapeHtml(p);
+      const safeParam = escaped.replace(/'/g, "\\'");
+      return `
+        <div class="path-history-item" data-path="${escaped}" onclick="selectRecentFolderPath('${side}', '${safeParam}', event)" title="${escaped}">
+          <span class="path-history-icon">📁</span>
+          <span class="path-history-text">${escaped}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  dropdown.style.display = 'block';
+}
+
+function selectRecentFolderPath(side, path, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  closeRecentFoldersDropdown(side);
+
+  const input = document.getElementById(`${side}PathInput`);
+  if (input) {
+    input.value = path;
+  }
+  if (side === 'left') {
+    appState.leftPath = path;
+  } else {
+    appState.rightPath = path;
+  }
+
+  recordRecentFolderPath(path);
+  runFolderComparison();
+}
+
+function closeRecentFoldersDropdown(side) {
+  if (side) {
+    const dd = document.getElementById(`${side}PathHistoryDropdown`);
+    if (dd) dd.style.display = 'none';
+  } else {
+    const dL = document.getElementById('leftPathHistoryDropdown');
+    const dR = document.getElementById('rightPathHistoryDropdown');
+    if (dL) dL.style.display = 'none';
+    if (dR) dR.style.display = 'none';
+  }
+}
+
+function showPathHistory(side, event) {
+  togglePathHistoryDropdown(side, event);
 }
 
 // --- RUN FOLDER COMPARISON ---
 async function runFolderComparison() {
   cancelSingleSideScan();
+  closeRecentFoldersDropdown();
   const inL = document.getElementById('leftPathInput');
   const inR = document.getElementById('rightPathInput');
   const left = sanitizePath(inL ? inL.value : '');
@@ -1775,6 +1917,9 @@ async function runFolderComparison() {
 
   appState.leftPath = left;
   appState.rightPath = right;
+
+  if (left) recordRecentFolderPath(left);
+  if (right) recordRecentFolderPath(right);
 
   if (!left && !right) {
     appendLog('No paths specified for comparison.');

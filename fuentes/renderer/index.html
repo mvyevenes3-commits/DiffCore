@@ -460,11 +460,12 @@
       <!-- Left Path -->
       <div class="path-box" id="leftPathBox" onclick="focusPathInput('left', event)">
         <input type="text" id="leftPathInput" class="path-input" placeholder="Enter path here" onpaste="handleFolderPathPaste(event, 'left')" onkeydown="handleFolderPathKeydown(event, 'left')" onblur="handleFolderPathBlur('left')" spellcheck="false">
-        <button class="path-tool-btn blue-combo" title="Recent Folders" onclick="showPathHistory('left')">▾</button>
+        <button class="path-tool-btn blue-combo" title="Recent Folders" onclick="togglePathHistoryDropdown('left', event)">▾</button>
         <button class="path-tool-btn" title="Go Up Folder" onclick="goUpFolder('left')">↩</button>
         <button class="path-tool-btn" title="Browse Left Folder" onclick="browseFolder('left')">📁▾</button>
         <button class="path-tool-btn" title="Go to Parent Folder" onclick="goUpFolder('left')">📁↑</button>
         <button class="path-tool-btn" title="Swap Sides" onclick="swapSides()">📁⇄</button>
+        <div class="path-history-dropdown" id="leftPathHistoryDropdown" style="display: none;"></div>
       </div>
 
       <!-- Center Divider -->
@@ -473,11 +474,12 @@
       <!-- Right Path -->
       <div class="path-box" id="rightPathBox" onclick="focusPathInput('right', event)">
         <input type="text" id="rightPathInput" class="path-input" placeholder="Enter path here" onpaste="handleFolderPathPaste(event, 'right')" onkeydown="handleFolderPathKeydown(event, 'right')" onblur="handleFolderPathBlur('right')" spellcheck="false">
-        <button class="path-tool-btn blue-combo" title="Recent Folders" onclick="showPathHistory('right')">▾</button>
+        <button class="path-tool-btn blue-combo" title="Recent Folders" onclick="togglePathHistoryDropdown('right', event)">▾</button>
         <button class="path-tool-btn" title="Go Up Folder" onclick="goUpFolder('right')">↩</button>
         <button class="path-tool-btn" title="Browse Right Folder" onclick="browseFolder('right')">📁▾</button>
         <button class="path-tool-btn" title="Go to Parent Folder" onclick="goUpFolder('right')">📁↑</button>
         <button class="path-tool-btn" title="Swap Sides" onclick="swapSides()">📁⇄</button>
+        <div class="path-history-dropdown" id="rightPathHistoryDropdown" style="display: none;"></div>
       </div>
     </div>
 

@@ -623,6 +623,7 @@ body.theme-light .tab-add-btn:hover {
   gap: 2px;
   min-width: 0;
   cursor: text;
+  position: relative;
 }
 
 .path-box:focus-within {
@@ -677,6 +678,84 @@ body.theme-light .tab-add-btn:hover {
 
 .path-tool-btn.blue-combo:hover {
   background: #106ebe;
+}
+
+/* Beyond Compare 5 Recent Folders Combobox Dropdown */
+.path-history-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  width: 100%;
+  min-width: 380px;
+  max-width: 850px;
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #1e222b;
+  border: 1px solid #3c4353;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.4);
+  z-index: 10000;
+  padding: 4px 0;
+}
+
+body.theme-light .path-history-dropdown {
+  background: #ffffff;
+  border-color: #d0d7de;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+}
+
+.path-history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #e6edf3;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  transition: background 0.08s ease;
+}
+
+body.theme-light .path-history-item {
+  color: #24292f;
+}
+
+.path-history-item:hover,
+.path-history-item.selected {
+  background: #0078d4;
+  color: #ffffff;
+}
+
+body.theme-light .path-history-item:hover,
+body.theme-light .path-history-item.selected {
+  background: #0969da;
+  color: #ffffff;
+}
+
+.path-history-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.path-history-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.path-history-empty {
+  padding: 10px 14px;
+  font-size: 11px;
+  color: #888888;
+  font-style: italic;
+  text-align: center;
 }
 
 .path-center-divider {

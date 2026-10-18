@@ -313,6 +313,7 @@
       'sessions.right_label': 'Right:',
       'sessions.enter_name': 'Please enter a session name.',
       'sessions.error_saving': 'Error saving session: ',
+      'sessions.no_recent_folders': 'No recent comparisons found',
 
       // Folder Merge
       'fmerge.conflicts': 'Conflicts',
@@ -744,6 +745,7 @@
       'sessions.right_label': 'Derecha:',
       'sessions.enter_name': 'Por favor ingresa un nombre para la sesión.',
       'sessions.error_saving': 'Error al guardar la sesión: ',
+      'sessions.no_recent_folders': 'No se encontraron comparaciones recientes',
 
       // Folder Merge
       'fmerge.conflicts': 'Conflictos',
@@ -1175,6 +1177,7 @@
       'sessions.right_label': 'Direita:',
       'sessions.enter_name': 'Por favor, insira um nome para a sessão.',
       'sessions.error_saving': 'Erro ao salvar a sessão: ',
+      'sessions.no_recent_folders': 'Nenhuma comparação recente encontrada',
 
       // Folder Merge
       'fmerge.conflicts': 'Conflitos',
@@ -1606,6 +1609,7 @@
       'sessions.right_label': 'Droite :',
       'sessions.enter_name': 'Veuillez saisir un nom de session.',
       'sessions.error_saving': 'Erreur lors de l\'enregistrement de la session : ',
+      'sessions.no_recent_folders': 'Aucune comparaison récente trouvée',
 
       // Folder Merge
       'fmerge.conflicts': 'Conflits',
@@ -2037,6 +2041,7 @@
       'sessions.right_label': 'Destra:',
       'sessions.enter_name': 'Inserisci un nome per la sessione.',
       'sessions.error_saving': 'Errore durante il salvataggio della sessione: ',
+      'sessions.no_recent_folders': 'Nessun confronto recente trovato',
 
       // Folder Merge
       'fmerge.conflicts': 'Conflitti',
@@ -2468,6 +2473,7 @@
       'sessions.right_label': 'Справа:',
       'sessions.enter_name': 'Пожалуйста, введите имя сессии.',
       'sessions.error_saving': 'Ошибка при сохранении сессии: ',
+      'sessions.no_recent_folders': 'Недавних папок не найдено',
 
       // Folder Merge
       'fmerge.conflicts': 'Конфликты',
