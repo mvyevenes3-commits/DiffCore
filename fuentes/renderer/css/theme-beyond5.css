@@ -3106,6 +3106,13 @@ body.theme-light .sync-vscrollbar-thumb.active {
   color: #d4d4d4;
   line-height: 20px;
   box-sizing: border-box;
+  outline: none;
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.text-line-content:focus {
+  outline: none;
 }
 
 /* Beyond Compare 5 Authentic Hatched Diagonal Stripes for Missing Gap */
@@ -3131,7 +3138,7 @@ body.theme-light .sync-vscrollbar-thumb.active {
   border-right: 1px solid #232832 !important;
 }
 .text-line-row.ghost-hatched .text-line-content {
-  visibility: hidden;
+  visibility: visible;
 }
 
 /* Beyond Compare 5 Code Diff: Deep Crimson Wine */

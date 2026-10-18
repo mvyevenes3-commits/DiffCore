@@ -248,6 +248,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupMenuListeners();
   setupSyncScroll();
   setupTextSyncScroll();
+  setupTextInlineEditing();
   setupTextDragAndDrop();
   setupTableEventDelegation();
   setupFolderKeyboardNavigation();
@@ -6497,19 +6498,27 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
 }
 
 function updateTextTabTitle() {
-  const left = appState.currentTextFile.leftFullPath;
-  const right = appState.currentTextFile.rightFullPath;
+  const file = appState.currentTextFile;
+  if (!file) return;
+  const left = file.leftFullPath;
+  const right = file.rightFullPath;
   const titleEl = document.getElementById('currentTextTabTitle');
   if (!titleEl) return;
+
+  const isDirty = (file.originalLeftContent !== undefined && file.leftContent !== file.originalLeftContent) ||
+                  (file.originalRightContent !== undefined && file.rightContent !== file.originalRightContent);
+  const dirtySuffix = isDirty ? '*' : '';
+
   if (!left && !right) {
-    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', 'Text Compare');
+    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `Text Compare${dirtySuffix}`);
   } else if (left && right) {
     const nameL = left.split(/[\/\\]/).pop();
     const nameR = right.split(/[\/\\]/).pop();
-    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', nameL === nameR ? nameL : `${nameL} ↔ ${nameR}`);
+    const baseName = nameL === nameR ? nameL : `${nameL} ↔ ${nameR}`;
+    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `${baseName}${dirtySuffix}`);
   } else {
     const single = (left || right).split(/[\/\\]/).pop();
-    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', single || 'Text Compare');
+    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `${single || 'Text Compare'}${dirtySuffix}`);
   }
   if (appState.activeView === 'text') {
     updateAppHeader();
@@ -7791,15 +7800,15 @@ function renderVisibleTextWindow(force = false) {
     let rowHtmlL = cacheL.get(i);
     if (!rowHtmlL) {
       if (row.type === 'same') {
-        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="left" data-row="${i}">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
       } else if (row.isGhostL) {
         const ghostClsL = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
-        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
+        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-num"></div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="left" data-row="${i}"></div></div>`;
       } else {
         const isCommL = row.isCommentL;
         const isWsL = row.isWhitespaceDiff;
         const clsL = isWsL ? 'diff-whitespace' : (isCommL ? 'diff-comment' : 'diff-code');
-        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${renderDiffLineContent(row.leftChunks, row.leftText, lang, clsL, isCommL)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="left" data-row="${i}">${renderDiffLineContent(row.leftChunks, row.leftText, lang, clsL, isCommL)}</div></div>`;
       }
       cacheL.set(i, rowHtmlL);
     }
@@ -7809,15 +7818,15 @@ function renderVisibleTextWindow(force = false) {
     let rowHtmlR = cacheR.get(i);
     if (!rowHtmlR) {
       if (row.type === 'same') {
-        rowHtmlR = `<div class="text-line-row" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content">${highlightSyntax(row.rightText, lang, false, false)}</div></div>`;
+        rowHtmlR = `<div class="text-line-row" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="right" data-row="${i}">${highlightSyntax(row.rightText, lang, false, false)}</div></div>`;
       } else if (row.isGhostR) {
         const ghostClsR = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
-        rowHtmlR = `<div class="text-line-row ${ghostClsR}" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
+        rowHtmlR = `<div class="text-line-row ${ghostClsR}" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="right" data-row="${i}"></div></div>`;
       } else {
         const isCommR = row.isCommentR;
         const isWsR = row.isWhitespaceDiff;
         const clsR = isWsR ? 'diff-whitespace' : (isCommR ? 'diff-comment' : 'diff-code');
-        rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content">${renderDiffLineContent(row.rightChunks, row.rightText, lang, clsR, isCommR)}</div></div>`;
+        rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="right" data-row="${i}">${renderDiffLineContent(row.rightChunks, row.rightText, lang, clsR, isCommR)}</div></div>`;
       }
       cacheR.set(i, rowHtmlR);
     }
@@ -8489,6 +8498,330 @@ function syncHorizontalScrollWidths() {
   containerL.style.minWidth = `${w}px`;
   containerR.style.minWidth = `${w}px`;
   if (textSyncScrollbar) textSyncScrollbar.update();
+}
+
+// --- BEYOND COMPARE 5 LIVE INLINE TEXT EDITING CONTROLLER ---
+let textEditCommitTimer = null;
+
+function getCaretCharacterOffsetWithin(element) {
+  let caretOffset = 0;
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(element);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
+    caretOffset = preCaretRange.toString().length;
+  }
+  return caretOffset;
+}
+
+function setCaretPosition(element, offset) {
+  const range = document.createRange();
+  const sel = window.getSelection();
+  let currentOffset = 0;
+
+  function traverse(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const nextOffset = currentOffset + node.length;
+      if (offset >= currentOffset && offset <= nextOffset) {
+        range.setStart(node, offset - currentOffset);
+        range.collapse(true);
+        return true;
+      }
+      currentOffset = nextOffset;
+    } else {
+      for (let i = 0; i < node.childNodes.length; i++) {
+        if (traverse(node.childNodes[i])) return true;
+      }
+    }
+    return false;
+  }
+
+  traverse(element);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function computeSimpleLineChunks(leftText, rightText) {
+  if (leftText === null || leftText === undefined) leftText = '';
+  if (rightText === null || rightText === undefined) rightText = '';
+
+  if (leftText === rightText) {
+    return {
+      leftChunks: [{ text: leftText, isDiff: false }],
+      rightChunks: [{ text: rightText, isDiff: false }]
+    };
+  }
+
+  let prefixLen = 0;
+  const minLen = Math.min(leftText.length, rightText.length);
+  while (prefixLen < minLen && leftText[prefixLen] === rightText[prefixLen]) {
+    prefixLen++;
+  }
+
+  let suffixLen = 0;
+  const maxSuffix = minLen - prefixLen;
+  while (
+    suffixLen < maxSuffix &&
+    leftText[leftText.length - 1 - suffixLen] === rightText[rightText.length - 1 - suffixLen]
+  ) {
+    suffixLen++;
+  }
+
+  const prefix = leftText.slice(0, prefixLen);
+  const suffix = leftText.slice(leftText.length - suffixLen);
+  const leftDiff = leftText.slice(prefixLen, leftText.length - suffixLen);
+  const rightDiff = rightText.slice(prefixLen, rightText.length - suffixLen);
+
+  const leftChunks = [];
+  const rightChunks = [];
+
+  if (prefix) {
+    leftChunks.push({ text: prefix, isDiff: false });
+    rightChunks.push({ text: prefix, isDiff: false });
+  }
+  if (leftDiff) {
+    leftChunks.push({ text: leftDiff, isDiff: true });
+  }
+  if (rightDiff) {
+    rightChunks.push({ text: rightDiff, isDiff: true });
+  }
+  if (suffix) {
+    leftChunks.push({ text: suffix, isDiff: false });
+    rightChunks.push({ text: suffix, isDiff: false });
+  }
+
+  return { leftChunks, rightChunks };
+}
+
+function handleTextLineInput(target, side, rowIndex) {
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+  if (!diffResult || !diffResult.rows || !diffResult.rows[rowIndex]) return;
+
+  const row = diffResult.rows[rowIndex];
+  const newText = target.innerText.replace(/\r\n|\r|\n/g, '');
+
+  if (side === 'left') {
+    row.leftText = newText;
+    if (row.isGhostL) {
+      row.isGhostL = false;
+      row.leftNum = rowIndex + 1;
+      const numEl = document.getElementById(`row-l-${rowIndex}`)?.querySelector('.text-line-num');
+      if (numEl) numEl.textContent = row.leftNum;
+    }
+  } else {
+    row.rightText = newText;
+    if (row.isGhostR) {
+      row.isGhostR = false;
+      row.rightNum = rowIndex + 1;
+      const numEl = document.getElementById(`row-r-${rowIndex}`)?.querySelector('.text-line-num');
+      if (numEl) numEl.textContent = row.rightNum;
+    }
+  }
+
+  // Synchronize full file content in appState
+  if (side === 'left') {
+    appState.currentTextFile.leftContent = diffResult.rows
+      .filter(r => !r.isGhostL && r.leftNum !== null)
+      .map(r => r.leftText)
+      .join('\n');
+  } else {
+    appState.currentTextFile.rightContent = diffResult.rows
+      .filter(r => !r.isGhostR && r.rightNum !== null)
+      .map(r => r.rightText)
+      .join('\n');
+  }
+
+  // Update dirty indicator in tab title & Save buttons
+  updateTextTabTitle();
+  updateSaveButtonStatusAfterHistory();
+
+  // Compare row.leftText and row.rightText
+  const isDiff = (row.leftText !== row.rightText);
+  const rowElL = document.getElementById(`row-l-${rowIndex}`);
+  const rowElR = document.getElementById(`row-r-${rowIndex}`);
+
+  if (isDiff) {
+    row.type = 'diff';
+    row.isWhitespaceDiff = false;
+
+    const chunks = computeSimpleLineChunks(row.leftText, row.rightText);
+    row.leftChunks = chunks.leftChunks;
+    row.rightChunks = chunks.rightChunks;
+
+    if (rowElL) {
+      rowElL.classList.remove('ghost-hatched', 'diff-whitespace', 'diff-comment');
+      rowElL.classList.add('diff-code');
+    }
+    if (rowElR) {
+      rowElR.classList.remove('ghost-hatched', 'diff-whitespace', 'diff-comment');
+      rowElR.classList.add('diff-code');
+      // If user is editing the left side, update the right side content HTML immediately
+      if (side === 'left' && !row.isGhostR) {
+        const contentR = rowElR.querySelector('.text-line-content');
+        if (contentR) {
+          contentR.innerHTML = renderDiffLineContent(row.rightChunks, row.rightText, virtualTextState.lang, 'diff-code', false);
+        }
+      }
+    }
+    // If user is editing the right side, update the left side content HTML immediately
+    if (side === 'right' && !row.isGhostL && rowElL) {
+      const contentL = rowElL.querySelector('.text-line-content');
+      if (contentL) {
+        contentL.innerHTML = renderDiffLineContent(row.leftChunks, row.leftText, virtualTextState.lang, 'diff-code', false);
+      }
+    }
+  } else {
+    row.type = 'same';
+    row.leftChunks = [];
+    row.rightChunks = [];
+
+    if (rowElL) {
+      rowElL.classList.remove('diff-code', 'diff-whitespace', 'diff-comment');
+    }
+    if (rowElR) {
+      rowElR.classList.remove('diff-code', 'diff-whitespace', 'diff-comment');
+      if (side === 'left' && !row.isGhostR) {
+        const contentR = rowElR.querySelector('.text-line-content');
+        if (contentR) {
+          contentR.innerHTML = highlightSyntax(row.rightText, virtualTextState.lang, false, false);
+        }
+      }
+    }
+    if (side === 'right' && !row.isGhostL && rowElL) {
+      const contentL = rowElL.querySelector('.text-line-content');
+      if (contentL) {
+        contentL.innerHTML = highlightSyntax(row.leftText, virtualTextState.lang, false, false);
+      }
+    }
+  }
+
+  // Invalidate virtual scroll cache for this row
+  virtualTextState.cacheL.delete(rowIndex);
+  virtualTextState.cacheR.delete(rowIndex);
+
+  // Debounced commit for intra-line highlighting of the actively edited target line
+  clearTimeout(textEditCommitTimer);
+  textEditCommitTimer = setTimeout(() => {
+    commitActiveLineHighlight(target, side, rowIndex);
+  }, 400);
+}
+
+function commitActiveLineHighlight(target, side, rowIndex) {
+  if (!target || !document.contains(target)) return;
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+  if (!diffResult || !diffResult.rows || !diffResult.rows[rowIndex]) return;
+
+  const row = diffResult.rows[rowIndex];
+  const isDiff = (row.leftText !== row.rightText);
+  const text = (side === 'left') ? row.leftText : row.rightText;
+  const chunks = (side === 'left') ? row.leftChunks : row.rightChunks;
+
+  // Save caret offset
+  const isFocused = (document.activeElement === target);
+  let caretOffset = isFocused ? getCaretCharacterOffsetWithin(target) : -1;
+
+  if (isDiff) {
+    target.innerHTML = renderDiffLineContent(chunks, text, virtualTextState.lang, 'diff-code', false);
+  } else {
+    target.innerHTML = highlightSyntax(text, virtualTextState.lang, false, false);
+  }
+
+  // Restore caret
+  if (isFocused && caretOffset >= 0) {
+    setCaretPosition(target, caretOffset);
+  }
+}
+
+function handleTextLineKeydown(e, target, side, rowIndex) {
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+  if (!diffResult || !diffResult.rows) return;
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    commitActiveLineHighlight(target, side, rowIndex);
+    // Move to next line if available
+    if (rowIndex < diffResult.rows.length - 1) {
+      const nextId = `row-${side === 'left' ? 'l' : 'r'}-${rowIndex + 1}`;
+      const nextTarget = document.getElementById(nextId)?.querySelector('.text-line-content');
+      if (nextTarget) {
+        nextTarget.focus();
+        setCaretPosition(nextTarget, 0);
+      }
+    }
+  } else if (e.key === 'ArrowDown') {
+    if (rowIndex < diffResult.rows.length - 1) {
+      const nextId = `row-${side === 'left' ? 'l' : 'r'}-${rowIndex + 1}`;
+      const nextTarget = document.getElementById(nextId)?.querySelector('.text-line-content');
+      if (nextTarget) {
+        const offset = getCaretCharacterOffsetWithin(target);
+        nextTarget.focus();
+        setCaretPosition(nextTarget, offset);
+        e.preventDefault();
+      }
+    }
+  } else if (e.key === 'ArrowUp') {
+    if (rowIndex > 0) {
+      const prevId = `row-${side === 'left' ? 'l' : 'r'}-${rowIndex - 1}`;
+      const prevTarget = document.getElementById(prevId)?.querySelector('.text-line-content');
+      if (prevTarget) {
+        const offset = getCaretCharacterOffsetWithin(target);
+        prevTarget.focus();
+        setCaretPosition(prevTarget, offset);
+        e.preventDefault();
+      }
+    }
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    saveTextFile(side);
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+    e.preventDefault();
+    undoTextChange();
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+    e.preventDefault();
+    redoTextChange();
+  }
+}
+
+function handleTextLineBlur(target, side, rowIndex) {
+  commitActiveLineHighlight(target, side, rowIndex);
+  pushTextHistoryState(`Edit line ${rowIndex + 1}`);
+}
+
+function setupTextInlineEditing() {
+  const panes = document.querySelector('#textView .text-compare-panes') || document.querySelector('.text-compare-panes');
+  if (!panes) return;
+
+  panes.addEventListener('input', (e) => {
+    const target = e.target.closest('.text-line-content');
+    if (!target) return;
+    const side = target.getAttribute('data-side');
+    const rowIndex = parseInt(target.getAttribute('data-row'), 10);
+    if (!side || isNaN(rowIndex)) return;
+
+    handleTextLineInput(target, side, rowIndex);
+  });
+
+  panes.addEventListener('keydown', (e) => {
+    const target = e.target.closest('.text-line-content');
+    if (!target) return;
+    const side = target.getAttribute('data-side');
+    const rowIndex = parseInt(target.getAttribute('data-row'), 10);
+    if (!side || isNaN(rowIndex)) return;
+
+    handleTextLineKeydown(e, target, side, rowIndex);
+  });
+
+  panes.addEventListener('blur', (e) => {
+    const target = e.target.closest('.text-line-content');
+    if (!target) return;
+    const side = target.getAttribute('data-side');
+    const rowIndex = parseInt(target.getAttribute('data-row'), 10);
+    if (!side || isNaN(rowIndex)) return;
+
+    handleTextLineBlur(target, side, rowIndex);
+  }, true);
 }
 
 // --- TEXT COMPARE UNDO / REDO HISTORY CONTROLLER ---
