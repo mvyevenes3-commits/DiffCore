@@ -1188,12 +1188,35 @@ function clearTextCompareDOM() {
   const badge = document.getElementById('textDiffBadge');
   const metaL = document.getElementById('textLeftMeta');
   const metaR = document.getElementById('textRightMeta');
+  const rail = document.getElementById('textOverviewRail');
+  const markersContainer = document.getElementById('overviewMarkersContainer') || rail;
+  const thumb = document.getElementById('overviewViewportThumb');
 
+  if (markersContainer) markersContainer.innerHTML = '';
+  if (thumb) {
+    thumb.style.top = '0%';
+    thumb.style.height = '0%';
+  }
   if (gutter) gutter.innerHTML = '';
   if (leftGutter) leftGutter.innerHTML = '';
   if (badge) badge.style.display = 'none';
   if (metaL) metaL.textContent = '';
   if (metaR) metaR.textContent = '';
+
+  virtualTextState.currentDiffResult = null;
+  virtualTextState.lastRenderedStart = -1;
+  virtualTextState.lastRenderedEnd = -1;
+  virtualTextState.cacheL.clear();
+  virtualTextState.cacheR.clear();
+
+  const scrollL = document.getElementById('textLeftScroll');
+  const scrollR = document.getElementById('textRightScroll');
+  const scrollG = document.getElementById('textCenterGutterScroll');
+  const scrollLeftG = document.getElementById('textLeftGutterScroll');
+  if (scrollL) { scrollL.scrollTop = 0; scrollL.scrollLeft = 0; }
+  if (scrollR) { scrollR.scrollTop = 0; scrollR.scrollLeft = 0; }
+  if (scrollG) { scrollG.scrollTop = 0; }
+  if (scrollLeftG) { scrollLeftG.scrollTop = 0; }
 
   if (containerL) {
     containerL.innerHTML = '';
@@ -6977,16 +7000,10 @@ function updateTextTabTitle() {
 }
 
 function renderEmptyTextCompare() {
+  clearTextCompareDOM();
   const containerL = document.getElementById('textLeftLines');
   const containerR = document.getElementById('textRightLines');
-  const gutter = document.getElementById('textCenterGutter');
-  const leftGutter = document.getElementById('textLeftGutter');
   const badge = document.getElementById('textDiffBadge');
-  const metaL = document.getElementById('textLeftMeta');
-  const metaR = document.getElementById('textRightMeta');
-
-  if (gutter) gutter.innerHTML = '';
-  if (leftGutter) leftGutter.innerHTML = '';
   const dropL = window.i18n ? window.i18n.t('text.dropzone_left') : 'Drop left file here, or click 📁 to browse';
   const dropR = window.i18n ? window.i18n.t('text.dropzone_right') : 'Drop right file here, or click 📁 to browse';
   if (containerL) {
@@ -7014,6 +7031,7 @@ function renderEmptyTextCompare() {
     containerR.style.overflow = 'hidden';
   }
   if (badge) {
+    badge.style.display = '';
     badge.textContent = dropL;
     badge.style.background = 'rgba(255, 255, 255, 0.08)';
     badge.style.color = '#aaa';
