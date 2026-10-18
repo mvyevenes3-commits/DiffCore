@@ -7579,9 +7579,15 @@ function renderTextDiff(diffResult) {
   virtualTextState.cacheL.clear();
   virtualTextState.cacheR.clear();
   virtualTextState.secStartMap.clear();
+  if (!virtualTextState.secSpanMap) virtualTextState.secSpanMap = new Map();
+  virtualTextState.secSpanMap.clear();
 
   for (let sIdx = 0; sIdx < sections.length; sIdx++) {
-    virtualTextState.secStartMap.set(sections[sIdx].startRow, sections[sIdx]);
+    const sec = sections[sIdx];
+    virtualTextState.secStartMap.set(sec.startRow, sec);
+    for (let r = sec.startRow; r <= sec.endRow; r++) {
+      virtualTextState.secSpanMap.set(r, sec);
+    }
   }
 
   const totalHeight = totalRows * TEXT_ROW_HEIGHT;
@@ -7695,9 +7701,19 @@ function renderVisibleTextWindow(force = false) {
       if (secStartMap.has(i)) {
         const sec = secStartMap.get(i);
         btnHtmlL = `<div class="diff-arrow-btn to-right" title="Copy section ${sec.index + 1} to Right (take Left version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_right')">▶</div>`;
+        if (sec.endRow > sec.startRow) {
+          btnHtmlL += `<div class="diff-bracket-down"></div>`;
+        }
+      } else if (virtualTextState.secSpanMap && virtualTextState.secSpanMap.has(i)) {
+        const sec = virtualTextState.secSpanMap.get(i);
+        if (i === sec.endRow) {
+          btnHtmlL = `<div class="diff-bracket-end"></div>`;
+        } else {
+          btnHtmlL = `<div class="diff-bracket-mid"></div>`;
+        }
       }
       if (row.type === 'same') {
-        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-action"></div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
       } else if (row.isGhostL) {
         const ghostClsL = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
         rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
@@ -7748,15 +7764,21 @@ function renderVisibleTextWindow(force = false) {
     containerR.innerHTML = htmlR;
   }
 
-  // Render ONLY visible center gutter action arrows
+  // Render ONLY visible center gutter action arrows & brackets
   if (gutter) {
     const sections = diffResult.sections || [];
     let gutterHtml = '';
     for (let sIdx = 0; sIdx < sections.length; sIdx++) {
       const sec = sections[sIdx];
-      if (sec.startRow >= startIndex - 10 && sec.startRow <= endIndex + 10) {
+      if (sec.endRow >= startIndex - 10 && sec.startRow <= endIndex + 10) {
         const topPx = sec.startRow * TEXT_ROW_HEIGHT;
+        const spanRows = sec.endRow - sec.startRow + 1;
+        const heightPx = spanRows * TEXT_ROW_HEIGHT;
+
         gutterHtml += `<div class="diff-arrow-btn" style="top:${topPx + 1}px;" title="Copy section ${sec.index + 1} to Left side (take right version)" onclick="event.stopPropagation(); copyDiffSection(${sec.index}, 'to_left')">◀</div>`;
+        if (spanRows > 1) {
+          gutterHtml += `<div class="diff-bracket-right" style="top:${topPx + 17}px; height:${heightPx - 18}px;"></div>`;
+        }
       }
     }
     gutter.innerHTML = gutterHtml;

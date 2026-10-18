@@ -2647,6 +2647,52 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   box-shadow: 0 0 8px rgba(245, 176, 37, 0.8);
 }
 
+.diff-bracket-right {
+  position: absolute;
+  left: 15px;
+  width: 10px;
+  border-left: 2px solid #f5b025;
+  border-bottom: 2px solid #f5b025;
+  pointer-events: none;
+  box-sizing: border-box;
+  z-index: 5;
+}
+
+.diff-bracket-down {
+  position: absolute;
+  bottom: 0;
+  left: 15px;
+  width: 2px;
+  height: 2px;
+  background: #f5b025;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.diff-bracket-mid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 15px;
+  width: 2px;
+  background: #f5b025;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.diff-bracket-end {
+  position: absolute;
+  top: 0;
+  left: 15px;
+  width: 10px;
+  height: 10px;
+  border-left: 2px solid #f5b025;
+  border-bottom: 2px solid #f5b025;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 5;
+}
+
 .diff-arrow-split {
   position: absolute;
   left: 2px;

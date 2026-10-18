@@ -891,25 +891,23 @@ function computeAlignedDiff(textLeft, textRight) {
   });
 
   const rows = [];
-  const sections = [];
   let lineNumL = 1;
   let lineNumR = 1;
-  let currentSec = null;
 
   function pushSameRow(leftTxt, rightTxt) {
-    currentSec = null;
     rows.push({
       type: 'same',
       leftNum: lineNumL++,
       leftText: leftTxt,
       rightNum: lineNumR++,
       rightText: rightTxt,
-      sectionIndex: -1
+      sectionIndex: -1,
+      isSectionStart: false,
+      isSectionEnd: false
     });
   }
 
   function pushDiffRow(hasLeft, leftTxt, hasRight, rightTxt, isWs, diffType) {
-    const curRow = rows.length;
     let leftChunks = null;
     let rightChunks = null;
 
@@ -935,29 +933,6 @@ function computeAlignedDiff(textLeft, textRight) {
     const isCommentL = hasLeft && (leftTxt.trim().startsWith('//') || leftTxt.trim().startsWith('/*') || leftTxt.trim().startsWith('*'));
     const isCommentR = hasRight && (rightTxt.trim().startsWith('//') || rightTxt.trim().startsWith('/*') || rightTxt.trim().startsWith('*'));
 
-    if (currentSec && currentSec.isWhitespaceDiff === isWs && currentSec.endRow === curRow - 1) {
-      currentSec.endRow = curRow;
-      if (hasLeft) { currentSec.leftLineCount++; currentSec.leftLines.push(leftTxt); }
-      if (hasRight) { currentSec.rightLineCount++; currentSec.rightLines.push(rightTxt); }
-      if (currentSec.leftLineCount > 0 && currentSec.rightLineCount > 0) currentSec.type = 'modify';
-    } else {
-      const secIdx = sections.length;
-      currentSec = {
-        index: secIdx,
-        startRow: curRow,
-        endRow: curRow,
-        type: diffType,
-        isWhitespaceDiff: isWs,
-        origStartLeft: lineNumL,
-        origStartRight: lineNumR,
-        leftLineCount: hasLeft ? 1 : 0,
-        rightLineCount: hasRight ? 1 : 0,
-        leftLines: hasLeft ? [leftTxt] : [],
-        rightLines: hasRight ? [rightTxt] : []
-      };
-      sections.push(currentSec);
-    }
-
     rows.push({
       type: 'diff',
       diffType,
@@ -972,8 +947,9 @@ function computeAlignedDiff(textLeft, textRight) {
       rightNum: hasRight ? lineNumR++ : null,
       rightText: hasRight ? rightTxt : null,
       rightChunks,
-      sectionIndex: currentSec.index,
-      isSectionStart: (currentSec.startRow === curRow)
+      sectionIndex: -1,
+      isSectionStart: false,
+      isSectionEnd: false
     });
   }
 
@@ -1055,6 +1031,74 @@ function computeAlignedDiff(textLeft, textRight) {
       }
     }
   }
+
+  // Build unified, contiguous Beyond Compare style difference sections:
+  // Groups contiguous diff rows together into one section.
+  // Internal blank lines between diff rows do not break the section.
+  const sections = [];
+  let curSec = null;
+
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r];
+    const isDiff = (row.type === 'diff');
+    const isBlankSame = (row.type === 'same' && (!row.leftText || row.leftText.trim() === '') && (!row.rightText || row.rightText.trim() === ''));
+
+    if (isDiff) {
+      if (!curSec) {
+        curSec = {
+          index: sections.length,
+          startRow: r,
+          endRow: r
+        };
+        sections.push(curSec);
+      }
+      curSec.endRow = r;
+    } else if (isBlankSame && curSec) {
+      // Hold: an empty line inside a diff block does not break the section
+    } else {
+      curSec = null;
+    }
+  }
+
+  sections.forEach((sec, idx) => {
+    sec.index = idx;
+    let minL = null, maxL = null;
+    let minR = null, maxR = null;
+
+    for (let r = sec.startRow; r <= sec.endRow; r++) {
+      const row = rows[r];
+      row.sectionIndex = idx;
+      row.isSectionStart = (r === sec.startRow);
+      row.isSectionEnd = (r === sec.endRow);
+
+      if (row.leftNum !== null && row.leftNum !== undefined) {
+        if (minL === null || row.leftNum < minL) minL = row.leftNum;
+        if (maxL === null || row.leftNum > maxL) maxL = row.leftNum;
+      }
+      if (row.rightNum !== null && row.rightNum !== undefined) {
+        if (minR === null || row.rightNum < minR) minR = row.rightNum;
+        if (maxR === null || row.rightNum > maxR) maxR = row.rightNum;
+      }
+    }
+
+    sec.origStartLeft = minL !== null ? minL : (sec.startRow > 0 ? (rows[sec.startRow - 1].leftNum || 1) + 1 : 1);
+    sec.leftLineCount = (minL !== null && maxL !== null) ? (maxL - minL + 1) : 0;
+    sec.leftLines = sec.leftLineCount > 0 ? linesL.slice(minL - 1, maxL) : [];
+
+    sec.origStartRight = minR !== null ? minR : (sec.startRow > 0 ? (rows[sec.startRow - 1].rightNum || 1) + 1 : 1);
+    sec.rightLineCount = (minR !== null && maxR !== null) ? (maxR - minR + 1) : 0;
+    sec.rightLines = sec.rightLineCount > 0 ? linesR.slice(minR - 1, maxR) : [];
+
+    let allWs = true;
+    for (let r = sec.startRow; r <= sec.endRow; r++) {
+      if (rows[r].type === 'diff' && !rows[r].isWhitespaceDiff) {
+        allWs = false;
+        break;
+      }
+    }
+    sec.isWhitespaceDiff = allWs;
+    sec.type = sec.leftLineCount === 0 ? 'add_right' : (sec.rightLineCount === 0 ? 'add_left' : 'modify');
+  });
 
   return {
     rows,
