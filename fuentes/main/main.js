@@ -404,3 +404,19 @@ ipcMain.handle('system:getInfo', async () => {
   };
 });
 
+// System Telemetry for Home Dashboard
+ipcMain.handle('system:getTelemetry', async () => {
+  const mem = process.memoryUsage();
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  return {
+    appMemoryMB: Math.round(mem.rss / (1024 * 1024)),
+    heapUsedMB: Math.round(mem.heapUsed / (1024 * 1024)),
+    totalMemoryGB: Math.round(totalMem / (1024 * 1024 * 1024)),
+    freeMemoryGB: +(freeMem / (1024 * 1024 * 1024)).toFixed(1),
+    platform: process.platform,
+    arch: process.arch,
+    uptime: Math.round(process.uptime())
+  };
+});
+

@@ -167,9 +167,51 @@ body.theme-light .folder-status-bar {
 }
 
 body.theme-light .home-footer-banner {
-  background: #ebedf0;
+  background: #f1f3f6;
   border-top-color: #d0d7de;
   color: #24292e;
+}
+
+body.theme-light .footer-telemetry-col {
+  border-right-color: #d8dee4;
+}
+
+body.theme-light .telemetry-label {
+  color: #57606a;
+}
+
+body.theme-light .telemetry-bar-track {
+  background: #d0d7de;
+}
+
+body.theme-light .telemetry-bar-fill {
+  background: #16a34a;
+}
+
+body.theme-light .telemetry-subtext {
+  color: #24292f;
+}
+
+body.theme-light .telemetry-digital-box {
+  background: #ffffff;
+  border-color: #d0d7de;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .digital-value {
+  color: #1f2328;
+}
+
+body.theme-light .status-indicator-text {
+  color: #1f2328;
+}
+
+body.theme-light .network-wifi-icon {
+  color: #24292f;
+}
+
+body.theme-light .telemetry-version-text {
+  color: #1f2328;
 }
 
 
@@ -1365,36 +1407,184 @@ body.theme-light .log-content::-webkit-scrollbar-button:single-button {
   color: #ddd;
 }
 
-/* HOME FOOTER BANNER (Image 3) */
+/* HOME FOOTER BANNER - TELEMETRY & SYSTEM STATUS DASHBOARD (media_1792294890839) */
 .home-footer-banner {
-  background: #0d0d0d;
-  border-top: 1px solid #333333;
-  padding: 14px 24px;
+  background: #11141c;
+  border-top: 1px solid #232834;
+  padding: 8px 14px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  align-items: start;
+  grid-template-columns: 2.2fr 1.1fr 1.1fr 0.9fr 1.2fr;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 62px;
+  user-select: none;
+}
+
+.footer-telemetry-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 12px;
+  border-right: 1px solid #202430;
+  height: 100%;
+}
+
+.footer-telemetry-col:last-child {
+  border-right: none;
+}
+
+.telemetry-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #727b8d;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* Col 1: RAM Usage */
+.footer-telemetry-col.col-ram {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding-left: 4px;
+}
+
+.telemetry-gauge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.footer-section h4 {
+.speedometer-icon {
+  display: block;
+}
+
+.telemetry-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.telemetry-bar-track {
+  width: 100%;
+  height: 6px;
+  background: #20242e;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.telemetry-bar-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.telemetry-subtext {
+  display: flex;
+  justify-content: space-between;
   font-size: 11px;
-  font-weight: 700;
-  color: var(--color-gold);
+  font-weight: 500;
+  color: #c9d1d9;
+}
+
+/* Col 2: Engine Latency */
+.footer-telemetry-col.col-latency {
+  align-items: center;
+}
+
+.telemetry-digital-box {
+  background: #090c12;
+  border: 1px solid #1f2532;
+  border-radius: 4px;
+  padding: 3px 18px;
+  min-width: 76px;
+  text-align: center;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.digital-value {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6edf3;
   letter-spacing: 0.5px;
-  margin-bottom: 6px;
 }
 
-.footer-section p, .footer-section a {
-  font-size: 11px;
-  color: #888888;
-  line-height: 1.4;
-  text-decoration: none;
+/* Col 3: Engine Status */
+.footer-telemetry-col.col-status {
+  align-items: center;
 }
 
-.footer-section a {
-  color: #aaa;
-  text-decoration: underline;
+.telemetry-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8), 0 0 2px #22c55e;
+  flex-shrink: 0;
+}
+
+.status-indicator-dot.busy {
+  background: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.85);
+  animation: pulseStatusDot 1.2s infinite ease-in-out;
+}
+
+@keyframes pulseStatusDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+.status-indicator-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e6edf3;
+  letter-spacing: 0.5px;
+}
+
+/* Col 4: Network Connection */
+.footer-telemetry-col.col-network {
+  align-items: center;
+}
+
+.telemetry-icon-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.network-wifi-icon {
+  color: #e6edf3;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.network-wifi-icon.offline {
+  color: #ef4444;
+  opacity: 0.65;
+}
+
+/* Col 5: Version */
+.footer-telemetry-col.col-version {
+  align-items: center;
+}
+
+.telemetry-version-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e6edf3;
+  white-space: nowrap;
 }
 
 /* MODAL COMPARE [=?] (Image 1) */

@@ -70,6 +70,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // System Info
   getSystemInfo: () => ipcRenderer.invoke('system:getInfo'),
+  getTelemetry: () => ipcRenderer.invoke('system:getTelemetry'),
 
   // Application Menu Integration
   setMenuLanguage: (lang) => ipcRenderer.invoke('menu:setLanguage', lang),

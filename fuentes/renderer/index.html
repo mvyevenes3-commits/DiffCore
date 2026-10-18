@@ -312,23 +312,72 @@
       </main>
     </div>
 
-    <!-- Home Bottom Banner (Image 3) -->
+    <!-- Home Bottom Banner - Telemetry & Status Dashboard (media_1792294890839) -->
     <footer class="home-footer-banner">
-      <div class="footer-section">
-        <h4>KNOWLEDGE BASE</h4>
-        <input type="text" class="tb-filter-input" placeholder="Search" style="width: 140px;">
+      <!-- 1. RAM Usage -->
+      <div class="footer-telemetry-col col-ram">
+        <div class="telemetry-gauge">
+          <svg class="speedometer-icon" viewBox="0 0 36 36" width="34" height="34" aria-hidden="true">
+            <defs>
+              <linearGradient id="gaugeGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#38bdf8"/>
+                <stop offset="45%" stop-color="#22c55e"/>
+                <stop offset="75%" stop-color="#eab308"/>
+                <stop offset="100%" stop-color="#ef4444"/>
+              </linearGradient>
+            </defs>
+            <path d="M 6 26 A 14 14 0 1 1 30 26" fill="none" stroke="#252a36" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 6 26 A 14 14 0 1 1 30 26" fill="none" stroke="url(#gaugeGrad)" stroke-width="3" stroke-linecap="round" stroke-dasharray="66 100"/>
+            <circle cx="18" cy="20" r="2.5" fill="#e6edf3"/>
+            <line x1="18" y1="20" x2="24" y2="10" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="telemetry-info">
+          <div class="telemetry-label" data-i18n="footer.ram_usage">USO DE MEMORIA RAM</div>
+          <div class="telemetry-bar-track">
+            <div id="footerRamBar" class="telemetry-bar-fill" style="width: 22%;"></div>
+          </div>
+          <div class="telemetry-subtext">
+            <span id="footerRamValue">182 MB</span>
+            <span id="footerRamMax">8 GB</span>
+          </div>
+        </div>
       </div>
-      <div class="footer-section">
-        <h4>SUPPORT FORUMS</h4>
-        <p>Visit our <a href="#">online forums</a> for technical support.</p>
+
+      <!-- 2. Engine Latency -->
+      <div class="footer-telemetry-col col-latency">
+        <div class="telemetry-label" data-i18n="footer.engine_latency">LATENCIA DEL MOTOR</div>
+        <div class="telemetry-digital-box">
+          <span id="footerLatencyVal" class="digital-value">0.04s</span>
+        </div>
       </div>
-      <div class="footer-section">
-        <h4>SCREENCASTS</h4>
-        <p>Watch our <a href="#">online videos</a> for tips on getting the most out of DiffCore.</p>
+
+      <!-- 3. Engine Status -->
+      <div class="footer-telemetry-col col-status">
+        <div class="telemetry-label" data-i18n="footer.engine_status">ESTADO DEL MOTOR</div>
+        <div class="telemetry-status-row">
+          <span id="footerStatusDot" class="status-indicator-dot ready"></span>
+          <span id="footerStatusText" class="status-indicator-text" data-i18n="footer.status_ready">LISTO</span>
+        </div>
       </div>
-      <div class="footer-section">
-        <h4>EDITION</h4>
-        <p>DiffCore 5.0 (Cross-Platform Native Edition). macOS, Linux, Windows.</p>
+
+      <!-- 4. Network Connection -->
+      <div class="footer-telemetry-col col-network">
+        <div class="telemetry-label" data-i18n="footer.network_connection">CONEXIÓN DE RED</div>
+        <div class="telemetry-icon-row">
+          <svg id="footerNetworkIcon" class="network-wifi-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 5. Version -->
+      <div class="footer-telemetry-col col-version">
+        <div class="telemetry-label" data-i18n="footer.version">VERSIÓN</div>
+        <div class="telemetry-version-text">DiffCore v1.0.0 (BETA)</div>
       </div>
     </footer>
   </div>

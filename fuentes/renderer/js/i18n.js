@@ -89,6 +89,15 @@
       'home.card_media_compare': 'Media Compare',
       'home.card_media_compare_desc': 'Compare MP3, ID3 tags and audio/video metadata.',
 
+      // Home Footer Telemetry
+      'footer.ram_usage': 'RAM MEMORY USAGE',
+      'footer.engine_latency': 'ENGINE LATENCY',
+      'footer.engine_status': 'ENGINE STATUS',
+      'footer.status_ready': 'READY',
+      'footer.status_busy': 'COMPARING...',
+      'footer.network_connection': 'NETWORK CONNECTION',
+      'footer.version': 'VERSION',
+
       // Toolbar Actions (Common & Folder)
       'toolbar.home': 'Home',
       'toolbar.rules': 'Rules',
@@ -519,6 +528,15 @@
       'home.card_table_compare_desc': 'Diferencias en datos estructurados CSV, TSV y hojas de cálculo.',
       'home.card_media_compare': 'Comparar Multimedia',
       'home.card_media_compare_desc': 'Compara archivos MP3, etiquetas ID3 y metadatos de audio/video.',
+
+      // Home Footer Telemetry
+      'footer.ram_usage': 'USO DE MEMORIA RAM',
+      'footer.engine_latency': 'LATENCIA DEL MOTOR',
+      'footer.engine_status': 'ESTADO DEL MOTOR',
+      'footer.status_ready': 'LISTO',
+      'footer.status_busy': 'COMPARANDO...',
+      'footer.network_connection': 'CONEXIÓN DE RED',
+      'footer.version': 'VERSIÓN',
 
       // Toolbar Actions (Common & Folder)
       'toolbar.home': 'Inicio',
@@ -952,6 +970,15 @@
       'home.card_media_compare': 'Comparar Mídia',
       'home.card_media_compare_desc': 'Compare arquivos MP3, tags ID3 e metadados de mídia.',
 
+      // Home Footer Telemetry
+      'footer.ram_usage': 'USO DE MEMÓRIA RAM',
+      'footer.engine_latency': 'LATÊNCIA DO MOTOR',
+      'footer.engine_status': 'ESTADO DO MOTOR',
+      'footer.status_ready': 'PRONTO',
+      'footer.status_busy': 'COMPARANDO...',
+      'footer.network_connection': 'CONEXÃO DE REDE',
+      'footer.version': 'VERSÃO',
+
       // Toolbar Actions (Common & Folder)
       'toolbar.home': 'Início',
       'toolbar.rules': 'Regras',
@@ -1383,6 +1410,15 @@
       'home.card_table_compare_desc': 'Comparaison de données CSV, TSV et feuilles de calcul.',
       'home.card_media_compare': 'Comparer Médias',
       'home.card_media_compare_desc': 'Comparez les fichiers audio MP3, balises ID3 et métadonnées.',
+
+      // Home Footer Telemetry
+      'footer.ram_usage': 'UTILISATION DE LA MÉMOIRE RAM',
+      'footer.engine_latency': 'LATENCE DU MOTEUR',
+      'footer.engine_status': 'ÉTAT DU MOTEUR',
+      'footer.status_ready': 'PRÊT',
+      'footer.status_busy': 'COMPARAISON...',
+      'footer.network_connection': 'CONNEXION RÉSEAU',
+      'footer.version': 'VERSION',
 
       // Toolbar Actions (Common & Folder)
       'toolbar.home': 'Accueil',
@@ -1816,6 +1852,15 @@
       'home.card_media_compare': 'Confronta Media',
       'home.card_media_compare_desc': 'Confronta file audio MP3, tag ID3 e metadati.',
 
+      // Home Footer Telemetry
+      'footer.ram_usage': 'USO DELLA MEMORIA RAM',
+      'footer.engine_latency': 'LATENZA DEL MOTORE',
+      'footer.engine_status': 'STATO DEL MOTORE',
+      'footer.status_ready': 'PRONTO',
+      'footer.status_busy': 'CONFRONTO...',
+      'footer.network_connection': 'CONNESSIONE DI RETE',
+      'footer.version': 'VERSIONE',
+
       // Toolbar Actions (Common & Folder)
       'toolbar.home': 'Home',
       'toolbar.rules': 'Regole',
@@ -2247,6 +2292,15 @@
       'home.card_table_compare_desc': 'Сравнение структурированных данных CSV, TSV и таблиц.',
       'home.card_media_compare': 'Сравнение медиа',
       'home.card_media_compare_desc': 'Сравнение аудио MP3, ID3-тегов и метаданных файлов.',
+
+      // Home Footer Telemetry
+      'footer.ram_usage': 'ИСПОЛЬЗОВАНИЕ ПАМЯТИ RAM',
+      'footer.engine_latency': 'ЗАДЕРЖКА ДВИЖКА',
+      'footer.engine_status': 'СОСТОЯНИЕ ДВИЖКА',
+      'footer.status_ready': 'ГОТОВ',
+      'footer.status_busy': 'СРАВНЕНИЕ...',
+      'footer.network_connection': 'СЕТЕВОЕ ПОДКЛЮЧЕНИЕ',
+      'footer.version': 'ВЕРСИЯ',
 
       // Toolbar Actions (Common & Folder)
       'toolbar.home': 'Главная',
