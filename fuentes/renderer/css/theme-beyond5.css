@@ -214,6 +214,49 @@ body.theme-light .telemetry-version-text {
   color: #1f2328;
 }
 
+body.theme-light .home-category-container {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+body.theme-light .home-category-container.cat-carpetas {
+  background: linear-gradient(180deg, #edf4fc 0%, #e2eefb 100%);
+  border: 1px solid #bfdbfe;
+}
+body.theme-light .home-category-container.cat-carpetas .category-title {
+  color: #1d4ed8;
+}
+
+body.theme-light .home-category-container.cat-archivos {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+}
+body.theme-light .home-category-container.cat-archivos .category-title {
+  color: #047857;
+}
+
+body.theme-light .home-category-container.cat-multimedia {
+  background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+  border: 1px solid #e9d5ff;
+}
+body.theme-light .home-category-container.cat-multimedia .category-title {
+  color: #7e22ce;
+}
+
+body.theme-light .home-category-container .tool-card {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .home-category-container .tool-card:hover {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.14);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.theme-light .tool-card .title {
+  color: #1f2328;
+}
+
 
 * {
   box-sizing: border-box;
@@ -1360,6 +1403,117 @@ body.theme-light .log-content::-webkit-scrollbar-button:single-button {
   max-width: 800px;
   margin: 0 auto;
   padding: 10px;
+}
+
+/* CATEGORIZED SESSION CONTAINERS (media_1792296390664) */
+.home-categories-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px 16px;
+}
+
+.home-categories-row-top {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  justify-content: center;
+}
+
+.home-category-container {
+  border-radius: 14px;
+  padding: 14px 20px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Category 1: GESTIÓN DE CARPETAS (Blue Container) */
+.home-category-container.cat-carpetas {
+  background: linear-gradient(180deg, rgba(29, 48, 80, 0.65) 0%, rgba(17, 28, 48, 0.75) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.38);
+}
+.home-category-container.cat-carpetas:hover {
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.2);
+}
+.home-category-container.cat-carpetas .category-title {
+  color: #60a5fa;
+}
+
+/* Category 2: GESTIÓN DE ARCHIVOS (Green Container) */
+.home-category-container.cat-archivos {
+  background: linear-gradient(180deg, rgba(16, 54, 40, 0.65) 0%, rgba(10, 32, 24, 0.75) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.38);
+}
+.home-category-container.cat-archivos:hover {
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.2);
+}
+.home-category-container.cat-archivos .category-title {
+  color: #34d399;
+}
+
+/* Category 3: MULTIMEDIA Y AVANZADO (Purple Container) */
+.home-category-container.cat-multimedia {
+  background: linear-gradient(180deg, rgba(46, 26, 68, 0.65) 0%, rgba(26, 15, 38, 0.75) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.38);
+  width: 100%;
+  max-width: 980px;
+}
+.home-category-container.cat-multimedia:hover {
+  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow: 0 8px 28px rgba(168, 85, 247, 0.2);
+}
+.home-category-container.cat-multimedia .category-title {
+  color: #c084fc;
+}
+
+.category-header {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.category-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.category-icons-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-icons-row.multimedia-row {
+  gap: 32px;
+}
+
+/* Tool card enhancements within categories */
+.home-category-container .tool-card {
+  width: 105px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-category-container .tool-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .tool-card {

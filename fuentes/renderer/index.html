@@ -126,190 +126,226 @@
           Drag folders or files onto session icon or click a session icon to begin:
         </div>
 
-        <!-- Grid of 10 Tools (Matching Image 3) -->
-        <div class="tools-grid">
-          <!-- Row 1 -->
-          <div class="tool-card" onclick="openTool('folder_compare')" title="Folder Compare">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <path d="M5 14C5 12.8954 5.89543 12 7 12H15L18 15H24C25.1046 15 26 15.8954 26 17V33C26 34.1046 25.1046 35 24 35H7C5.89543 35 5 34.1046 5 33V14Z" fill="#D99824"/>
-                  <path d="M5 17C5 16.4477 5.44772 16 6 16H25C25.5523 16 26 16.4477 26 17V33C26 34.1046 25.1046 35 24 35H7C5.89543 35 5 34.1046 5 33V17Z" fill="#F4C242"/>
-                  <path d="M22 18C22 16.8954 22.8954 16 24 16H32L35 19H41C42.1046 19 43 19.8954 43 21V37C43 38.1046 42.1046 39 41 39H24C22.8954 39 22 38.1046 22 37V18Z" fill="#C58518"/>
-                  <path d="M22 21C22 20.4477 22.4477 20 23 20H42C42.5523 20 43 20.4477 43 21V37C43 38.1046 42.1046 39 41 39H24C22.8954 39 22 38.1046 22 37V21Z" fill="#FFCE48"/>
-                  <rect x="18" y="22" width="12" height="12" rx="3" fill="#1E2229" stroke="#475569" stroke-width="1.2"/>
-                  <path d="M21 26H27M21 30H27M22 32L26 24" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
-                </g>
-              </svg>
-            </div>
-            <div class="title" data-i18n="home.card_folder_compare">Folder Compare</div>
+        <!-- Categorized Session Tool Containers -->
+        <div class="home-categories-wrapper">
+          <!-- Row 1: Gestión de Carpetas & Gestión de Archivos -->
+          <div class="home-categories-row-top">
+
+            <!-- Category 1: GESTIÓN DE CARPETAS -->
+            <section class="home-category-container cat-carpetas">
+              <div class="category-header">
+                <span class="category-title" data-i18n="home.category_folders">GESTIÓN DE CARPETAS</span>
+              </div>
+              <div class="category-icons-row">
+                <!-- 1. Comparar Carpetas -->
+                <div class="tool-card" onclick="openTool('folder_compare')" title="Folder Compare">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <path d="M5 14C5 12.8954 5.89543 12 7 12H15L18 15H24C25.1046 15 26 15.8954 26 17V33C26 34.1046 25.1046 35 24 35H7C5.89543 35 5 34.1046 5 33V14Z" fill="#D99824"/>
+                        <path d="M5 17C5 16.4477 5.44772 16 6 16H25C25.5523 16 26 16.4477 26 17V33C26 34.1046 25.1046 35 24 35H7C5.89543 35 5 34.1046 5 33V17Z" fill="#F4C242"/>
+                        <path d="M22 18C22 16.8954 22.8954 16 24 16H32L35 19H41C42.1046 19 43 19.8954 43 21V37C43 38.1046 42.1046 39 41 39H24C22.8954 39 22 38.1046 22 37V18Z" fill="#C58518"/>
+                        <path d="M22 21C22 20.4477 22.4477 20 23 20H42C42.5523 20 43 20.4477 43 21V37C43 38.1046 42.1046 39 41 39H24C22.8954 39 22 38.1046 22 37V21Z" fill="#FFCE48"/>
+                        <rect x="18" y="22" width="12" height="12" rx="3" fill="#1E2229" stroke="#475569" stroke-width="1.2"/>
+                        <path d="M21 26H27M21 30H27M22 32L26 24" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_folder_compare">Folder Compare</div>
+                </div>
+
+                <!-- 2. Combinar Carpetas -->
+                <div class="tool-card" onclick="openTool('folder_merge')" title="Folder Merge">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <path d="M6 14C6 12.8954 6.89543 12 8 12H17L20 15H40C41.1046 15 42 15.8954 42 17V35C42 36.1046 41.1046 37 40 37H8C6.89543 37 6 36.1046 6 35V14Z" fill="#C58518"/>
+                        <path d="M6 17C6 16.4477 6.44772 16 7 16H41C41.5523 16 42 16.4477 42 17V35C42 36.1046 41.1046 37 40 37H8C6.89543 37 6 36.1046 6 35V17Z" fill="#F5C443"/>
+                        <rect x="10" y="9" width="7" height="6" rx="1.5" fill="#3B82F6"/>
+                        <rect x="20" y="9" width="7" height="6" rx="1.5" fill="#10B981"/>
+                        <rect x="30" y="9" width="7" height="6" rx="1.5" fill="#EF4444"/>
+                        <circle cx="24" cy="27" r="8" fill="#1E293B" stroke="#475569" stroke-width="1.2"/>
+                        <path d="M19 24L24 29L29 24M24 29V32" stroke="#F8FAFC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_folder_merge">Folder Merge</div>
+                </div>
+
+                <!-- 3. Sincronizar Carpetas -->
+                <div class="tool-card" onclick="openTool('folder_sync')" title="Folder Sync">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <path d="M8 12C8 10.8954 8.89543 10 10 10H18L21 13H38C39.1046 13 40 13.8954 40 15V33C40 34.1046 39.1046 35 38 35H10C8.89543 35 8 34.1046 8 33V12Z" fill="#D99824"/>
+                        <path d="M8 15C8 14.4477 8.44772 14 9 14H39C39.5523 14 40 14.4477 40 15V33C40 34.1046 39.1046 35 38 35H10C8.89543 35 8 34.1046 8 33V15Z" fill="#F4C242"/>
+                        <circle cx="31" cy="28" r="10" fill="#0284C7" stroke="#38BDF8" stroke-width="1.5"/>
+                        <path d="M35 25A4.5 4.5 0 0 0 28 24.5L27 23M27 26.5V23H30.5" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M27 31A4.5 4.5 0 0 0 34 31.5L35 33M35 29.5V33H31.5" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_folder_sync">Folder Sync</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Category 2: GESTIÓN DE ARCHIVOS -->
+            <section class="home-category-container cat-archivos">
+              <div class="category-header">
+                <span class="category-title" data-i18n="home.category_files">GESTIÓN DE ARCHIVOS</span>
+              </div>
+              <div class="category-icons-row">
+                <!-- 1. Comparar Texto -->
+                <div class="tool-card" onclick="openTool('text_compare')" title="Text Compare">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <rect x="5" y="8" width="18" height="26" rx="2" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.2"/>
+                        <line x1="8" y1="13" x2="19" y2="13" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="8" y1="17" x2="17" y2="17" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="8" y1="21" x2="19" y2="21" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="8" y1="25" x2="15" y2="25" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="8" y1="29" x2="18" y2="29" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+
+                        <rect x="25" y="14" width="18" height="26" rx="2" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2"/>
+                        <line x1="28" y1="19" x2="39" y2="19" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="28" y1="23" x2="37" y2="23" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="28" y1="27" x2="39" y2="27" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="28" y1="31" x2="35" y2="31" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="28" y1="35" x2="38" y2="35" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+
+                        <rect x="19" y="21" width="10" height="10" rx="2.5" fill="#1E293B" stroke="#475569" stroke-width="1.2"/>
+                        <path d="M22 24.5H26M22 27.5H26" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_text_compare">Text Compare</div>
+                </div>
+
+                <!-- 2. Combinar Texto -->
+                <div class="tool-card" onclick="openTool('text_merge')" title="Text Merge">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <rect x="6" y="8" width="14" height="18" rx="2" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.2"/>
+                        <rect x="28" y="8" width="14" height="18" rx="2" fill="#FEF2F2" stroke="#EF4444" stroke-width="1.2"/>
+                        <rect x="15" y="20" width="18" height="22" rx="2" fill="#FFFFFF" stroke="#10B981" stroke-width="1.5"/>
+                        <line x1="19" y1="26" x2="29" y2="26" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="19" y1="31" x2="27" y2="31" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="19" y1="36" x2="29" y2="36" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_text_merge">Text Merge</div>
+                </div>
+
+                <!-- 3. Editar Texto -->
+                <div class="tool-card" onclick="openTool('text_edit')" title="Text Edit">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <rect x="8" y="8" width="24" height="32" rx="2" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+                        <line x1="13" y1="15" x2="25" y2="15" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="13" y1="21" x2="23" y2="21" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="13" y1="27" x2="21" y2="27" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="13" y1="33" x2="24" y2="33" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        <g transform="translate(24, 18) rotate(45)">
+                          <path d="M0 0H6V18L3 22L0 18V0Z" fill="#F59E0B" stroke="#B45309" stroke-width="1"/>
+                          <path d="M0 0H6V5H0V0Z" fill="#EF4444"/>
+                          <path d="M1.5 19L3 22L4.5 19H1.5Z" fill="#1E293B"/>
+                        </g>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_text_edit">Text Edit</div>
+                </div>
+              </div>
+            </section>
           </div>
 
-          <div class="tool-card" onclick="openTool('folder_merge')" title="Folder Merge">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <path d="M6 14C6 12.8954 6.89543 12 8 12H17L20 15H40C41.1046 15 42 15.8954 42 17V35C42 36.1046 41.1046 37 40 37H8C6.89543 37 6 36.1046 6 35V14Z" fill="#C58518"/>
-                  <path d="M6 17C6 16.4477 6.44772 16 7 16H41C41.5523 16 42 16.4477 42 17V35C42 36.1046 41.1046 37 40 37H8C6.89543 37 6 36.1046 6 35V17Z" fill="#F5C443"/>
-                  <rect x="10" y="9" width="7" height="6" rx="1.5" fill="#3B82F6"/>
-                  <rect x="20" y="9" width="7" height="6" rx="1.5" fill="#10B981"/>
-                  <rect x="30" y="9" width="7" height="6" rx="1.5" fill="#EF4444"/>
-                  <circle cx="24" cy="27" r="8" fill="#1E293B" stroke="#475569" stroke-width="1.2"/>
-                  <path d="M19 24L24 29L29 24M24 29V32" stroke="#F8FAFC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </g>
-              </svg>
+          <!-- Row 2: MULTIMEDIA Y AVANZADO (Debajo, de forma horizontal) -->
+          <section class="home-category-container cat-multimedia">
+            <div class="category-header">
+              <span class="category-title" data-i18n="home.category_multimedia">MULTIMEDIA Y AVANZADO</span>
             </div>
-            <div class="title" data-i18n="home.card_folder_merge">Folder Merge</div>
-          </div>
+            <div class="category-icons-row multimedia-row">
+              <!-- 1. Comparar Hex -->
+              <div class="tool-card" onclick="openTool('hex_compare')" title="Hex Compare">
+                <div class="tool-icon-wrapper">
+                  <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                      <rect x="7" y="7" width="34" height="34" rx="6" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
+                      <rect x="11" y="11" width="11" height="11" rx="2" fill="#1E293B"/>
+                      <text x="16.5" y="19.5" font-family="monospace" font-size="8" font-weight="bold" fill="#38BDF8" text-anchor="middle">12</text>
+                      <rect x="26" y="11" width="11" height="11" rx="2" fill="#1E293B"/>
+                      <text x="31.5" y="19.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F8FAFC" text-anchor="middle">34</text>
+                      <rect x="11" y="26" width="11" height="11" rx="2" fill="#1E293B"/>
+                      <text x="16.5" y="34.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F8FAFC" text-anchor="middle">AB</text>
+                      <rect x="26" y="26" width="11" height="11" rx="2" fill="#1E293B"/>
+                      <text x="31.5" y="34.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F43F5E" text-anchor="middle">FF</text>
+                    </g>
+                  </svg>
+                </div>
+                <div class="title" data-i18n="home.card_hex_compare">Hex Compare</div>
+              </div>
 
-          <div class="tool-card" onclick="openTool('folder_sync')" title="Folder Sync">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <path d="M8 12C8 10.8954 8.89543 10 10 10H18L21 13H38C39.1046 13 40 13.8954 40 15V33C40 34.1046 39.1046 35 38 35H10C8.89543 35 8 34.1046 8 33V12Z" fill="#D99824"/>
-                  <path d="M8 15C8 14.4477 8.44772 14 9 14H39C39.5523 14 40 14.4477 40 15V33C40 34.1046 39.1046 35 38 35H10C8.89543 35 8 34.1046 8 33V15Z" fill="#F4C242"/>
-                  <circle cx="31" cy="28" r="10" fill="#0284C7" stroke="#38BDF8" stroke-width="1.5"/>
-                  <path d="M35 25A4.5 4.5 0 0 0 28 24.5L27 23M27 26.5V23H30.5" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M27 31A4.5 4.5 0 0 0 34 31.5L35 33M35 29.5V33H31.5" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                </g>
-              </svg>
+              <!-- 2. Comparar Multimedia -->
+              <div class="tool-card" onclick="openTool('media_compare')" title="Media Compare">
+                <div class="tool-icon-wrapper">
+                  <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                      <rect x="7" y="7" width="34" height="34" rx="6" fill="#18181B" stroke="#3F3F46" stroke-width="1.5"/>
+                      <rect x="12" y="22" width="3" height="12" rx="1.5" fill="#A1A1AA"/>
+                      <rect x="17" y="16" width="3" height="18" rx="1.5" fill="#38BDF8"/>
+                      <rect x="22" y="12" width="3" height="22" rx="1.5" fill="#38BDF8"/>
+                      <rect x="27" y="18" width="3" height="16" rx="1.5" fill="#818CF8"/>
+                      <path d="M33 14V26C32.2 25.4 31.1 25 30 25C28.3 25 27 26.1 27 27.5C27 28.9 28.3 30 30 30C31.7 30 33 28.9 33 27.5V18L38 16V22C37.2 21.4 36.1 21 35 21C33.3 21 32 22.1 32 23.5C32 24.9 33.3 26 35 26C36.7 26 38 24.9 38 23.5V13L33 14Z" fill="#F43F5E"/>
+                    </g>
+                  </svg>
+                </div>
+                <div class="title" data-i18n="home.card_media_compare">Media Compare</div>
+              </div>
+
+              <!-- 3. Comparar Imágenes -->
+              <div class="tool-card" onclick="openTool('picture_compare')" title="Picture Compare">
+                <div class="tool-icon-wrapper">
+                  <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                      <rect x="7" y="9" width="34" height="30" rx="4" fill="#0284C7" stroke="#38BDF8" stroke-width="1.5"/>
+                      <line x1="24" y1="9" x2="24" y2="39" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2"/>
+                      <circle cx="16" cy="17" r="4" fill="#FBBF24"/>
+                      <path d="M7 35L15 24L24 35H7Z" fill="#047857"/>
+                      <path d="M24 35L31 22L41 35H24Z" fill="#B91C1C"/>
+                      <circle cx="24" cy="24" r="3.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.2"/>
+                    </g>
+                  </svg>
+                </div>
+                <div class="title" data-i18n="home.card_picture_compare">Picture Compare</div>
+              </div>
+
+              <!-- 4. Comparar Tablas -->
+              <div class="tool-card" onclick="openTool('table_compare')" title="Table Compare">
+                <div class="tool-icon-wrapper">
+                  <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                      <rect x="7" y="8" width="34" height="32" rx="3" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+                      <rect x="7" y="8" width="34" height="9" rx="3" fill="#0284C7"/>
+                      <line x1="18" y1="8" x2="18" y2="40" stroke="#CBD5E1" stroke-width="1"/>
+                      <line x1="30" y1="8" x2="30" y2="40" stroke="#CBD5E1" stroke-width="1"/>
+                      <line x1="7" y1="24" x2="41" y2="24" stroke="#CBD5E1" stroke-width="1"/>
+                      <line x1="7" y1="32" x2="41" y2="32" stroke="#CBD5E1" stroke-width="1"/>
+                      <rect x="19" y="18" width="10" height="5" fill="#FEE2E2"/>
+                      <rect x="31" y="25" width="9" height="6" fill="#DBEAFE"/>
+                    </g>
+                  </svg>
+                </div>
+                <div class="title" data-i18n="home.card_table_compare">Table Compare</div>
+              </div>
             </div>
-            <div class="title" data-i18n="home.card_folder_sync">Folder Sync</div>
-          </div>
-
-          <div class="tool-card" onclick="openTool('text_compare')" title="Text Compare">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <rect x="5" y="8" width="18" height="26" rx="2" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.2"/>
-                  <line x1="8" y1="13" x2="19" y2="13" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
-                  <line x1="8" y1="17" x2="17" y2="17" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="8" y1="21" x2="19" y2="21" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
-                  <line x1="8" y1="25" x2="15" y2="25" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
-                  <line x1="8" y1="29" x2="18" y2="29" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
-
-                  <rect x="25" y="14" width="18" height="26" rx="2" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2"/>
-                  <line x1="28" y1="19" x2="39" y2="19" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
-                  <line x1="28" y1="23" x2="37" y2="23" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="28" y1="27" x2="39" y2="27" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
-                  <line x1="28" y1="31" x2="35" y2="31" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
-                  <line x1="28" y1="35" x2="38" y2="35" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
-
-                  <rect x="19" y="21" width="10" height="10" rx="2.5" fill="#1E293B" stroke="#475569" stroke-width="1.2"/>
-                  <path d="M22 24.5H26M22 27.5H26" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
-                </g>
-              </svg>
-            </div>
-            <div class="title" data-i18n="home.card_text_compare">Text Compare</div>
-          </div>
-
-          <div class="tool-card" onclick="openTool('text_merge')" title="Text Merge">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <rect x="6" y="8" width="14" height="18" rx="2" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.2"/>
-                  <rect x="28" y="8" width="14" height="18" rx="2" fill="#FEF2F2" stroke="#EF4444" stroke-width="1.2"/>
-                  <rect x="15" y="20" width="18" height="22" rx="2" fill="#FFFFFF" stroke="#10B981" stroke-width="1.5"/>
-                  <line x1="19" y1="26" x2="29" y2="26" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="19" y1="31" x2="27" y2="31" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="19" y1="36" x2="29" y2="36" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
-                </g>
-              </svg>
-            </div>
-            <div class="title" data-i18n="home.card_text_merge">Text Merge</div>
-          </div>
-
-          <div class="tool-card" onclick="openTool('text_edit')" title="Text Edit">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <rect x="8" y="8" width="24" height="32" rx="2" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
-                  <line x1="13" y1="15" x2="25" y2="15" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="13" y1="21" x2="23" y2="21" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="13" y1="27" x2="21" y2="27" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="13" y1="33" x2="24" y2="33" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
-                  <g transform="translate(24, 18) rotate(45)">
-                    <path d="M0 0H6V18L3 22L0 18V0Z" fill="#F59E0B" stroke="#B45309" stroke-width="1"/>
-                    <path d="M0 0H6V5H0V0Z" fill="#EF4444"/>
-                    <path d="M1.5 19L3 22L4.5 19H1.5Z" fill="#1E293B"/>
-                  </g>
-                </g>
-              </svg>
-            </div>
-            <div class="title" data-i18n="home.card_text_edit">Text Edit</div>
-          </div>
-
-          <!-- Row 2 -->
-          <div class="tool-card" onclick="openTool('hex_compare')" title="Hex Compare">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <rect x="7" y="7" width="34" height="34" rx="6" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
-                  <rect x="11" y="11" width="11" height="11" rx="2" fill="#1E293B"/>
-                  <text x="16.5" y="19.5" font-family="monospace" font-size="8" font-weight="bold" fill="#38BDF8" text-anchor="middle">12</text>
-                  <rect x="26" y="11" width="11" height="11" rx="2" fill="#1E293B"/>
-                  <text x="31.5" y="19.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F8FAFC" text-anchor="middle">34</text>
-                  <rect x="11" y="26" width="11" height="11" rx="2" fill="#1E293B"/>
-                  <text x="16.5" y="34.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F8FAFC" text-anchor="middle">AB</text>
-                  <rect x="26" y="26" width="11" height="11" rx="2" fill="#1E293B"/>
-                  <text x="31.5" y="34.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F43F5E" text-anchor="middle">FF</text>
-                </g>
-              </svg>
-            </div>
-            <div class="title" data-i18n="home.card_hex_compare">Hex Compare</div>
-          </div>
-
-          <div class="tool-card" onclick="openTool('media_compare')" title="Media Compare">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <rect x="7" y="7" width="34" height="34" rx="6" fill="#18181B" stroke="#3F3F46" stroke-width="1.5"/>
-                  <rect x="12" y="22" width="3" height="12" rx="1.5" fill="#A1A1AA"/>
-                  <rect x="17" y="16" width="3" height="18" rx="1.5" fill="#38BDF8"/>
-                  <rect x="22" y="12" width="3" height="22" rx="1.5" fill="#38BDF8"/>
-                  <rect x="27" y="18" width="3" height="16" rx="1.5" fill="#818CF8"/>
-                  <path d="M33 14V26C32.2 25.4 31.1 25 30 25C28.3 25 27 26.1 27 27.5C27 28.9 28.3 30 30 30C31.7 30 33 28.9 33 27.5V18L38 16V22C37.2 21.4 36.1 21 35 21C33.3 21 32 22.1 32 23.5C32 24.9 33.3 26 35 26C36.7 26 38 24.9 38 23.5V13L33 14Z" fill="#F43F5E"/>
-                </g>
-              </svg>
-            </div>
-            <div class="title" data-i18n="home.card_media_compare">Media Compare</div>
-          </div>
-
-          <div class="tool-card" onclick="openTool('picture_compare')" title="Picture Compare">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <rect x="7" y="9" width="34" height="30" rx="4" fill="#0284C7" stroke="#38BDF8" stroke-width="1.5"/>
-                  <line x1="24" y1="9" x2="24" y2="39" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2"/>
-                  <circle cx="16" cy="17" r="4" fill="#FBBF24"/>
-                  <path d="M7 35L15 24L24 35H7Z" fill="#047857"/>
-                  <path d="M24 35L31 22L41 35H24Z" fill="#B91C1C"/>
-                  <circle cx="24" cy="24" r="3.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.2"/>
-                </g>
-              </svg>
-            </div>
-            <div class="title" data-i18n="home.card_picture_compare">Picture Compare</div>
-          </div>
-
-          <div class="tool-card" onclick="openTool('table_compare')" title="Table Compare">
-            <div class="tool-icon-wrapper">
-              <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
-                  <rect x="7" y="8" width="34" height="32" rx="3" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
-                  <rect x="7" y="8" width="34" height="9" rx="3" fill="#0284C7"/>
-                  <line x1="18" y1="8" x2="18" y2="40" stroke="#CBD5E1" stroke-width="1"/>
-                  <line x1="30" y1="8" x2="30" y2="40" stroke="#CBD5E1" stroke-width="1"/>
-                  <line x1="7" y1="24" x2="41" y2="24" stroke="#CBD5E1" stroke-width="1"/>
-                  <line x1="7" y1="32" x2="41" y2="32" stroke="#CBD5E1" stroke-width="1"/>
-                  <rect x="19" y="18" width="10" height="5" fill="#FEE2E2"/>
-                  <rect x="31" y="25" width="9" height="6" fill="#DBEAFE"/>
-                </g>
-              </svg>
-            </div>
-            <div class="title" data-i18n="home.card_table_compare">Table Compare</div>
-          </div>
+          </section>
         </div>
-      </main>
+        </main>
     </div>
 
     <!-- Home Bottom Banner - Telemetry & Status Dashboard (media_1792294890839) -->
