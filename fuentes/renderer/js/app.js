@@ -1051,6 +1051,16 @@ function openFolderCompare(left = '', right = '', sessionName = 'Folder Compare'
   appState.leftPath = left || '';
   appState.rightPath = right || '';
 
+  // Always reset folderOpenState for newly opened sessions so subfolders start collapsed
+  appState.folderOpenState.clear();
+  appState.selectedIndices.clear();
+  appState.selectedIndex = -1;
+  appState.lastClickedIndex = -1;
+  appState.lastComparedLeft = '';
+  appState.lastComparedRight = '';
+  appState.comparisonItems = [];
+  appState.treeRoot = null;
+
   const inL = document.getElementById('leftPathInput');
   const inR = document.getElementById('rightPathInput');
   if (inL) {
@@ -1764,6 +1774,14 @@ function closeAllComparisonTabsAndGoHome() {
   // Clear active and selected sessions
   appState.activeFolderSession = null;
   appState.selectedSession = null;
+  appState.folderOpenState.clear();
+  appState.selectedIndices.clear();
+  appState.selectedIndex = -1;
+  appState.lastClickedIndex = -1;
+  appState.lastComparedLeft = '';
+  appState.lastComparedRight = '';
+  appState.comparisonItems = [];
+  appState.treeRoot = null;
   clearSessionDetails();
 
   // Reset folder compare inputs and trees
@@ -1858,6 +1876,14 @@ function closeFolderTab(event) {
   const tabFolderBtn = document.getElementById('tabFolderBtn');
   if (tabFolderBtn) tabFolderBtn.style.display = 'none';
   appState.activeFolderSession = null;
+  appState.folderOpenState.clear();
+  appState.selectedIndices.clear();
+  appState.selectedIndex = -1;
+  appState.lastClickedIndex = -1;
+  appState.lastComparedLeft = '';
+  appState.lastComparedRight = '';
+  appState.comparisonItems = [];
+  appState.treeRoot = null;
   if (appState.selectedSession && appState.selectedSession.id === 'active-folder') {
     appState.selectedSession = null;
     clearSessionDetails();
@@ -2207,8 +2233,8 @@ async function runFolderComparison(preserveOpenState = false) {
   appState.lastComparedLeft = left;
   appState.lastComparedRight = right;
 
-  // Clear folder open state and selection only when loading a completely new pair of paths
-  if (!preserveOpenState && !isSameOrSwappedPair) {
+  // Clear folder open state and selection unless preserving open state
+  if (!preserveOpenState) {
     appState.folderOpenState.clear();
     appState.selectedIndices.clear();
     appState.selectedIndex = -1;
