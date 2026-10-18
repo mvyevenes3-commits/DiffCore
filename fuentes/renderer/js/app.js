@@ -8368,9 +8368,11 @@ function jumpToSection(sectionIndex) {
   const clientH = activeScroll ? activeScroll.clientHeight : 400;
   const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
 
-  // Precision alignment: exactly place the first line of the difference section at the top of the editor view
-  let targetTop = sec.startRow * TEXT_ROW_HEIGHT;
-  targetTop = Math.max(0, Math.min(maxScroll, targetTop));
+  // Precision alignment: place the first line of the difference section 2 lines down from the top
+  // so there is comfortable context above the change (like image 2)
+  const CONTEXT_ROWS_ABOVE = 2;
+  let targetTop = Math.max(0, (sec.startRow - CONTEXT_ROWS_ABOVE) * TEXT_ROW_HEIGHT);
+  targetTop = Math.min(maxScroll, targetTop);
 
   textScrollDriver = 'programmatic';
   clearTimeout(textScrollTimer);
