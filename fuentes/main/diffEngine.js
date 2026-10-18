@@ -894,6 +894,88 @@ function computeAlignedDiff(textLeft, textRight) {
   const sections = [];
   let lineNumL = 1;
   let lineNumR = 1;
+  let currentSec = null;
+
+  function pushSameRow(leftTxt, rightTxt) {
+    currentSec = null;
+    rows.push({
+      type: 'same',
+      leftNum: lineNumL++,
+      leftText: leftTxt,
+      rightNum: lineNumR++,
+      rightText: rightTxt,
+      sectionIndex: -1
+    });
+  }
+
+  function pushDiffRow(hasLeft, leftTxt, hasRight, rightTxt, isWs, diffType) {
+    const curRow = rows.length;
+    let leftChunks = null;
+    let rightChunks = null;
+
+    if (hasLeft && hasRight) {
+      const parts = Diff.diffWordsWithSpace(leftTxt, rightTxt);
+      leftChunks = [];
+      rightChunks = [];
+      for (let p = 0; p < parts.length; p++) {
+        const part = parts[p];
+        if (part.added) rightChunks.push({ text: part.value, isDiff: true });
+        else if (part.removed) leftChunks.push({ text: part.value, isDiff: true });
+        else {
+          leftChunks.push({ text: part.value, isDiff: false });
+          rightChunks.push({ text: part.value, isDiff: false });
+        }
+      }
+    } else if (hasLeft) {
+      leftChunks = [{ text: leftTxt, isDiff: true }];
+    } else if (hasRight) {
+      rightChunks = [{ text: rightTxt, isDiff: true }];
+    }
+
+    const isCommentL = hasLeft && (leftTxt.trim().startsWith('//') || leftTxt.trim().startsWith('/*') || leftTxt.trim().startsWith('*'));
+    const isCommentR = hasRight && (rightTxt.trim().startsWith('//') || rightTxt.trim().startsWith('/*') || rightTxt.trim().startsWith('*'));
+
+    if (currentSec && currentSec.isWhitespaceDiff === isWs && currentSec.endRow === curRow - 1) {
+      currentSec.endRow = curRow;
+      if (hasLeft) { currentSec.leftLineCount++; currentSec.leftLines.push(leftTxt); }
+      if (hasRight) { currentSec.rightLineCount++; currentSec.rightLines.push(rightTxt); }
+      if (currentSec.leftLineCount > 0 && currentSec.rightLineCount > 0) currentSec.type = 'modify';
+    } else {
+      const secIdx = sections.length;
+      currentSec = {
+        index: secIdx,
+        startRow: curRow,
+        endRow: curRow,
+        type: diffType,
+        isWhitespaceDiff: isWs,
+        origStartLeft: lineNumL,
+        origStartRight: lineNumR,
+        leftLineCount: hasLeft ? 1 : 0,
+        rightLineCount: hasRight ? 1 : 0,
+        leftLines: hasLeft ? [leftTxt] : [],
+        rightLines: hasRight ? [rightTxt] : []
+      };
+      sections.push(currentSec);
+    }
+
+    rows.push({
+      type: 'diff',
+      diffType,
+      isGhostL: !hasLeft,
+      isGhostR: !hasRight,
+      isCommentL,
+      isCommentR,
+      isWhitespaceDiff: isWs,
+      leftNum: hasLeft ? lineNumL++ : null,
+      leftText: hasLeft ? leftTxt : null,
+      leftChunks,
+      rightNum: hasRight ? lineNumR++ : null,
+      rightText: hasRight ? rightTxt : null,
+      rightChunks,
+      sectionIndex: currentSec.index,
+      isSectionStart: (currentSec.startRow === curRow)
+    });
+  }
 
   let i = 0;
   while (i < chunks.length) {
@@ -908,75 +990,9 @@ function computeAlignedDiff(textLeft, textRight) {
         const isExactSame = (curL === curR);
 
         if (isExactSame) {
-          rows.push({
-            type: 'same',
-            leftNum: lineNumL++,
-            leftText: curL,
-            rightNum: lineNumR++,
-            rightText: curR,
-            sectionIndex: -1
-          });
+          pushSameRow(curL, curR);
         } else {
-          // Lines match conceptually but have minor whitespace / formatting differences
-          const sRow = rows.length;
-
-          const parts = Diff.diffWordsWithSpace(curL, curR);
-          const leftChunks = [];
-          const rightChunks = [];
-          for (let p = 0; p < parts.length; p++) {
-            const part = parts[p];
-            if (part.added) rightChunks.push({ text: part.value, isDiff: true });
-            else if (part.removed) leftChunks.push({ text: part.value, isDiff: true });
-            else {
-              leftChunks.push({ text: part.value, isDiff: false });
-              rightChunks.push({ text: part.value, isDiff: false });
-            }
-          }
-
-          // Merge adjacent whitespace diff rows into a single section
-          const prevSec = sections.length > 0 ? sections[sections.length - 1] : null;
-          const canMerge = prevSec && prevSec.isWhitespaceDiff && prevSec.endRow === sRow - 1;
-
-          let secIdx;
-          if (canMerge) {
-            secIdx = prevSec.index;
-            prevSec.endRow = sRow;
-            prevSec.leftLineCount++;
-            prevSec.rightLineCount++;
-            prevSec.leftLines.push(curL);
-            prevSec.rightLines.push(curR);
-          } else {
-            secIdx = sections.length;
-            sections.push({
-              index: secIdx,
-              startRow: sRow,
-              endRow: sRow,
-              type: 'modify',
-              isWhitespaceDiff: true,
-              origStartLeft: lineNumL,
-              origStartRight: lineNumR,
-              leftLineCount: 1,
-              rightLineCount: 1,
-              leftLines: [curL],
-              rightLines: [curR]
-            });
-          }
-
-          rows.push({
-            type: 'diff',
-            diffType: 'modify',
-            isGhostL: false,
-            isGhostR: false,
-            isWhitespaceDiff: true,
-            leftNum: lineNumL++,
-            leftText: curL,
-            leftChunks,
-            rightNum: lineNumR++,
-            rightText: curR,
-            rightChunks,
-            sectionIndex: secIdx,
-            isSectionStart: !canMerge
-          });
+          pushDiffRow(true, curL, true, curR, true, 'modify');
         }
       }
       i++;
@@ -1002,21 +1018,20 @@ function computeAlignedDiff(textLeft, textRight) {
       const addLines = add ? add.value : [];
       const aligned = alignLinesWithinBlock(remLines, addLines);
 
-      const startRow = rows.length;
-      const secIdx = sections.length;
-      const origStartLeft = lineNumL;
-      const origStartRight = lineNumR;
-      let sectionAllWhitespace = aligned.length > 0;
-
       for (let k = 0; k < aligned.length; k++) {
         const pair = aligned[k];
         const hasLeft = pair.left !== null;
         const hasRight = pair.right !== null;
-        const leftTxt = hasLeft ? pair.left : '';
-        const rightTxt = hasRight ? pair.right : '';
+        const leftTxt = hasLeft ? pair.left : null;
+        const rightTxt = hasRight ? pair.right : null;
 
-        const isCommentL = hasLeft && (leftTxt.trim().startsWith('//') || leftTxt.trim().startsWith('/*') || leftTxt.trim().startsWith('*'));
-        const isCommentR = hasRight && (rightTxt.trim().startsWith('//') || rightTxt.trim().startsWith('/*') || rightTxt.trim().startsWith('*'));
+        const exactSame = (hasLeft && hasRight && leftTxt === rightTxt);
+        const bothBlank = (hasLeft && hasRight && leftTxt.trim() === '' && rightTxt.trim() === '');
+
+        if (exactSame || bothBlank) {
+          pushSameRow(leftTxt, rightTxt);
+          continue;
+        }
 
         let isWhitespaceDiff = false;
         if (hasLeft && hasRight) {
@@ -1024,79 +1039,20 @@ function computeAlignedDiff(textLeft, textRight) {
           const normRight = rightTxt.replace(/\t/g, ' ').replace(/\s+/g, ' ').trim();
           if (normLeft === normRight) {
             isWhitespaceDiff = true;
-          } else {
-            sectionAllWhitespace = false;
           }
         } else if (hasLeft && !hasRight) {
           if (leftTxt.trim() === '') {
             isWhitespaceDiff = true;
-          } else {
-            sectionAllWhitespace = false;
           }
         } else if (!hasLeft && hasRight) {
           if (rightTxt.trim() === '') {
             isWhitespaceDiff = true;
-          } else {
-            sectionAllWhitespace = false;
           }
         }
 
-        let leftChunks = null;
-        let rightChunks = null;
-
-        if (hasLeft && hasRight) {
-          const parts = Diff.diffWordsWithSpace(leftTxt, rightTxt);
-          leftChunks = [];
-          rightChunks = [];
-          for (let p = 0; p < parts.length; p++) {
-            const part = parts[p];
-            if (part.added) {
-              rightChunks.push({ text: part.value, isDiff: true });
-            } else if (part.removed) {
-              leftChunks.push({ text: part.value, isDiff: true });
-            } else {
-              leftChunks.push({ text: part.value, isDiff: false });
-              rightChunks.push({ text: part.value, isDiff: false });
-            }
-          }
-        } else if (hasLeft) {
-          leftChunks = [{ text: leftTxt, isDiff: true }];
-        } else if (hasRight) {
-          rightChunks = [{ text: rightTxt, isDiff: true }];
-        }
-
-        rows.push({
-          type: 'diff',
-          diffType: remLines.length === 0 ? 'add_right' : (addLines.length === 0 ? 'add_left' : 'modify'),
-          isGhostL: !hasLeft,
-          isGhostR: !hasRight,
-          isCommentL,
-          isCommentR,
-          isWhitespaceDiff,
-          leftNum: hasLeft ? lineNumL++ : null,
-          leftText: hasLeft ? leftTxt : null,
-          leftChunks,
-          rightNum: hasRight ? lineNumR++ : null,
-          rightText: hasRight ? rightTxt : null,
-          rightChunks,
-          sectionIndex: secIdx,
-          isSectionStart: (k === 0)
-        });
+        const diffType = !hasLeft ? 'add_right' : (!hasRight ? 'add_left' : 'modify');
+        pushDiffRow(hasLeft, leftTxt, hasRight, rightTxt, isWhitespaceDiff, diffType);
       }
-
-      sections.push({
-        index: secIdx,
-        startRow,
-        endRow: rows.length - 1,
-        type: remLines.length === 0 ? 'add_right' : (addLines.length === 0 ? 'add_left' : 'modify'),
-        isWhitespaceDiff: sectionAllWhitespace,
-        origStartLeft,
-        leftLineCount: remLines.length,
-        origStartRight,
-        rightLineCount: addLines.length,
-        leftLines: remLines,
-        rightLines: addLines
-      });
     }
   }
 
