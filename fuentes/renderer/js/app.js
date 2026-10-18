@@ -6220,14 +6220,29 @@ function highlightSyntax(line, lang = 'generic', isDiff = false, isComment = fal
 
   // HTML / XML Syntax
   if (lang === 'html' || lang === 'xml') {
-    return line.replace(/(<!--[\s\S]*?-->)|(<\/?[a-zA-Z0-9_\-:]+)|(\s+[a-zA-Z0-9_\-:]+)(?=\s*=)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\/?>)/g, (m, comm, tag, attr, str, bracket) => {
-      if (comm) return `<span class="token-comment">${escapeHtml(comm)}</span>`;
-      if (tag) return `<span class="token-tag">${escapeHtml(tag)}</span>`;
-      if (attr) return `<span class="token-attribute">${escapeHtml(attr)}</span>`;
-      if (str) return `<span class="token-string">${escapeHtml(str)}</span>`;
-      if (bracket) return `<span class="token-tag">${escapeHtml(bracket)}</span>`;
-      return escapeHtml(m);
-    });
+    if (/^\s*<!DOCTYPE[^>]*>/i.test(trimmed)) {
+      return `<span class="token-directive">${escapeHtml(line)}</span>`;
+    }
+    const htmlRegex = /(<!--[\s\S]*?-->)|(<\/?[a-zA-Z0-9_\-:]+)|(\s+[a-zA-Z0-9_\-:]+)(?=\s*=)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\/?>)/g;
+    let out = '';
+    let last = 0;
+    let m;
+    while ((m = htmlRegex.exec(line)) !== null) {
+      if (m.index > last) {
+        out += escapeHtml(line.slice(last, m.index));
+      }
+      last = htmlRegex.lastIndex;
+      if (m[1]) out += `<span class="token-comment">${escapeHtml(m[1])}</span>`;
+      else if (m[2]) out += `<span class="token-tag">${escapeHtml(m[2])}</span>`;
+      else if (m[3]) out += `<span class="token-attribute">${escapeHtml(m[3])}</span>`;
+      else if (m[4]) out += `<span class="token-string">${escapeHtml(m[4])}</span>`;
+      else if (m[5]) out += `<span class="token-tag">${escapeHtml(m[5])}</span>`;
+      else out += escapeHtml(m[0]);
+    }
+    if (last < line.length) {
+      out += escapeHtml(line.slice(last));
+    }
+    return out;
   }
 
   // JSON Syntax
@@ -6319,6 +6334,12 @@ function highlightSyntax(line, lang = 'generic', isDiff = false, isComment = fal
 function renderDiffLineContent(chunks, fullText, lang = 'generic', cls = 'diff-code', isComment = false) {
   if (fullText === null || fullText === undefined) return '';
 
+  // For whitespace lines, Beyond Compare renders syntax highlighting directly
+  // with no inline chunk containers or bubbles over indentation
+  if (cls === 'diff-whitespace') {
+    return highlightSyntax(fullText, lang, true, false);
+  }
+
   if (!chunks || chunks.length === 0) {
     chunks = [{ text: fullText, isDiff: true }];
   }
@@ -6328,6 +6349,13 @@ function renderDiffLineContent(chunks, fullText, lang = 'generic', cls = 'diff-c
     const chunk = chunks[i];
     if (!chunk.text) continue;
     const escaped = escapeHtml(chunk.text);
+
+    // Whitespace or indentation chunks should NEVER have containers or diff spans
+    if (/^\s+$/.test(chunk.text)) {
+      html += escaped;
+      continue;
+    }
+
     if (chunk.isDiff) {
       html += `<span class="diff-inline-diff">${escaped}</span>`;
     } else {
@@ -7671,7 +7699,8 @@ function renderVisibleTextWindow(force = false) {
       if (row.type === 'same') {
         rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-action"></div><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
       } else if (row.isGhostL) {
-        rowHtmlL = `<div class="text-line-row ghost-hatched" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
+        const ghostClsL = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
+        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-action">${btnHtmlL}</div><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
       } else {
         const isCommL = row.isCommentL;
         const isWsL = row.isWhitespaceDiff;
@@ -7688,7 +7717,8 @@ function renderVisibleTextWindow(force = false) {
       if (row.type === 'same') {
         rowHtmlR = `<div class="text-line-row" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content">${highlightSyntax(row.rightText, lang, false, false)}</div></div>`;
       } else if (row.isGhostR) {
-        rowHtmlR = `<div class="text-line-row ghost-hatched" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
+        const ghostClsR = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
+        rowHtmlR = `<div class="text-line-row ${ghostClsR}" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content"></div></div>`;
       } else {
         const isCommR = row.isCommentR;
         const isWsR = row.isWhitespaceDiff;

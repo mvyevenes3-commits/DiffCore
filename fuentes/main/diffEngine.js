@@ -1027,8 +1027,18 @@ function computeAlignedDiff(textLeft, textRight) {
           } else {
             sectionAllWhitespace = false;
           }
-        } else {
-          sectionAllWhitespace = false;
+        } else if (hasLeft && !hasRight) {
+          if (leftTxt.trim() === '') {
+            isWhitespaceDiff = true;
+          } else {
+            sectionAllWhitespace = false;
+          }
+        } else if (!hasLeft && hasRight) {
+          if (rightTxt.trim() === '') {
+            isWhitespaceDiff = true;
+          } else {
+            sectionAllWhitespace = false;
+          }
         }
 
         let leftChunks = null;

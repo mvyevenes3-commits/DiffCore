@@ -3102,51 +3102,55 @@ body.theme-light .sync-vscrollbar-thumb.active {
 
 /* Beyond Compare 5 Code Diff: Deep Crimson Wine */
 .text-line-row.diff-code {
-  background: #3e1113 !important;
+  background: #461417 !important;
   border: none !important;
   outline: none !important;
 }
 .text-line-row.diff-code .text-line-num {
-  background: #4e1719 !important;
-  color: #ff9090 !important;
+  background: #361214 !important;
+  color: #ff8585 !important;
   font-weight: 700;
-  border-right: 1px solid #6b2525 !important;
+  border-right: 1px solid #5a1e22 !important;
 }
 .text-line-row.diff-code .text-line-action {
-  background: #4e1719 !important;
-  border-right: 1px solid #6b2525 !important;
+  background: #361214 !important;
+  border-right: 1px solid #5a1e22 !important;
 }
 .text-line-row.diff-code .text-line-content {
-  color: #e2e8f0;
+  color: #c9d1d9;
 }
 
-/* Beyond Compare 5 Intra-Line Difference Highlighting (Dark Theme) */
+/* Beyond Compare 5 Intra-Line Difference Highlighting (Clean Text Color, No Border, No Container) */
 .diff-inline-diff {
-  color: #ff3333 !important;
+  color: #ff5555 !important;
   font-weight: 700;
-  background: rgba(255, 50, 50, 0.28);
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(255, 60, 60, 0.45);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 
 .diff-inline-same {
-  color: #e2e8f0 !important;
+  color: #c9d1d9 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Beyond Compare 5 Comment Diff: Deep Navy */
 .text-line-row.diff-comment {
-  background: #0f2647 !important;
+  background: #14233a !important;
   border: none !important;
   outline: none !important;
 }
 .text-line-row.diff-comment .text-line-num {
-  background: #183354 !important;
+  background: #1a2e4a !important;
   color: #8ac0fc !important;
   font-weight: 700;
   border-right: 1px solid #274775 !important;
 }
 .text-line-row.diff-comment .text-line-action {
-  background: #183354 !important;
+  background: #1a2e4a !important;
   border-right: 1px solid #274775 !important;
 }
 .text-line-row.diff-comment .text-line-content {
@@ -3158,18 +3162,18 @@ body.theme-light .sync-vscrollbar-thumb.active {
 
 /* Beyond Compare 5 Whitespace Diff: Deep Navy */
 .text-line-row.diff-whitespace {
-  background: #0f2647 !important;
+  background: #14233a !important;
   border: none !important;
   outline: none !important;
 }
 .text-line-row.diff-whitespace .text-line-num {
-  background: #183354 !important;
+  background: #1a2e4a !important;
   color: #8ac0fc !important;
   font-weight: 700;
   border-right: 1px solid #274775 !important;
 }
 .text-line-row.diff-whitespace .text-line-action {
-  background: #183354 !important;
+  background: #1a2e4a !important;
   border-right: 1px solid #274775 !important;
 }
 .text-line-row.diff-whitespace .text-line-content {
@@ -3178,11 +3182,12 @@ body.theme-light .sync-vscrollbar-thumb.active {
 
 .text-line-row.diff-comment .diff-inline-diff,
 .text-line-row.diff-whitespace .diff-inline-diff {
-  color: #58a6ff !important;
-  font-weight: 700;
-  background: rgba(56, 139, 253, 0.28);
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(56, 139, 253, 0.45);
+  color: inherit !important;
+  font-weight: normal !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 
 .text-line-row.diff-comment .diff-inline-same,
@@ -3234,9 +3239,10 @@ body.theme-light .text-line-row.diff-code .text-line-content {
 body.theme-light .diff-inline-diff {
   color: #cf222e !important;
   font-weight: 700;
-  background: rgba(207, 34, 46, 0.20);
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(207, 34, 46, 0.35);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 
 body.theme-light .diff-inline-same {
@@ -3276,11 +3282,12 @@ body.theme-light .text-line-row.diff-whitespace .text-line-content {
 
 body.theme-light .text-line-row.diff-comment .diff-inline-diff,
 body.theme-light .text-line-row.diff-whitespace .diff-inline-diff {
-  color: #0969da !important;
-  font-weight: 700;
-  background: rgba(9, 105, 218, 0.20);
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(9, 105, 218, 0.35);
+  color: inherit !important;
+  font-weight: normal !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 
 body.theme-light .text-line-row.diff-comment .diff-inline-same,
