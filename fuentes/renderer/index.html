@@ -30,6 +30,7 @@
         <span class="tab-icon">📄</span> <span class="tab-text" id="currentTextTabTitle" data-i18n="tab.text_compare">Text Compare</span>
         <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTextTab(event)">✕</span>
       </button>
+      <div id="dynamicTextTabs" style="display: contents;"></div>
       <button class="tab-btn" id="tabTextMergeBtn" style="display: none;" onclick="switchView('textmerge')">
         <span class="tab-icon">📑</span> <span class="tab-text" id="currentTextMergeTabTitle" data-i18n="tab.text_merge">Text Merge</span>
         <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTextMergeTab(event)">✕</span>
@@ -72,9 +73,6 @@
           <div class="lang-opt" onclick="selectLanguage('ru')"><span>🇷🇺</span> Русский</div>
         </div>
       </div>
-      <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode (Beyond Compare 5)" onclick="toggleTheme()">
-        <span id="themeToggleIcon">☀️</span> <span id="themeToggleLabel" data-i18n="common.theme_light">Light Mode</span>
-      </button>
     </div>
   </div>
 

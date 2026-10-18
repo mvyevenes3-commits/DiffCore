@@ -1429,11 +1429,20 @@ function switchView(viewName) {
   const target = viewMap[viewName];
   if (target) {
     const vEl = document.getElementById(target.view);
-    const tEl = document.getElementById(target.tab);
     if (vEl) vEl.classList.add('active');
-    if (tEl) {
-      tEl.classList.add('active');
-      tEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+
+    if (viewName === 'text' && appState.activeTextSessionId) {
+      const dynTab = document.getElementById(`tabText-${appState.activeTextSessionId}`);
+      if (dynTab) {
+        dynTab.classList.add('active');
+        dynTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
+    } else {
+      const tEl = document.getElementById(target.tab);
+      if (tEl) {
+        tEl.classList.add('active');
+        tEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
     }
   }
 
@@ -1606,6 +1615,13 @@ function closeAllComparisonTabsAndGoHome() {
     btn.classList.remove('active');
   });
 
+  // Clear text sessions
+  appState.textSessions = [];
+  appState.activeTextSessionId = null;
+  appState.currentTextFile = null;
+  const dynContainer = document.getElementById('dynamicTextTabs');
+  if (dynContainer) dynContainer.innerHTML = '';
+
   // Clear active and selected sessions
   appState.activeFolderSession = null;
   appState.selectedSession = null;
@@ -1668,59 +1684,12 @@ function handleToolbarHomeClick() {
 
   // Scenario 1: Inside child file compare view and Folder Compare is the active parent
   if (currentView !== 'folder' && isFolderActive) {
-    if (currentView === 'text') {
-      const file = appState.currentTextFile;
-      const isLeftDirty = file.originalLeftContent !== undefined && file.leftContent !== file.originalLeftContent;
-      const isRightDirty = file.originalRightContent !== undefined && file.rightContent !== file.originalRightContent;
-
-      if (isLeftDirty || isRightDirty) {
-        showSaveConfirmModal(isLeftDirty, isRightDirty);
-
-        pendingCloseAction = async (decision) => {
-          if (decision === 'yes') {
-            if (isLeftDirty) await saveTextFile('left');
-            if (isRightDirty) await saveTextFile('right');
-            const tabTextBtn = document.getElementById('tabTextBtn');
-            if (tabTextBtn) tabTextBtn.style.display = 'none';
-            switchView('folder');
-          } else if (decision === 'no') {
-            const tabTextBtn = document.getElementById('tabTextBtn');
-            if (tabTextBtn) tabTextBtn.style.display = 'none';
-            switchView('folder');
-          }
-          // If cancel, stay in text compare
-        };
-        return;
-      }
-
-      const tabTextBtn = document.getElementById('tabTextBtn');
-      if (tabTextBtn) tabTextBtn.style.display = 'none';
-      switchView('folder');
-      return;
-    }
-
-    // Other child views (hex, picture, table, media)
-    const childMap = {
-      hex: 'tabHexBtn',
-      picture: 'tabPictureBtn',
-      table: 'tabTableBtn',
-      media: 'tabMediaBtn',
-      textedit: 'tabTextEditBtn',
-      textmerge: 'tabTextMergeBtn',
-      foldersync: 'tabFolderSyncBtn',
-      foldermerge: 'tabFolderMergeBtn'
-    };
-    const childBtnId = childMap[currentView];
-    if (childBtnId) {
-      const btn = document.getElementById(childBtnId);
-      if (btn) btn.style.display = 'none';
-    }
     switchView('folder');
     return;
   }
 
   // Scenario 2: Inside standalone text compare with unsaved changes
-  if (currentView === 'text') {
+  if (currentView === 'text' && appState.currentTextFile) {
     const file = appState.currentTextFile;
     const isLeftDirty = file.originalLeftContent !== undefined && file.leftContent !== file.originalLeftContent;
     const isRightDirty = file.originalRightContent !== undefined && file.rightContent !== file.originalRightContent;
@@ -1761,7 +1730,11 @@ let pendingCloseAction = null;
 
 function closeTextTab(event) {
   if (event) event.stopPropagation();
-  closeTextCompareWithPrompt();
+  if (appState.activeTextSessionId) {
+    closeSpecificTextTab(appState.activeTextSessionId, event);
+  } else {
+    closeTextCompareWithPrompt();
+  }
 }
 
 function closeTextCompareWithPrompt() {
@@ -3967,37 +3940,18 @@ function closeHexTab(event) {
   switchToRemainingTabOrHome();
 }
 
-// --- THEME SWITCHER (Beyond Compare 5 Dark / Light Mode) ---
+// --- THEME INITIALIZER (DiffCore Always Dark Mode) ---
 function initTheme() {
-  const savedTheme = localStorage.getItem('diffcore_theme') || 'dark';
-  applyTheme(savedTheme);
+  applyTheme('dark');
 }
 
-function applyTheme(theme) {
-  const icon = document.getElementById('themeToggleIcon');
-  const label = document.getElementById('themeToggleLabel');
-  if (theme === 'light') {
-    document.body.classList.add('theme-light');
-    if (icon) icon.textContent = '🌙';
-    if (label) {
-      label.setAttribute('data-i18n', 'common.theme_dark');
-      label.textContent = window.i18n ? window.i18n.t('common.theme_dark') : 'Dark Mode';
-    }
-  } else {
-    document.body.classList.remove('theme-light');
-    if (icon) icon.textContent = '☀️';
-    if (label) {
-      label.setAttribute('data-i18n', 'common.theme_light');
-      label.textContent = window.i18n ? window.i18n.t('common.theme_light') : 'Light Mode';
-    }
-  }
-  localStorage.setItem('diffcore_theme', theme);
+function applyTheme(theme = 'dark') {
+  document.body.classList.remove('theme-light');
+  localStorage.setItem('diffcore_theme', 'dark');
 }
 
 function toggleTheme() {
-  const isLight = document.body.classList.contains('theme-light');
-  applyTheme(isLight ? 'dark' : 'light');
-  showToast(isLight ? 'Switched to Dark Mode' : 'Switched to Light Mode', 'info');
+  applyTheme('dark');
 }
 
 // --- LANGUAGE SWITCHER (Beyond Compare 5 i18n) ---
@@ -6389,24 +6343,244 @@ function renderDiffLineContent(chunks, fullText, lang = 'generic', cls = 'diff-c
   return html;
 }
 
+function saveActiveTextSessionScroll() {
+  if (!appState.currentTextFile) return;
+  const scrollL = document.getElementById('textLeftScroll');
+  if (scrollL) {
+    appState.currentTextFile.scrollTop = scrollL.scrollTop;
+    appState.currentTextFile.scrollLeft = scrollL.scrollLeft;
+  }
+}
+
+function restoreTextSessionScroll(session) {
+  if (!session) return;
+  const scrollL = document.getElementById('textLeftScroll');
+  const scrollR = document.getElementById('textRightScroll');
+  const scrollG = document.getElementById('textGutterScroll');
+  const scrollLeftG = document.getElementById('textLeftGutterScroll');
+  const top = session.scrollTop || 0;
+  const left = session.scrollLeft || 0;
+  if (scrollL) { scrollL.scrollTop = top; scrollL.scrollLeft = left; }
+  if (scrollR) { scrollR.scrollTop = top; scrollR.scrollLeft = left; }
+  if (scrollG) { scrollG.scrollTop = top; }
+  if (scrollLeftG) { scrollLeftG.scrollTop = top; }
+  renderVisibleTextWindow(true);
+  updateOverviewViewport();
+  if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) {
+    textSyncScrollbar.update();
+  }
+}
+
+function renderDynamicTextTabs() {
+  const container = document.getElementById('dynamicTextTabs');
+  if (!container) return;
+
+  const sessions = appState.textSessions || [];
+  const tabTextBtn = document.getElementById('tabTextBtn');
+  if (tabTextBtn) {
+    tabTextBtn.style.display = 'none';
+  }
+
+  container.innerHTML = '';
+
+  sessions.forEach(session => {
+    const isActive = (session.id === appState.activeTextSessionId && appState.activeView === 'text');
+    const isLeftDirty = (session.originalLeftContent !== undefined && session.leftContent !== session.originalLeftContent);
+    const isRightDirty = (session.originalRightContent !== undefined && session.rightContent !== session.originalRightContent);
+    const isDirty = isLeftDirty || isRightDirty;
+    const dirtySuffix = isDirty ? '*' : '';
+
+    let displayName = session.relativePath || 'Text Compare';
+    if (session.leftFullPath && session.rightFullPath) {
+      const nameL = session.leftFullPath.split(/[\/\\]/).pop();
+      const nameR = session.rightFullPath.split(/[\/\\]/).pop();
+      displayName = (nameL === nameR) ? nameL : `${nameL} ↔ ${nameR}`;
+    } else if (session.leftFullPath || session.rightFullPath) {
+      displayName = (session.leftFullPath || session.rightFullPath).split(/[\/\\]/).pop() || displayName;
+    }
+
+    const fullTitle = `${session.leftFullPath || ''} ${session.rightFullPath ? '↔ ' + session.rightFullPath : ''}`.trim() || displayName;
+
+    const btn = document.createElement('button');
+    btn.className = `tab-btn text-session-tab ${isActive ? 'active' : ''}`;
+    btn.id = `tabText-${session.id}`;
+    btn.title = fullTitle;
+    btn.onclick = () => switchToTextSession(session.id);
+
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'tab-icon';
+    iconSpan.textContent = '📄';
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'tab-text';
+    textSpan.textContent = `${displayName}${dirtySuffix}`;
+
+    const closeSpan = document.createElement('span');
+    closeSpan.className = 'tab-close';
+    closeSpan.title = window.i18n ? window.i18n.t('tab.close_tab') : 'Cerrar pestaña';
+    closeSpan.textContent = '✕';
+    closeSpan.onclick = (e) => {
+      e.stopPropagation();
+      closeSpecificTextTab(session.id, e);
+    };
+
+    btn.appendChild(iconSpan);
+    btn.appendChild(textSpan);
+    btn.appendChild(closeSpan);
+
+    container.appendChild(btn);
+
+    if (isActive) {
+      const titleEl = document.getElementById('currentTextTabTitle');
+      if (titleEl) {
+        titleEl.textContent = `${displayName}${dirtySuffix}`;
+      }
+    }
+  });
+
+  if (appState.activeView === 'text') {
+    updateAppHeader();
+  }
+}
+
+function switchToTextSession(sessionId) {
+  if (!appState.textSessions) return;
+  const target = appState.textSessions.find(s => s.id === sessionId);
+  if (!target) return;
+
+  if (appState.activeView === 'text' && appState.activeTextSessionId && appState.activeTextSessionId !== sessionId) {
+    saveActiveTextSessionScroll();
+  }
+
+  appState.activeTextSessionId = sessionId;
+  appState.currentTextFile = target;
+  appState.textHistory = target.textHistory || { undoStack: [], redoStack: [] };
+  target.textHistory = appState.textHistory;
+
+  const inputL = document.getElementById('textLeftPathInput');
+  if (inputL) inputL.value = target.leftFullPath || '';
+  const inputR = document.getElementById('textRightPathInput');
+  if (inputR) inputR.value = target.rightFullPath || '';
+
+  updateUndoRedoButtons();
+  updateSaveButtonStatusAfterHistory();
+
+  switchView('text');
+
+  if (target.diffResult) {
+    renderTextDiff(target.diffResult);
+    restoreTextSessionScroll(target);
+  } else if (!target.leftFullPath && !target.rightFullPath) {
+    renderEmptyTextCompare();
+  } else if (target.leftFullPath && !target.rightFullPath) {
+    renderSingleSideText('left');
+  } else if (!target.leftFullPath && target.rightFullPath) {
+    renderSingleSideText('right');
+  }
+
+  renderDynamicTextTabs();
+}
+
+function closeSpecificTextTab(sessionId, event) {
+  if (event) event.stopPropagation();
+  const session = (appState.textSessions || []).find(s => s.id === sessionId);
+  if (!session) return;
+
+  const isLeftDirty = session.originalLeftContent !== undefined && session.leftContent !== session.originalLeftContent;
+  const isRightDirty = session.originalRightContent !== undefined && session.rightContent !== session.originalRightContent;
+
+  if (isLeftDirty || isRightDirty) {
+    showSaveConfirmModal(isLeftDirty, isRightDirty);
+    pendingCloseAction = async (decision) => {
+      if (decision === 'yes') {
+        if (isLeftDirty && session.leftFullPath) await window.api.writeTextFile(session.leftFullPath, session.leftContent);
+        if (isRightDirty && session.rightFullPath) await window.api.writeTextFile(session.rightFullPath, session.rightContent);
+        executeCloseTextSession(sessionId);
+      } else if (decision === 'no') {
+        executeCloseTextSession(sessionId);
+      }
+      // If cancel, do nothing
+    };
+  } else {
+    executeCloseTextSession(sessionId);
+  }
+}
+
+function executeCloseTextSession(sessionId) {
+  const list = appState.textSessions || [];
+  const idx = list.findIndex(s => s.id === sessionId);
+  if (idx === -1) return;
+
+  list.splice(idx, 1);
+
+  if (appState.activeTextSessionId === sessionId) {
+    if (list.length > 0) {
+      const nextIdx = Math.min(idx, list.length - 1);
+      switchToTextSession(list[nextIdx].id);
+    } else {
+      appState.activeTextSessionId = null;
+      appState.currentTextFile = null;
+      renderDynamicTextTabs();
+      switchToRemainingTabOrHome();
+    }
+  } else {
+    renderDynamicTextTabs();
+  }
+}
+
 async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'Text Compare', isChildCompare = false) {
-  appState.currentTextFile = {
-    relativePath: label,
+  if (!appState.textSessions) {
+    appState.textSessions = [];
+  }
+
+  // Look for existing session with the same paths or relativePath
+  const existingSession = appState.textSessions.find(s => {
+    if (leftFullPath && rightFullPath) {
+      return s.leftFullPath === leftFullPath && s.rightFullPath === rightFullPath;
+    }
+    if (leftFullPath && !rightFullPath) {
+      return s.leftFullPath === leftFullPath && !s.rightFullPath;
+    }
+    if (!leftFullPath && rightFullPath) {
+      return !s.leftFullPath && s.rightFullPath === rightFullPath;
+    }
+    return label && s.relativePath === label;
+  });
+
+  if (existingSession) {
+    switchToTextSession(existingSession.id);
+    return;
+  }
+
+  saveActiveTextSessionScroll();
+
+  const sessionId = 'text-sess-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+  const session = {
+    id: sessionId,
+    relativePath: label || 'Text Compare',
     leftFullPath: leftFullPath || '',
     rightFullPath: rightFullPath || '',
     leftContent: '',
     rightContent: '',
+    originalLeftContent: '',
+    originalRightContent: '',
     diffResult: null,
-    currentSectionIndex: -1
+    currentSectionIndex: -1,
+    textHistory: { undoStack: [], redoStack: [] },
+    scrollTop: 0,
+    scrollLeft: 0,
+    isChildCompare: isChildCompare
   };
+  appState.textSessions.push(session);
+  appState.activeTextSessionId = sessionId;
+  appState.currentTextFile = session;
+  appState.textHistory = session.textHistory;
 
   updateTextTabTitle();
-
-  appState.textHistory = { undoStack: [], redoStack: [] };
   updateUndoRedoButtons();
 
   const tabTextBtn = document.getElementById('tabTextBtn');
-  if (tabTextBtn) tabTextBtn.style.display = 'flex';
+  if (tabTextBtn) tabTextBtn.style.display = 'none';
 
   const inputL = document.getElementById('textLeftPathInput');
   if (inputL) inputL.value = leftFullPath || '';
@@ -6414,8 +6588,6 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   const inputR = document.getElementById('textRightPathInput');
   if (inputR) inputR.value = rightFullPath || '';
 
-  // Only register as the top active session card if this is a direct/standalone comparison
-  // (not a child inspection from within an ongoing Folder Compare session)
   if (!isChildCompare && (leftFullPath || rightFullPath)) {
     appState.selectedSession = {
       id: 'active-text',
@@ -6428,6 +6600,7 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
     appState.activeFolderSession = null;
   }
 
+  renderDynamicTextTabs();
   switchView('text');
 
   // Case 1: Both files empty -> display authentic Beyond Compare 5 empty canvas
@@ -6439,12 +6612,14 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   // Case 2: Only left file specified
   if (leftFullPath && !rightFullPath) {
     await loadTextFileForSide('left', leftFullPath);
+    renderDynamicTextTabs();
     return;
   }
 
   // Case 3: Only right file specified
   if (!leftFullPath && rightFullPath) {
     await loadTextFileForSide('right', rightFullPath);
+    renderDynamicTextTabs();
     return;
   }
 
@@ -6455,10 +6630,10 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   const contentLeft = resLeft.success ? (resLeft.content || '') : '';
   const contentRight = resRight.success ? (resRight.content || '') : '';
 
-  appState.currentTextFile.leftContent = contentLeft;
-  appState.currentTextFile.rightContent = contentRight;
-  appState.currentTextFile.originalLeftContent = contentLeft;
-  appState.currentTextFile.originalRightContent = contentRight;
+  session.leftContent = contentLeft;
+  session.rightContent = contentRight;
+  session.originalLeftContent = contentLeft;
+  session.originalRightContent = contentRight;
 
   updateTextFileMetadata('left', resLeft, leftFullPath, contentLeft);
   updateTextFileMetadata('right', resRight, rightFullPath, contentRight);
@@ -6471,21 +6646,23 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   } finally {
     setEngineStatus('ready');
   }
-  appState.currentTextFile.diffResult = diffResult;
+  session.diffResult = diffResult;
 
-  // Render side-by-side aligned diff
-  resetTextCompareScroll();
-  renderTextDiff(diffResult);
+  if (appState.activeTextSessionId === sessionId) {
+    resetTextCompareScroll();
+    renderTextDiff(diffResult);
 
-  const opts = appState.diffOptions || loadDiffOptions();
-  if (opts.goToFirstDiffOnLoad && diffResult.sections && diffResult.sections.length > 0) {
-    setTimeout(() => jumpToSection(0), 60);
-  } else {
-    setTimeout(() => resetTextCompareScroll(), 20);
+    const opts = appState.diffOptions || loadDiffOptions();
+    if (opts.goToFirstDiffOnLoad && diffResult.sections && diffResult.sections.length > 0) {
+      setTimeout(() => jumpToSection(0), 60);
+    } else {
+      setTimeout(() => resetTextCompareScroll(), 20);
+    }
   }
 
+  renderDynamicTextTabs();
+
   // Auto-save session ONLY if this is a direct standalone text comparison
-  // (Do not save child file comparisons triggered from within a Folder Compare session)
   if (!isChildCompare && leftFullPath && rightFullPath) {
     const sessName = (label && label !== 'Text Compare') ? label : undefined;
     window.api.recordAutoSavedSession({
@@ -6503,23 +6680,27 @@ function updateTextTabTitle() {
   const left = file.leftFullPath;
   const right = file.rightFullPath;
   const titleEl = document.getElementById('currentTextTabTitle');
-  if (!titleEl) return;
 
   const isDirty = (file.originalLeftContent !== undefined && file.leftContent !== file.originalLeftContent) ||
                   (file.originalRightContent !== undefined && file.rightContent !== file.originalRightContent);
   const dirtySuffix = isDirty ? '*' : '';
 
-  if (!left && !right) {
-    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `Text Compare${dirtySuffix}`);
-  } else if (left && right) {
-    const nameL = left.split(/[\/\\]/).pop();
-    const nameR = right.split(/[\/\\]/).pop();
-    const baseName = nameL === nameR ? nameL : `${nameL} ↔ ${nameR}`;
-    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `${baseName}${dirtySuffix}`);
-  } else {
-    const single = (left || right).split(/[\/\\]/).pop();
-    setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `${single || 'Text Compare'}${dirtySuffix}`);
+  if (titleEl) {
+    if (!left && !right) {
+      setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `Text Compare${dirtySuffix}`);
+    } else if (left && right) {
+      const nameL = left.split(/[\/\\]/).pop();
+      const nameR = right.split(/[\/\\]/).pop();
+      const baseName = nameL === nameR ? nameL : `${nameL} ↔ ${nameR}`;
+      setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `${baseName}${dirtySuffix}`);
+    } else {
+      const single = (left || right).split(/[\/\\]/).pop();
+      setSessionTabTitle('currentTextTabTitle', 'tab.text_compare', 'Text Compare', `${single || 'Text Compare'}${dirtySuffix}`);
+    }
   }
+
+  renderDynamicTextTabs();
+
   if (appState.activeView === 'text') {
     updateAppHeader();
   }
@@ -8595,9 +8776,24 @@ function computeSimpleLineChunks(leftText, rightText) {
   return { leftChunks, rightChunks };
 }
 
+let activeInlineEdit = null;
+
 function handleTextLineInput(target, side, rowIndex) {
   const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
   if (!diffResult || !diffResult.rows || !diffResult.rows[rowIndex]) return;
+
+  // Snapshot PREVIOUS state before the first modification in this sequence
+  if (!activeInlineEdit || activeInlineEdit.rowIndex !== rowIndex || activeInlineEdit.side !== side) {
+    pushTextHistoryState(`Editar línea ${rowIndex + 1}`);
+    activeInlineEdit = {
+      rowIndex,
+      side,
+      lastSnapshotTime: Date.now()
+    };
+  } else if (Date.now() - activeInlineEdit.lastSnapshotTime > 2000) {
+    pushTextHistoryState(`Editar línea ${rowIndex + 1}`);
+    activeInlineEdit.lastSnapshotTime = Date.now();
+  }
 
   const row = diffResult.rows[rowIndex];
   const newText = target.innerText.replace(/\r\n|\r|\n/g, '');
@@ -8785,8 +8981,9 @@ function handleTextLineKeydown(e, target, side, rowIndex) {
 }
 
 function handleTextLineBlur(target, side, rowIndex) {
+  clearTimeout(textEditCommitTimer);
   commitActiveLineHighlight(target, side, rowIndex);
-  pushTextHistoryState(`Edit line ${rowIndex + 1}`);
+  activeInlineEdit = null;
 }
 
 function setupTextInlineEditing() {
@@ -8829,6 +9026,8 @@ function pushTextHistoryState(description = '') {
   if (!appState.textHistory) {
     appState.textHistory = { undoStack: [], redoStack: [] };
   }
+  if (!appState.currentTextFile) return;
+
   appState.textHistory.undoStack.push({
     leftContent: appState.currentTextFile.leftContent,
     rightContent: appState.currentTextFile.rightContent,
@@ -8839,6 +9038,9 @@ function pushTextHistoryState(description = '') {
   }
   // Clear redo stack on new action
   appState.textHistory.redoStack = [];
+  if (appState.currentTextFile) {
+    appState.currentTextFile.textHistory = appState.textHistory;
+  }
   updateUndoRedoButtons();
 }
 
@@ -8894,10 +9096,16 @@ function updateSaveButtonStatusAfterHistory() {
 
 async function undoTextChange() {
   if (appState.activeView !== 'text') return;
+  activeInlineEdit = null;
+  clearTimeout(textEditCommitTimer);
+
   if (!appState.textHistory || appState.textHistory.undoStack.length === 0) {
     showToast('No hay más cambios para deshacer', 'info');
     return;
   }
+
+  const focusedRow = document.activeElement?.getAttribute ? document.activeElement.getAttribute('data-row') : null;
+  const focusedSide = document.activeElement?.getAttribute ? document.activeElement.getAttribute('data-side') : null;
 
   const prevState = appState.textHistory.undoStack.pop();
   appState.textHistory.redoStack.push({
@@ -8910,6 +9118,7 @@ async function undoTextChange() {
   appState.currentTextFile.rightContent = prevState.rightContent;
 
   updateSaveButtonStatusAfterHistory();
+  updateTextTabTitle();
 
   const updatedDiff = await window.api.computeAlignedDiff(
     appState.currentTextFile.leftContent,
@@ -8918,16 +9127,30 @@ async function undoTextChange() {
   appState.currentTextFile.diffResult = updatedDiff;
   renderTextDiff(updatedDiff);
 
+  if (focusedRow !== null && focusedSide !== null) {
+    const newEl = document.querySelector(`.text-line-content[data-row="${focusedRow}"][data-side="${focusedSide}"]`);
+    if (newEl) {
+      newEl.focus();
+      setCaretPosition(newEl, newEl.innerText.length);
+    }
+  }
+
   updateUndoRedoButtons();
   showToast(window.i18n ? window.i18n.t('toast.undo_done') : `Deshecho: ${prevState.description || 'cambio revertido'}`, 'info');
 }
 
 async function redoTextChange() {
   if (appState.activeView !== 'text') return;
+  activeInlineEdit = null;
+  clearTimeout(textEditCommitTimer);
+
   if (!appState.textHistory || appState.textHistory.redoStack.length === 0) {
     showToast('No hay cambios para rehacer', 'info');
     return;
   }
+
+  const focusedRow = document.activeElement?.getAttribute ? document.activeElement.getAttribute('data-row') : null;
+  const focusedSide = document.activeElement?.getAttribute ? document.activeElement.getAttribute('data-side') : null;
 
   const nextState = appState.textHistory.redoStack.pop();
   appState.textHistory.undoStack.push({
@@ -8940,6 +9163,7 @@ async function redoTextChange() {
   appState.currentTextFile.rightContent = nextState.rightContent;
 
   updateSaveButtonStatusAfterHistory();
+  updateTextTabTitle();
 
   const updatedDiff = await window.api.computeAlignedDiff(
     appState.currentTextFile.leftContent,
@@ -8947,6 +9171,14 @@ async function redoTextChange() {
   );
   appState.currentTextFile.diffResult = updatedDiff;
   renderTextDiff(updatedDiff);
+
+  if (focusedRow !== null && focusedSide !== null) {
+    const newEl = document.querySelector(`.text-line-content[data-row="${focusedRow}"][data-side="${focusedSide}"]`);
+    if (newEl) {
+      newEl.focus();
+      setCaretPosition(newEl, newEl.innerText.length);
+    }
+  }
 
   updateUndoRedoButtons();
   showToast(window.i18n ? window.i18n.t('toast.redo_done') : `Rehecho: ${nextState.description || 'cambio aplicado'}`, 'info');
@@ -9109,6 +9341,7 @@ async function saveTextFile(side) {
     if (saveBtn) saveBtn.style.boxShadow = '';
     appendLog(`Saved ${side} file: ${path}`);
     showToast(`Saved ${side} file successfully!`, 'success');
+    updateTextTabTitle();
     
     // If files are now identical, notify folder view
     if (file.diffResult && file.diffResult.sectionCount === 0) {
