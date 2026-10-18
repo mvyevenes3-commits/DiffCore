@@ -1943,11 +1943,59 @@ function swapSides() {
   appState.leftPath = appState.rightPath;
   appState.rightPath = temp;
 
-  document.getElementById('leftPathInput').value = appState.leftPath;
-  document.getElementById('rightPathInput').value = appState.rightPath;
+  const inL = document.getElementById('leftPathInput');
+  const inR = document.getElementById('rightPathInput');
+  if (inL) inL.value = appState.leftPath || '';
+  if (inR) inR.value = appState.rightPath || '';
 
   appendLog('Swapped left and right sides.');
-  runFolderComparison(true);
+
+  if (appState.comparisonItems && appState.comparisonItems.length > 0) {
+    // Instant in-memory swap (0ms):
+    // Preserves all comparison results (including deep compare/CRC results) and folderOpenState
+    for (let i = 0; i < appState.comparisonItems.length; i++) {
+      const it = appState.comparisonItems[i];
+      const tmpSide = it.left;
+      it.left = it.right;
+      it.right = tmpSide;
+
+      if (it.status === 'orphan_left') {
+        it.status = 'orphan_right';
+      } else if (it.status === 'orphan_right') {
+        it.status = 'orphan_left';
+      }
+      // 'identical' and 'different' remain unchanged
+    }
+
+    appState.lastComparedLeft = appState.leftPath;
+    appState.lastComparedRight = appState.rightPath;
+
+    // Rebuild tree keeping folder open states and selection
+    appState.treeRoot = buildComparisonTree(appState.comparisonItems);
+    applyFilterAndRender();
+    updateStatusBar();
+
+    // Auto-save folder comparison session to history
+    if (appState.leftPath && appState.rightPath) {
+      const sessName = (appState.activeFolderSession && appState.activeFolderSession.name && appState.activeFolderSession.name !== 'Folder Compare')
+        ? appState.activeFolderSession.name
+        : ((appState.selectedSession && appState.selectedSession.name && appState.selectedSession.name !== 'Folder Compare') ? appState.selectedSession.name : undefined);
+      window.api.recordAutoSavedSession({
+        name: sessName,
+        type: 'folder_compare',
+        leftPath: appState.leftPath,
+        rightPath: appState.rightPath
+      }).then(() => {
+        if (appState.expandedSessionGroups) {
+          appState.expandedSessionGroups.add('Today');
+          appState.expandedSessionGroups.add('auto-saved');
+        }
+        reloadSessions();
+      }).catch(err => console.warn('AutoSave error:', err));
+    }
+  } else {
+    runFolderComparison(true);
+  }
 }
 
 function goUpFolder(side) {
@@ -7033,14 +7081,17 @@ async function swapSidesText() {
   const tempPath = appState.currentTextFile.leftFullPath;
   const tempContent = appState.currentTextFile.leftContent;
   const tempOrig = appState.currentTextFile.originalLeftContent;
+  const tempMtime = appState.currentTextFile.leftMtimeMs;
 
   appState.currentTextFile.leftFullPath = appState.currentTextFile.rightFullPath;
   appState.currentTextFile.leftContent = appState.currentTextFile.rightContent;
   appState.currentTextFile.originalLeftContent = appState.currentTextFile.originalRightContent;
+  appState.currentTextFile.leftMtimeMs = appState.currentTextFile.rightMtimeMs;
 
   appState.currentTextFile.rightFullPath = tempPath;
   appState.currentTextFile.rightContent = tempContent;
   appState.currentTextFile.originalRightContent = tempOrig;
+  appState.currentTextFile.rightMtimeMs = tempMtime;
 
   const inputL = document.getElementById('textLeftPathInput');
   const inputR = document.getElementById('textRightPathInput');
@@ -7048,6 +7099,7 @@ async function swapSidesText() {
   if (inputR) inputR.value = appState.currentTextFile.rightFullPath || '';
 
   updateTextTabTitle();
+  if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
 
   if (appState.currentTextFile.leftFullPath && appState.currentTextFile.rightFullPath) {
     const diff = await window.api.computeAlignedDiff(

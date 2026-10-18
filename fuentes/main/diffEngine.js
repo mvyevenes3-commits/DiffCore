@@ -323,6 +323,7 @@ async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
   const sortedPaths = Array.from(allRelPaths).sort();
 
   const comparison = [];
+  const contentChecks = [];
 
   for (let pIdx = 0; pIdx < sortedPaths.length; pIdx++) {
     const relPath = sortedPaths[pIdx];
@@ -334,6 +335,7 @@ async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
     }
 
     let status = 'identical'; // 'identical', 'different', 'orphan_left', 'orphan_right'
+    let quickMatches = true;
 
     if (left && !right) {
       status = 'orphan_left';
@@ -344,7 +346,7 @@ async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
       if (left.isDirectory !== right.isDirectory) {
         status = 'different';
       } else if (!left.isDirectory) {
-        let quickMatches = true;
+        quickMatches = true;
 
         // 1. File size test
         if (compareFileSize) {
@@ -398,36 +400,13 @@ async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
           if (skipIfQuickSame && quickMatches) {
             status = 'identical';
           } else {
-            let contentMatch = false;
-            try {
-              if (contentMethod === 'binary') {
-                contentMatch = await areFilesEqualBinaryStreamAsync(left.fullPath, right.fullPath, left.size);
-              } else if (contentMethod === 'crc') {
-                const [c1, c2] = await Promise.all([
-                  calculateFileCRC32Async(left.fullPath, left.size),
-                  calculateFileCRC32Async(right.fullPath, right.size)
-                ]);
-                contentMatch = (c1 && c2 && c1 === c2);
-              } else {
-                // rules
-                const deepComp = await compareFilesDeepAsync(left.fullPath, right.fullPath, 'rules', false, left.size, right.size);
-                contentMatch = deepComp.match;
-              }
-            } catch {
-              contentMatch = false;
-            }
-
-            if (contentMatch) {
-              status = (overrideQuickTests || quickMatches) ? 'identical' : 'different';
-            } else {
-              status = 'different';
-            }
+            status = 'pending_content';
           }
         }
       }
     }
 
-    comparison.push({
+    const itemObj = {
       relativePath: relPath,
       name: (left || right).name,
       isDirectory: (left || right).isDirectory,
@@ -450,7 +429,56 @@ async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
         gid: right.gid,
         fullPath: right.fullPath
       } : null
-    });
+    };
+
+    comparison.push(itemObj);
+
+    if (status === 'pending_content') {
+      contentChecks.push({ itemObj, left, right, quickMatches });
+    }
+  }
+
+  // Parallel multi-worker content check (64 concurrent workers matching Beyond Compare 5)
+  if (contentChecks.length > 0) {
+    const CONCURRENCY = 64;
+    let currIdx = 0;
+    const worker = async () => {
+      while (currIdx < contentChecks.length) {
+        const idx = currIdx++;
+        const { itemObj, left, right, quickMatches } = contentChecks[idx];
+        let contentMatch = false;
+        try {
+          if (contentMethod === 'binary') {
+            contentMatch = await areFilesEqualBinaryStreamAsync(left.fullPath, right.fullPath, left.size);
+          } else if (contentMethod === 'crc') {
+            const [c1, c2] = await Promise.all([
+              calculateFileCRC32Async(left.fullPath, left.size),
+              calculateFileCRC32Async(right.fullPath, right.size)
+            ]);
+            contentMatch = (c1 && c2 && c1 === c2);
+          } else {
+            // rules
+            const deepComp = await compareFilesDeepAsync(left.fullPath, right.fullPath, 'rules', false, left.size, right.size);
+            contentMatch = deepComp.match;
+          }
+        } catch {
+          contentMatch = false;
+        }
+
+        if (contentMatch) {
+          itemObj.status = (overrideQuickTests || quickMatches) ? 'identical' : 'different';
+        } else {
+          itemObj.status = 'different';
+        }
+      }
+    };
+
+    const workers = [];
+    const numWorkers = Math.min(CONCURRENCY, contentChecks.length);
+    for (let w = 0; w < numWorkers; w++) {
+      workers.push(worker());
+    }
+    await Promise.all(workers);
   }
 
   return comparison;
