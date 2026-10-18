@@ -307,6 +307,8 @@
       'toast.file_save_err': 'Error saving file: {error}',
       'toast.undo_done': 'Change undone',
       'toast.redo_done': 'Change reapplied',
+      'toast.file_reloaded_external': 'File reloaded from external change: {file}',
+      'modal.external_change_dirty_confirm': 'The file "{file}" was modified externally, but you have unsaved edits in DiffCore.\n\nDo you want to reload from disk and overwrite your local edits?',
 
       // Sessions History
       'sessions.auto_saved': 'Auto-saved',
@@ -776,6 +778,8 @@
       'toast.file_save_err': 'Error al guardar archivo: {error}',
       'toast.undo_done': 'Cambio deshecho',
       'toast.redo_done': 'Cambio rehecho',
+      'toast.file_reloaded_external': 'Archivo recargado por cambio externo: {file}',
+      'modal.external_change_dirty_confirm': 'El archivo "{file}" fue modificado externamente, pero tienes cambios sin guardar en DiffCore.\n\n¿Deseas recargarlo del disco y sobrescribir tus cambios locales?',
 
       // Sessions History
       'sessions.auto_saved': 'Guardado automático',
@@ -1245,6 +1249,8 @@
       'toast.file_save_err': 'Erro ao salvar arquivo: {error}',
       'toast.undo_done': 'Ação desfeita',
       'toast.redo_done': 'Ação refeita',
+      'toast.file_reloaded_external': 'Arquivo recarregado por alteração externa: {file}',
+      'modal.external_change_dirty_confirm': 'O arquivo "{file}" foi modificado externamente, mas você tem alterações não salvas no DiffCore.\n\nDeseja recarregar do disco e sobrescrever suas alterações locais?',
 
       // Sessions History
       'sessions.auto_saved': 'Salvo automaticamente',
@@ -1714,6 +1720,8 @@
       'toast.file_save_err': 'Erreur lors de l\'enregistrement : {error}',
       'toast.undo_done': 'Action annulée',
       'toast.redo_done': 'Action rétablie',
+      'toast.file_reloaded_external': 'Fichier rechargé suite à une modification externe : {file}',
+      'modal.external_change_dirty_confirm': 'Le fichier "{file}" a été modifié à l\'extérieur, mais vous avez des modifications non enregistrées dans DiffCore.\n\nVoulez-vous recharger depuis le disque et écraser vos modifications locales ?',
 
       // Sessions History
       'sessions.auto_saved': 'Enregistré automatiquement',
@@ -2183,6 +2191,8 @@
       'toast.file_save_err': 'Errore durante il salvataggio: {error}',
       'toast.undo_done': 'Modifica annullata',
       'toast.redo_done': 'Modifica ripristinata',
+      'toast.file_reloaded_external': 'File ricaricato per modifica esterna: {file}',
+      'modal.external_change_dirty_confirm': 'Il file "{file}" è stato modificato esternamente, ma hai modifiche non salvate in DiffCore.\n\nVuoi ricaricare dal disco e sovrascrivere le modifiche locali?',
 
       // Sessions History
       'sessions.auto_saved': 'Salvataggio automatico',
@@ -2652,6 +2662,8 @@
       'toast.file_save_err': 'Ошибка сохранения файла: {error}',
       'toast.undo_done': 'Действие отменено',
       'toast.redo_done': 'Действие повторено',
+      'toast.file_reloaded_external': 'Файл перезагружен из-за внешнего изменения: {file}',
+      'modal.external_change_dirty_confirm': 'Файл "{file}" был изменен извне, но у вас есть несохраненные изменения в DiffCore.\n\nПерезагрузить с диска и перезаписать локальные изменения?',
 
       // Sessions History
       'sessions.auto_saved': 'Автосохранение',

@@ -83,7 +83,8 @@ function readTextFile(filePath, maxBytes = 10 * 1024 * 1024) {
       content,
       lineCount: lines.length,
       size: stat.size,
-      mtime: stat.mtime
+      mtime: stat.mtime,
+      mtimeMs: stat.mtimeMs
     };
   } catch (err) {
     return { success: false, error: err.message };
@@ -95,7 +96,8 @@ function writeTextFile(filePath, content) {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(filePath, content, 'utf8');
-    return { success: true };
+    const stat = fs.statSync(filePath);
+    return { success: true, mtimeMs: stat.mtimeMs };
   } catch (err) {
     return { success: false, error: err.message };
   }

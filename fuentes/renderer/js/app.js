@@ -254,6 +254,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupFolderKeyboardNavigation();
   setupTextKeyboardNavigation();
   setupWindowClickHandlers();
+  setupFileWatcherListeners();
   initFooterTelemetry();
 
   // Apply persisted or default filter ('diffs')
@@ -458,6 +459,142 @@ function setupWindowClickHandlers() {
       closeRecentFoldersDropdown('right');
     }
   });
+}
+
+// --- CROSS-PLATFORM EXTERNAL FILE WATCHER & AUTO-RELOAD (macOS, Linux, Windows) ---
+function pathEquals(p1, p2) {
+  if (!p1 || !p2) return false;
+  const norm1 = p1.replace(/\\/g, '/').replace(/\/+$/, '');
+  const norm2 = p2.replace(/\\/g, '/').replace(/\/+$/, '');
+  const isCaseInsensitive = navigator.platform && (
+    navigator.platform.toLowerCase().includes('win') || 
+    navigator.platform.toLowerCase().includes('mac')
+  );
+  if (isCaseInsensitive) {
+    return norm1.toLowerCase() === norm2.toLowerCase();
+  }
+  return norm1 === norm2;
+}
+
+function updateWatchedFiles() {
+  if (!window.api || typeof window.api.watchFiles !== 'function') return;
+  const current = appState.currentTextFile;
+  if (!current || appState.activeView !== 'text') {
+    if (window.api.unwatchFiles) window.api.unwatchFiles().catch(() => {});
+    return;
+  }
+  const paths = [current.leftFullPath, current.rightFullPath].filter(Boolean);
+  window.api.watchFiles(paths).catch(() => {});
+}
+
+function setupFileWatcherListeners() {
+  if (window.api && typeof window.api.onFileChanged === 'function') {
+    window.api.onFileChanged((data) => {
+      if (data && data.filePath) {
+        handleExternalFileChange(data.filePath, data.mtimeMs);
+      }
+    });
+  }
+
+  // Cross-platform window focus listener: check open files when returning to DiffCore
+  window.addEventListener('focus', () => {
+    checkActiveTextFilesForExternalChanges();
+  });
+}
+
+async function checkActiveTextFilesForExternalChanges() {
+  const session = appState.currentTextFile;
+  if (!session || appState.activeView !== 'text') return;
+  if (session.leftFullPath) {
+    handleExternalFileChange(session.leftFullPath);
+  }
+  if (session.rightFullPath) {
+    handleExternalFileChange(session.rightFullPath);
+  }
+}
+
+let isReloadingExternalFile = false;
+async function handleExternalFileChange(filePath, externalMtimeMs) {
+  if (isReloadingExternalFile) return;
+  const session = appState.currentTextFile;
+  if (!session || appState.activeView !== 'text') return;
+
+  const isLeft = session.leftFullPath && pathEquals(session.leftFullPath, filePath);
+  const isRight = session.rightFullPath && pathEquals(session.rightFullPath, filePath);
+  if (!isLeft && !isRight) return;
+
+  const side = isLeft ? 'left' : 'right';
+  const sidePath = isLeft ? session.leftFullPath : session.rightFullPath;
+  const currentContent = isLeft ? session.leftContent : session.rightContent;
+  const originalContent = isLeft ? session.originalLeftContent : session.originalRightContent;
+  const lastMtime = isLeft ? (session.leftMtimeMs || 0) : (session.rightMtimeMs || 0);
+
+  // Check if mtime actually changed on disk
+  const mtimeRes = await window.api.getFileMtime(sidePath);
+  if (!mtimeRes || !mtimeRes.success) return;
+  if (lastMtime && mtimeRes.mtimeMs <= lastMtime) return;
+
+  // Read new content from disk
+  const res = await window.api.readTextFile(sidePath);
+  if (!res || !res.success) return;
+
+  // If content on disk is identical to current buffer, update mtime without re-render
+  const newContent = res.content || '';
+  if (newContent === currentContent) {
+    if (isLeft) session.leftMtimeMs = res.mtimeMs || mtimeRes.mtimeMs;
+    else session.rightMtimeMs = res.mtimeMs || mtimeRes.mtimeMs;
+    return;
+  }
+
+  // If user has unsaved edits in DiffCore on this side
+  const isDirtyLocally = currentContent !== originalContent;
+  const fileName = sidePath.split(/[/\\]/).pop() || 'file';
+
+  if (isDirtyLocally) {
+    const confirmMsg = window.i18n
+      ? window.i18n.t('modal.external_change_dirty_confirm', { file: fileName })
+      : `The file "${fileName}" was modified externally, but you have unsaved edits in DiffCore.\n\nDo you want to reload from disk and overwrite your local edits?`;
+    if (!confirm(confirmMsg)) {
+      // User opted to keep local edits; update mtime so we don't prompt repeatedly for same change
+      if (isLeft) session.leftMtimeMs = res.mtimeMs || mtimeRes.mtimeMs;
+      else session.rightMtimeMs = res.mtimeMs || mtimeRes.mtimeMs;
+      return;
+    }
+  }
+
+  isReloadingExternalFile = true;
+  try {
+    if (isLeft) {
+      session.leftContent = newContent;
+      session.originalLeftContent = newContent;
+      session.leftMtimeMs = res.mtimeMs || mtimeRes.mtimeMs;
+      updateTextFileMetadata('left', res, session.leftFullPath, newContent);
+    } else {
+      session.rightContent = newContent;
+      session.originalRightContent = newContent;
+      session.rightMtimeMs = res.mtimeMs || mtimeRes.mtimeMs;
+      updateTextFileMetadata('right', res, session.rightFullPath, newContent);
+    }
+
+    // Recalculate Myers Aligned Diff instantly
+    if (session.leftFullPath && session.rightFullPath) {
+      const diff = await window.api.computeAlignedDiff(session.leftContent, session.rightContent);
+      session.diffResult = diff;
+      renderTextDiff(diff);
+    } else {
+      renderSingleSideText(side);
+    }
+
+    updateUndoRedoButtons();
+    updateTextTabTitle();
+
+    const toastMsg = window.i18n
+      ? window.i18n.t('toast.file_reloaded_external', { file: fileName })
+      : `File reloaded from external change: ${fileName}`;
+    showToast(toastMsg, 'info');
+  } finally {
+    isReloadingExternalFile = false;
+  }
 }
 
 // --- DYNAMIC SESSIONS MANAGEMENT ---
@@ -1423,6 +1560,7 @@ function switchView(viewName) {
       clearSessionDetails();
     }
     updateFooterTelemetry();
+    if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
     return;
   }
 
@@ -1453,6 +1591,7 @@ function switchView(viewName) {
   }
 
   updateAppHeader();
+  if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
 }
 
 function updateAppHeader() {
@@ -1808,7 +1947,7 @@ function swapSides() {
   document.getElementById('rightPathInput').value = appState.rightPath;
 
   appendLog('Swapped left and right sides.');
-  runFolderComparison();
+  runFolderComparison(true);
 }
 
 function goUpFolder(side) {
@@ -1979,7 +2118,7 @@ function showPathHistory(side, event) {
 }
 
 // --- RUN FOLDER COMPARISON ---
-async function runFolderComparison() {
+async function runFolderComparison(preserveOpenState = false) {
   cancelSingleSideScan();
   closeRecentFoldersDropdown();
   const inL = document.getElementById('leftPathInput');
@@ -2013,14 +2152,20 @@ async function runFolderComparison() {
     return;
   }
 
+  const isSameOrSwappedPair = 
+    (appState.lastComparedLeft === left && appState.lastComparedRight === right) ||
+    (appState.lastComparedLeft === right && appState.lastComparedRight === left);
+
   appState.lastComparedLeft = left;
   appState.lastComparedRight = right;
 
-  // Clear folder open state and selection so comparison starts clean
-  appState.folderOpenState.clear();
-  appState.selectedIndices.clear();
-  appState.selectedIndex = -1;
-  appState.lastClickedIndex = -1;
+  // Clear folder open state and selection only when loading a completely new pair of paths
+  if (!preserveOpenState && !isSameOrSwappedPair) {
+    appState.folderOpenState.clear();
+    appState.selectedIndices.clear();
+    appState.selectedIndex = -1;
+    appState.lastClickedIndex = -1;
+  }
 
   appendLog(`Running comparison: ${left} <=> ${right}`);
   setEngineStatus('busy');
@@ -3159,7 +3304,7 @@ async function contextAction(action) {
       showToast(item.isIgnored ? `Ignored "${item.name}"` : `Unignored "${item.name}"`, 'info');
       break;
     case 'refresh_selection':
-      runFolderComparison();
+      runFolderComparison(true);
       break;
     case 'file_compare_report':
       openFileCompareReport(item);
@@ -6479,6 +6624,7 @@ function switchToTextSession(sessionId) {
   }
 
   renderDynamicTextTabs();
+  if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
 }
 
 function closeSpecificTextTab(sessionId, event) {
@@ -6521,6 +6667,7 @@ function executeCloseTextSession(sessionId) {
       appState.activeTextSessionId = null;
       appState.currentTextFile = null;
       renderDynamicTextTabs();
+      if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
       switchToRemainingTabOrHome();
     }
   } else {
@@ -6634,6 +6781,8 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   session.rightContent = contentRight;
   session.originalLeftContent = contentLeft;
   session.originalRightContent = contentRight;
+  session.leftMtimeMs = resLeft.mtimeMs || 0;
+  session.rightMtimeMs = resRight.mtimeMs || 0;
 
   updateTextFileMetadata('left', resLeft, leftFullPath, contentLeft);
   updateTextFileMetadata('right', resRight, rightFullPath, contentRight);
@@ -6661,6 +6810,7 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   }
 
   renderDynamicTextTabs();
+  if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
 
   // Auto-save session ONLY if this is a direct standalone text comparison
   if (!isChildCompare && leftFullPath && rightFullPath) {
@@ -6824,6 +6974,7 @@ async function loadTextFileForSide(side, filePath) {
     appState.currentTextFile.leftFullPath = filePath;
     appState.currentTextFile.leftContent = content;
     appState.currentTextFile.originalLeftContent = content;
+    appState.currentTextFile.leftMtimeMs = res.mtimeMs || 0;
     const inputL = document.getElementById('textLeftPathInput');
     if (inputL) inputL.value = filePath;
     updateTextFileMetadata('left', res, filePath, content);
@@ -6831,12 +6982,14 @@ async function loadTextFileForSide(side, filePath) {
     appState.currentTextFile.rightFullPath = filePath;
     appState.currentTextFile.rightContent = content;
     appState.currentTextFile.originalRightContent = content;
+    appState.currentTextFile.rightMtimeMs = res.mtimeMs || 0;
     const inputR = document.getElementById('textRightPathInput');
     if (inputR) inputR.value = filePath;
     updateTextFileMetadata('right', res, filePath, content);
   }
 
   updateTextTabTitle();
+  if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
 
   if (appState.currentTextFile.leftFullPath && appState.currentTextFile.rightFullPath) {
     const diff = await window.api.computeAlignedDiff(
@@ -9425,9 +9578,19 @@ async function saveTextFile(side) {
   const saveBtn = side === 'left' ? document.getElementById('btnSaveLeft') : document.getElementById('btnSaveRight');
   
   if (path) {
-    await window.api.writeTextFile(path, content);
-    if (side === 'left') file.originalLeftContent = content;
-    else file.originalRightContent = content;
+    const res = await window.api.writeTextFile(path, content);
+    if (res && res.success) {
+      if (side === 'left') {
+        file.originalLeftContent = content;
+        file.leftMtimeMs = res.mtimeMs || Date.now();
+      } else {
+        file.originalRightContent = content;
+        file.rightMtimeMs = res.mtimeMs || Date.now();
+      }
+    } else {
+      if (side === 'left') file.originalLeftContent = content;
+      else file.originalRightContent = content;
+    }
 
     if (saveBtn) saveBtn.style.boxShadow = '';
     appendLog(`Saved ${side} file: ${path}`);
@@ -9436,7 +9599,7 @@ async function saveTextFile(side) {
     
     // If files are now identical, notify folder view
     if (file.diffResult && file.diffResult.sectionCount === 0) {
-      runFolderComparison();
+      runFolderComparison(true);
     }
   } else {
     showToast(`Cannot save: ${side} file has no valid path`, 'error');

@@ -360,6 +360,108 @@ ipcMain.handle('fs:writeText', async (_event, { filePath, content }) => {
   return fileOps.writeTextFile(filePath, content);
 });
 
+// Cross-Platform Native File Watchers (macOS: FSEvents, Linux: inotify, Windows: ReadDirectoryChangesW)
+const activeWatchers = new Map();
+
+function unwatchAllFiles() {
+  for (const [p, item] of activeWatchers.entries()) {
+    if (item.debounceTimer) clearTimeout(item.debounceTimer);
+    try { item.watcher.close(); } catch (_) {}
+  }
+  activeWatchers.clear();
+}
+
+function watchFile(filePath) {
+  if (!filePath || typeof filePath !== 'string') return;
+  const resolved = path.resolve(filePath);
+  if (activeWatchers.has(resolved)) return;
+
+  try {
+    if (!fs.existsSync(resolved)) return;
+    let lastMtimeMs = 0;
+    try { lastMtimeMs = fs.statSync(resolved).mtimeMs; } catch (_) {}
+
+    const item = {
+      lastMtimeMs,
+      debounceTimer: null,
+      watcher: null
+    };
+
+    const attachWatcher = () => {
+      try {
+        if (!fs.existsSync(resolved)) return;
+        item.watcher = fs.watch(resolved, (eventType) => {
+          clearTimeout(item.debounceTimer);
+          item.debounceTimer = setTimeout(() => {
+            try {
+              if (!fs.existsSync(resolved)) {
+                // Potential atomic save (write temp file + replace/rename)
+                setTimeout(() => {
+                  if (fs.existsSync(resolved)) {
+                    attachWatcher();
+                    notifyFileChanged(resolved);
+                  }
+                }, 150);
+                return;
+              }
+              const stat = fs.statSync(resolved);
+              if (stat.mtimeMs !== item.lastMtimeMs) {
+                item.lastMtimeMs = stat.mtimeMs;
+                notifyFileChanged(resolved, stat.mtimeMs);
+              }
+            } catch (_) {}
+          }, 200);
+        });
+
+        item.watcher.on('error', () => {
+          try { item.watcher.close(); } catch (_) {}
+          setTimeout(() => attachWatcher(), 300);
+        });
+      } catch (e) {
+        console.warn('attachWatcher error:', e);
+      }
+    };
+
+    attachWatcher();
+    activeWatchers.set(resolved, item);
+  } catch (err) {
+    console.warn('watchFile failed for:', resolved, err);
+  }
+}
+
+function notifyFileChanged(filePath, mtimeMs) {
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+    mainWindow.webContents.send('file:changed', { filePath, mtimeMs: mtimeMs || Date.now() });
+  }
+}
+
+ipcMain.handle('fs:watchFiles', async (_event, filePaths) => {
+  unwatchAllFiles();
+  if (Array.isArray(filePaths)) {
+    for (const p of filePaths) {
+      if (p) watchFile(p);
+    }
+  }
+  return true;
+});
+
+ipcMain.handle('fs:unwatchFiles', async () => {
+  unwatchAllFiles();
+  return true;
+});
+
+ipcMain.handle('fs:getMtime', async (_event, filePath) => {
+  try {
+    if (filePath && fs.existsSync(filePath)) {
+      const stat = fs.statSync(filePath);
+      return { success: true, mtimeMs: stat.mtimeMs, size: stat.size };
+    }
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+  return { success: false, error: 'File not found' };
+});
+
 // Hex Compare Operations
 ipcMain.handle('fs:readHex', async (_event, { filePath, offset, length }) => {
   return fileOps.readHexDump(filePath, offset, length);

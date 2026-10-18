@@ -49,6 +49,9 @@ contextBridge.exposeInMainWorld('api', {
   // Text Compare Operations
   readTextFile: (filePath) => ipcRenderer.invoke('fs:readText', filePath),
   writeTextFile: (filePath, content) => ipcRenderer.invoke('fs:writeText', { filePath, content }),
+  watchFiles: (filePaths) => ipcRenderer.invoke('fs:watchFiles', filePaths),
+  unwatchFiles: () => ipcRenderer.invoke('fs:unwatchFiles'),
+  getFileMtime: (filePath) => ipcRenderer.invoke('fs:getMtime', filePath),
   
   // Hex Compare Operations
   readHexDump: (filePath, offset, length) => ipcRenderer.invoke('fs:readHex', { filePath, offset, length }),
@@ -103,5 +106,10 @@ contextBridge.exposeInMainWorld('api', {
     const handler = (_event, data) => callback(data);
     ipcRenderer.on('diff:compareProgress', handler);
     return () => ipcRenderer.removeListener('diff:compareProgress', handler);
+  },
+  onFileChanged: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('file:changed', handler);
+    return () => ipcRenderer.removeListener('file:changed', handler);
   }
 });
