@@ -738,9 +738,12 @@
             <input type="text" id="textLeftPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'left')" onblur="handlePathInputBlur('left')" spellcheck="false">
             <button class="text-address-btn" title="Browse for Left File" onclick="browseTextFile('left')">📁▾</button>
           </div>
-          <div class="text-address-sub-row">
+          <div class="text-address-sub-row" id="textLeftSubRow">
+            <span class="text-sub-item text-sub-date" id="textLeftDate"></span>
+            <span class="text-sub-item text-sub-size" id="textLeftSize"></span>
             <span class="text-format-badge" id="textLeftFormatBadge">Everything Else ▾</span>
             <span class="text-encoding-badge" id="textLeftMeta">Unicode (UTF-8) ▾</span>
+            <span class="text-sub-item text-sub-eol" id="textLeftEol"></span>
           </div>
         </div>
         <div class="text-pane-body">
@@ -773,9 +776,12 @@
             <input type="text" id="textRightPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'right')" onblur="handlePathInputBlur('right')" spellcheck="false">
             <button class="text-address-btn" title="Browse for Right File" onclick="browseTextFile('right')">📁▾</button>
           </div>
-          <div class="text-address-sub-row">
+          <div class="text-address-sub-row" id="textRightSubRow">
+            <span class="text-sub-item text-sub-date" id="textRightDate"></span>
+            <span class="text-sub-item text-sub-size" id="textRightSize"></span>
             <span class="text-format-badge" id="textRightFormatBadge">Everything Else ▾</span>
             <span class="text-encoding-badge" id="textRightMeta">Unicode (UTF-8) ▾</span>
+            <span class="text-sub-item text-sub-eol" id="textRightEol"></span>
           </div>
         </div>
         <div class="text-pane-body">

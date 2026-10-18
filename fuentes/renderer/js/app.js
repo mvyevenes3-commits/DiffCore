@@ -6152,15 +6152,49 @@ function getLanguageDisplayName(lang) {
   }
 }
 
+function updateTextFileMetadata(side, fileRes, fullPath, content) {
+  const prefix = side === 'left' ? 'textLeft' : 'textRight';
+  const dateEl = document.getElementById(`${prefix}Date`);
+  const sizeEl = document.getElementById(`${prefix}Size`);
+  const formatEl = document.getElementById(`${prefix}FormatBadge`);
+  const metaEl = document.getElementById(`${prefix}Meta`);
+  const eolEl = document.getElementById(`${prefix}Eol`);
+
+  if (!fullPath || !fileRes || fileRes.success === false) {
+    if (dateEl) dateEl.textContent = '';
+    if (sizeEl) sizeEl.textContent = '';
+    if (formatEl) formatEl.textContent = 'Everything Else ▾';
+    if (metaEl) metaEl.textContent = 'Unicode (UTF-8) ▾';
+    if (eolEl) eolEl.textContent = '';
+    return;
+  }
+
+  const d = fileRes.mtime ? new Date(fileRes.mtime) : null;
+  const pad = n => String(n).padStart(2, '0');
+  const dateStr = (d && !isNaN(d.getTime()))
+    ? `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    : '';
+
+  const byteCount = (fileRes.size !== undefined ? fileRes.size : (content ? content.length : 0));
+  const sizeStr = `${Number(byteCount).toLocaleString('es-ES')} bytes`;
+  const lang = detectLanguage(fullPath);
+  const formatStr = getLanguageDisplayName(lang);
+  const eolStr = (content && content.includes('\r\n')) ? 'CRLF' : ((content && content.includes('\r')) ? 'MAC' : 'UNIX');
+
+  if (dateEl) dateEl.textContent = dateStr;
+  if (sizeEl) sizeEl.textContent = sizeStr;
+  if (formatEl) formatEl.textContent = formatStr;
+  if (metaEl) metaEl.textContent = 'Unicode (UTF-8) ▾';
+  if (eolEl) eolEl.textContent = eolStr;
+}
+
 function updateTextFormatBadges() {
-  const badgeL = document.getElementById('textLeftFormatBadge');
-  const badgeR = document.getElementById('textRightFormatBadge');
   const pathL = appState.currentTextFile ? appState.currentTextFile.leftFullPath : '';
   const pathR = appState.currentTextFile ? appState.currentTextFile.rightFullPath : '';
-  const langL = detectLanguage(pathL || pathR || appState.currentTextFile?.relativePath);
-  const langR = detectLanguage(pathR || pathL || appState.currentTextFile?.relativePath);
-  if (badgeL) badgeL.textContent = getLanguageDisplayName(langL);
-  if (badgeR) badgeR.textContent = getLanguageDisplayName(langR);
+  const badgeL = document.getElementById('textLeftFormatBadge');
+  const badgeR = document.getElementById('textRightFormatBadge');
+  if (badgeL && pathL) badgeL.textContent = getLanguageDisplayName(detectLanguage(pathL));
+  if (badgeR && pathR) badgeR.textContent = getLanguageDisplayName(detectLanguage(pathR));
 }
 
 function highlightSyntax(line, lang = 'generic', isDiff = false, isComment = false) {
@@ -6374,11 +6408,8 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   appState.currentTextFile.originalLeftContent = contentLeft;
   appState.currentTextFile.originalRightContent = contentRight;
 
-  const leftMetaEl = document.getElementById('textLeftMeta');
-  if (leftMetaEl) leftMetaEl.textContent = `${formatBytes(contentLeft.length)} | ${(resLeft.lineCount || 0).toLocaleString()} lines | UTF-8 ▾`;
-
-  const rightMetaEl = document.getElementById('textRightMeta');
-  if (rightMetaEl) rightMetaEl.textContent = `${formatBytes(contentRight.length)} | ${(resRight.lineCount || 0).toLocaleString()} lines | UTF-8 ▾`;
+  updateTextFileMetadata('left', resLeft, leftFullPath, contentLeft);
+  updateTextFileMetadata('right', resRight, rightFullPath, contentRight);
 
   // Compute Myers Aligned Diff
   setEngineStatus('busy');
@@ -6458,8 +6489,8 @@ function renderEmptyTextCompare() {
     badge.style.background = 'rgba(255, 255, 255, 0.08)';
     badge.style.color = '#aaa';
   }
-  if (metaL) metaL.textContent = 'Unicode (UTF-8) ▾';
-  if (metaR) metaR.textContent = 'Unicode (UTF-8) ▾';
+  updateTextFileMetadata('left', null, null, null);
+  updateTextFileMetadata('right', null, null, null);
 }
 
 function renderSingleSideText(loadedSide) {
@@ -6533,16 +6564,14 @@ async function loadTextFileForSide(side, filePath) {
     appState.currentTextFile.originalLeftContent = content;
     const inputL = document.getElementById('textLeftPathInput');
     if (inputL) inputL.value = filePath;
-    const metaL = document.getElementById('textLeftMeta');
-    if (metaL) metaL.textContent = `${formatBytes(content.length)} | ${(res.lineCount || 0).toLocaleString()} lines | UTF-8 ▾`;
+    updateTextFileMetadata('left', res, filePath, content);
   } else {
     appState.currentTextFile.rightFullPath = filePath;
     appState.currentTextFile.rightContent = content;
     appState.currentTextFile.originalRightContent = content;
     const inputR = document.getElementById('textRightPathInput');
     if (inputR) inputR.value = filePath;
-    const metaR = document.getElementById('textRightMeta');
-    if (metaR) metaR.textContent = `${formatBytes(content.length)} | ${(res.lineCount || 0).toLocaleString()} lines | UTF-8 ▾`;
+    updateTextFileMetadata('right', res, filePath, content);
   }
 
   updateTextTabTitle();
