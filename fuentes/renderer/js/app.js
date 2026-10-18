@@ -7900,11 +7900,17 @@ function renderTextDiff(diffResult) {
         marker.className = sec.isWhitespaceDiff ? 'overview-marker marker-whitespace' : 'overview-marker';
         marker.style.top = `${safeTopPct}%`;
         marker.style.height = `${heightPct}%`;
+        marker.dataset.sectionIndex = sec.index;
         if (sec.endRow >= totalRows - 2) {
           marker.style.top = 'auto';
           marker.style.bottom = '1px';
         }
         marker.title = `Difference section ${sec.index + 1} (${rowSpan} lines) - Click to jump directly`;
+        marker.onpointerdown = (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          jumpToSection(sec.index);
+        };
         marker.onclick = (e) => {
           e.stopPropagation();
           jumpToSection(sec.index);
@@ -8100,7 +8106,82 @@ function renderVisibleTextWindow(force = false) {
   }
 }
 
+function findSectionAtRailY(clientY) {
+  const rail = document.getElementById('textOverviewRail');
+  if (!rail) return null;
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+  if (!diffResult || !diffResult.sections || diffResult.sections.length === 0 || !diffResult.totalRows) return null;
+
+  const rect = rail.getBoundingClientRect();
+  const clickY = clientY - rect.top;
+  const railH = rect.height;
+  if (railH <= 0) return null;
+
+  const totalRows = diffResult.totalRows;
+  const sections = diffResult.sections;
+
+  let bestSec = null;
+  let minDistance = Infinity;
+
+  // 1. Check visually rendered marker boundaries on the rail (with generous 6px tolerance)
+  for (let i = 0; i < sections.length; i++) {
+    const sec = sections[i];
+    const rawTopPct = (sec.startRow / totalRows) * 100;
+    const rowSpan = Math.max(1, sec.endRow - sec.startRow + 1);
+    const heightPct = Math.max(2.2, (rowSpan / totalRows) * 100);
+    let safeTopPct = rawTopPct;
+    if (safeTopPct + heightPct > 100) {
+      safeTopPct = Math.max(0, 100 - heightPct);
+    }
+
+    let topPx = (safeTopPct / 100) * railH;
+    let heightPx = (heightPct / 100) * railH;
+    if (sec.endRow >= totalRows - 2) {
+      topPx = railH - heightPx - 1;
+    }
+    const bottomPx = topPx + heightPx;
+    const centerPx = (topPx + bottomPx) / 2;
+
+    if (clickY >= topPx - 6 && clickY <= bottomPx + 6) {
+      const dist = Math.abs(clickY - centerPx);
+      if (dist < minDistance) {
+        minDistance = dist;
+        bestSec = sec;
+      }
+    }
+  }
+
+  if (bestSec) return bestSec;
+
+  // 2. Secondary check: row proximity within ±4 rows
+  const pct = Math.max(0, Math.min(1, clickY / railH));
+  const clickedRow = pct * totalRows;
+  for (let i = 0; i < sections.length; i++) {
+    const sec = sections[i];
+    if (clickedRow >= sec.startRow - 4 && clickedRow <= sec.endRow + 4) {
+      return sec;
+    }
+  }
+
+  return null;
+}
+
 function handleOverviewRailClick(event) {
+  const markerEl = event.target ? event.target.closest('.overview-marker') : null;
+  if (markerEl && markerEl.dataset.sectionIndex !== undefined) {
+    const idx = parseInt(markerEl.dataset.sectionIndex, 10);
+    if (!isNaN(idx)) {
+      jumpToSection(idx);
+      return;
+    }
+  }
+
+  const matchedSec = findSectionAtRailY(event.clientY);
+  if (matchedSec) {
+    jumpToSection(matchedSec.index);
+    return;
+  }
+
   const rail = document.getElementById('textOverviewRail');
   if (!rail) return;
   const rect = rail.getBoundingClientRect();
@@ -8122,12 +8203,8 @@ function handleOverviewRailClick(event) {
   const clientH = activeScroll ? activeScroll.clientHeight : 400;
   const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
   const halfView = clientH / 2;
-  let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
-  if (pct >= 0.95 || targetRow >= diffResult.totalRows - 12) {
-    targetTop = maxScroll;
-  } else {
-    targetTop = Math.min(maxScroll, targetTop);
-  }
+  let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView);
+  targetTop = Math.min(maxScroll, targetTop);
 
   textScrollDriver = 'programmatic';
   clearTimeout(textScrollTimer);
@@ -8178,12 +8255,8 @@ function setupOverviewRailDrag() {
     const clientH = activeScroll ? activeScroll.clientHeight : 400;
     const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
     const halfView = clientH / 2;
-    let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
-    if (pct >= 0.95 || targetRow >= diffResult.totalRows - 12) {
-      targetTop = maxScroll;
-    } else {
-      targetTop = Math.min(maxScroll, targetTop);
-    }
+    let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView);
+    targetTop = Math.min(maxScroll, targetTop);
 
     textScrollDriver = 'custom_vscroll';
 
@@ -8207,6 +8280,28 @@ function setupOverviewRailDrag() {
 
   rail.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
+
+    // Check if clicked on a marker or near a difference section
+    const markerEl = e.target ? e.target.closest('.overview-marker') : null;
+    let targetSection = null;
+    if (markerEl && markerEl.dataset.sectionIndex !== undefined) {
+      const idx = parseInt(markerEl.dataset.sectionIndex, 10);
+      const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+      if (diffResult && diffResult.sections && diffResult.sections[idx]) {
+        targetSection = diffResult.sections[idx];
+      }
+    }
+    if (!targetSection) {
+      targetSection = findSectionAtRailY(e.clientY);
+    }
+
+    if (targetSection) {
+      e.preventDefault();
+      e.stopPropagation();
+      jumpToSection(targetSection.index);
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
     isDraggingRail = true;
@@ -8255,7 +8350,7 @@ function resetTextCompareScroll() {
 }
 
 function jumpToSection(sectionIndex) {
-  const diffResult = appState.currentTextFile.diffResult;
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
   if (!diffResult || !diffResult.sections || !diffResult.sections[sectionIndex]) return;
 
   appState.currentTextFile.currentSectionIndex = sectionIndex;
@@ -8272,16 +8367,10 @@ function jumpToSection(sectionIndex) {
 
   const clientH = activeScroll ? activeScroll.clientHeight : 400;
   const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
-  const halfView = clientH / 2;
 
-  let targetTop = Math.max(0, sec.startRow * TEXT_ROW_HEIGHT - halfView + 30);
-  // If the section is near or at the end of the file, clamp directly to maxScroll
-  // so the file ends cleanly on top of the horizontal scrollbar without requiring extra scrolling
-  if (sec.endRow >= (diffResult.totalRows - 12) || (sec.startRow * TEXT_ROW_HEIGHT + clientH >= diffResult.totalRows * TEXT_ROW_HEIGHT)) {
-    targetTop = maxScroll;
-  } else {
-    targetTop = Math.min(maxScroll, targetTop);
-  }
+  // Precision alignment: exactly place the first line of the difference section at the top of the editor view
+  let targetTop = sec.startRow * TEXT_ROW_HEIGHT;
+  targetTop = Math.max(0, Math.min(maxScroll, targetTop));
 
   textScrollDriver = 'programmatic';
   clearTimeout(textScrollTimer);
