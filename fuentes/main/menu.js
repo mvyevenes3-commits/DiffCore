@@ -202,7 +202,6 @@ const MENU_TRANSLATIONS = {
 };
 
 let currentMenuLang = 'es';
-let isTextEditActive = false;
 
 function buildMenuTemplate(lang, mainWindow) {
   const t = MENU_TRANSLATIONS[lang] || MENU_TRANSLATIONS['es'] || MENU_TRANSLATIONS['en'];
@@ -288,22 +287,20 @@ function buildMenuTemplate(lang, mainWindow) {
     submenu: fileSubmenu
   });
 
-  // 3. Edit Menu (Only shown when inside Text Edit session)
-  if (isTextEditActive) {
-    template.push({
-      label: t.edit,
-      submenu: [
-        { label: t.undo, role: 'undo' },
-        { label: t.redo, role: 'redo' },
-        { type: 'separator' },
-        { label: t.cut, role: 'cut' },
-        { label: t.copy, role: 'copy' },
-        { label: t.paste, role: 'paste' },
-        { type: 'separator' },
-        { label: t.selectAll, role: 'selectAll' }
-      ]
-    });
-  }
+  // 3. Edit Menu (Always present so clipboard shortcuts Cmd+C, Cmd+V, Cmd+A, Cmd+X, Cmd+Z work universally across all views on macOS and all OSs)
+  template.push({
+    label: t.edit,
+    submenu: [
+      { label: t.undo, role: 'undo' },
+      { label: t.redo, role: 'redo' },
+      { type: 'separator' },
+      { label: t.cut, role: 'cut' },
+      { label: t.copy, role: 'copy' },
+      { label: t.paste, role: 'paste' },
+      { type: 'separator' },
+      { label: t.selectAll, role: 'selectAll' }
+    ]
+  });
 
   // 4. View Menu (Toggle Developer Tools removed as requested)
   template.push({
@@ -374,14 +371,37 @@ function updateMenuLanguage(mainWindow, lang) {
 }
 
 function updateActiveView(mainWindow, viewName) {
-  const nextState = (viewName === 'textedit');
-  if (isTextEditActive === nextState) return;
-  isTextEditActive = nextState;
-  setupApplicationMenu(mainWindow, currentMenuLang);
+  // Edit menu is now universally active across all views for seamless clipboard support.
+  // Retained for IPC backwards compatibility.
+}
+
+function getContextMenuForEditable() {
+  const t = MENU_TRANSLATIONS[currentMenuLang] || MENU_TRANSLATIONS['es'] || MENU_TRANSLATIONS['en'];
+  return Menu.buildFromTemplate([
+    { label: t.undo || 'Deshacer', role: 'undo' },
+    { label: t.redo || 'Rehacer', role: 'redo' },
+    { type: 'separator' },
+    { label: t.cut || 'Cortar', role: 'cut' },
+    { label: t.copy || 'Copiar', role: 'copy' },
+    { label: t.paste || 'Pegar', role: 'paste' },
+    { type: 'separator' },
+    { label: t.selectAll || 'Seleccionar todo', role: 'selectAll' }
+  ]);
+}
+
+function getContextMenuForSelection() {
+  const t = MENU_TRANSLATIONS[currentMenuLang] || MENU_TRANSLATIONS['es'] || MENU_TRANSLATIONS['en'];
+  return Menu.buildFromTemplate([
+    { label: t.copy || 'Copiar', role: 'copy' },
+    { type: 'separator' },
+    { label: t.selectAll || 'Seleccionar todo', role: 'selectAll' }
+  ]);
 }
 
 module.exports = {
   setupApplicationMenu,
   updateMenuLanguage,
-  updateActiveView
+  updateActiveView,
+  getContextMenuForEditable,
+  getContextMenuForSelection
 };

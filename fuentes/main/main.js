@@ -1,12 +1,12 @@
 process.env.UV_THREADPOOL_SIZE = '64';
-const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeImage, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { compareFolderTrees, compareFolderTreesAsync, compareFilesDeep, compareFilesDeepAsync, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
 const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
-const { setupApplicationMenu, updateMenuLanguage, updateActiveView } = require('./menu');
+const { setupApplicationMenu, updateMenuLanguage, updateActiveView, getContextMenuForEditable, getContextMenuForSelection } = require('./menu');
 
 // Set application identity
 app.name = 'DiffCore';
@@ -63,6 +63,17 @@ function createWindow() {
   }
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+
+  // Universal native context menu for editable inputs (Cut, Copy, Paste, Select All)
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    if (params.isEditable) {
+      const menu = getContextMenuForEditable();
+      menu.popup({ window: mainWindow });
+    } else if (params.selectionText && params.selectionText.trim().length > 0) {
+      const menu = getContextMenuForSelection();
+      menu.popup({ window: mainWindow });
+    }
+  });
 
   mainWindow.webContents.on('did-finish-load', () => {
     sendLog(`DiffCore started. Username: ${os.userInfo().username}`);

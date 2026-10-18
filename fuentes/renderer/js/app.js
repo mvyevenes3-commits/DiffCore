@@ -1298,9 +1298,24 @@ function handleFolderPathPaste(event, side) {
 
   event.preventDefault();
   const cleaned = sanitizePath(rawPasted);
-
   const targetInput = event.target;
-  targetInput.value = cleaned;
+
+  const isAllSelected = (typeof targetInput.selectionStart === 'number') &&
+                        targetInput.selectionStart === 0 &&
+                        targetInput.selectionEnd === targetInput.value.length;
+  const isEmpty = !targetInput.value || targetInput.value.trim() === '';
+  const isFullPath = /^([a-zA-Z]:|[\\/~])/.test(cleaned);
+
+  if (isAllSelected || isEmpty || isFullPath || typeof targetInput.selectionStart !== 'number') {
+    targetInput.value = cleaned;
+  } else {
+    const start = targetInput.selectionStart;
+    const end = targetInput.selectionEnd;
+    const val = targetInput.value;
+    targetInput.value = val.slice(0, start) + cleaned + val.slice(end);
+    const newPos = start + cleaned.length;
+    targetInput.setSelectionRange(newPos, newPos);
+  }
 
   const inL = document.getElementById('leftPathInput');
   const inR = document.getElementById('rightPathInput');
@@ -3023,6 +3038,23 @@ function setupFolderKeyboardNavigation() {
         selectAllRows();
       }
       return;
+    }
+
+    if (isMeta && (event.key === 'c' || event.key === 'C')) {
+      if (appState.selectedIndices && appState.selectedIndices.size > 0) {
+        event.preventDefault();
+        const names = Array.from(appState.selectedIndices)
+          .sort((a, b) => a - b)
+          .map(idx => appState.filteredItems[idx])
+          .filter(Boolean)
+          .map(item => item.relativePath || item.name)
+          .join('\n');
+        if (names) {
+          navigator.clipboard.writeText(names);
+          showToast(`Copiado al portapapeles (${appState.selectedIndices.size} elementos)`, 'info');
+        }
+        return;
+      }
     }
 
     if (event.key === 'Escape') {
