@@ -5768,17 +5768,26 @@ function createSyncVScrollbar(options) {
 
   function update() {
     if (!leftScroll || !rightScroll) return;
+    const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+    const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
+    const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+    const activeScroll = isRightOnly ? rightScroll : leftScroll;
+
     const scrollH = Math.max(leftScroll.scrollHeight, rightScroll.scrollHeight);
-    const clientH = leftScroll.clientHeight;
-    const currentScrollTop = leftScroll.scrollTop;
+    const clientH = activeScroll.clientHeight;
+    const currentScrollTop = activeScroll.scrollTop;
 
     const pairs = [
-      { track: leftTrack, thumb: leftThumb },
-      { track: rightTrack, thumb: rightThumb }
+      { track: leftTrack, thumb: leftThumb, isSideEmpty: isRightOnly },
+      { track: rightTrack, thumb: rightThumb, isSideEmpty: isLeftOnly }
     ];
 
-    pairs.forEach(({ track, thumb }) => {
+    pairs.forEach(({ track, thumb, isSideEmpty }) => {
       if (!track || !thumb) return;
+      if (isSideEmpty) {
+        thumb.style.display = 'none';
+        return;
+      }
       const trackH = track.clientHeight;
       if (scrollH <= clientH || trackH <= 0) {
         thumb.style.display = 'none';
@@ -5799,18 +5808,27 @@ function createSyncVScrollbar(options) {
 
   function setScrollTop(newTop, skipOnScroll = false) {
     if (!leftScroll || !rightScroll) return;
-    const maxScroll = Math.max(
-      0,
-      Math.max(leftScroll.scrollHeight, rightScroll.scrollHeight) - leftScroll.clientHeight
-    );
+    const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+    const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
+    const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+    const activeScroll = isRightOnly ? rightScroll : leftScroll;
+
+    const scrollH = Math.max(leftScroll.scrollHeight, rightScroll.scrollHeight);
+    const clientH = activeScroll.clientHeight;
+    const maxScroll = Math.max(0, scrollH - clientH);
     const clampedTop = Math.max(0, Math.min(maxScroll, Math.round(newTop)));
 
-    // Simultaneous synchronized scroll assignment
-    leftScroll.scrollTop = clampedTop;
-    rightScroll.scrollTop = clampedTop;
-    extraScrolls.forEach(el => {
-      if (el) el.scrollTop = clampedTop;
-    });
+    if (isRightOnly) {
+      rightScroll.scrollTop = clampedTop;
+    } else if (isLeftOnly) {
+      leftScroll.scrollTop = clampedTop;
+    } else {
+      leftScroll.scrollTop = clampedTop;
+      rightScroll.scrollTop = clampedTop;
+      extraScrolls.forEach(el => {
+        if (el) el.scrollTop = clampedTop;
+      });
+    }
 
     update();
     if (!skipOnScroll && typeof onScroll === 'function') {
@@ -5826,8 +5844,13 @@ function createSyncVScrollbar(options) {
       e.preventDefault();
       e.stopPropagation();
 
+      const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+      const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
+      const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+      const activeScroll = isRightOnly ? rightScroll : leftScroll;
+
       const scrollH = Math.max(leftScroll.scrollHeight, rightScroll.scrollHeight);
-      const clientH = leftScroll.clientHeight;
+      const clientH = activeScroll.clientHeight;
       if (scrollH <= clientH) return;
 
       const trackRect = track.getBoundingClientRect();
@@ -5849,8 +5872,8 @@ function createSyncVScrollbar(options) {
 
       isDragging = true;
       dragStartY = e.clientY;
-      startScrollTop = leftScroll.scrollTop;
-      maxScrollAtDragStart = Math.max(1, Math.max(leftScroll.scrollHeight, rightScroll.scrollHeight) - clientH);
+      startScrollTop = activeScroll.scrollTop;
+      maxScrollAtDragStart = Math.max(1, scrollH - clientH);
       maxThumbTopAtDragStart = Math.max(1, track.clientHeight - (thumb.offsetHeight || 22));
 
       if (typeof setDriver === 'function') setDriver('custom_vscroll');
@@ -6508,11 +6531,27 @@ function renderEmptyTextCompare() {
   const dropR = window.i18n ? window.i18n.t('text.dropzone_right') : 'Drop right file here, or click 📁 to browse';
   if (containerL) {
     containerL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('left')"><div class="dropzone-icon">📄</div><div>${dropL}</div></div>`;
+    containerL.style.position = 'absolute';
+    containerL.style.inset = '0';
     containerL.style.height = '100%';
+    containerL.style.minWidth = '0';
+    containerL.style.width = '100%';
+    containerL.style.display = 'flex';
+    containerL.style.alignItems = 'center';
+    containerL.style.justifyContent = 'center';
+    containerL.style.overflow = 'hidden';
   }
   if (containerR) {
     containerR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('right')"><div class="dropzone-icon">📄</div><div>${dropR}</div></div>`;
+    containerR.style.position = 'absolute';
+    containerR.style.inset = '0';
     containerR.style.height = '100%';
+    containerR.style.minWidth = '0';
+    containerR.style.width = '100%';
+    containerR.style.display = 'flex';
+    containerR.style.alignItems = 'center';
+    containerR.style.justifyContent = 'center';
+    containerR.style.overflow = 'hidden';
   }
   if (badge) {
     badge.textContent = dropL;
@@ -6572,6 +6611,7 @@ function renderSingleSideText(loadedSide) {
   }
 
   renderTextDiff(singleDiff);
+  resetTextCompareScroll();
 }
 
 async function browseTextFile(side) {
@@ -7584,10 +7624,68 @@ function renderTextDiff(diffResult) {
   virtualTextState.cacheL.clear();
   virtualTextState.cacheR.clear();
   const totalHeight = totalRows * TEXT_ROW_HEIGHT;
-  containerL.style.height = `${totalHeight}px`;
-  containerR.style.height = `${totalHeight}px`;
-  containerL.style.minWidth = `${maxLineWidthPx}px`;
-  containerR.style.minWidth = `${maxLineWidthPx}px`;
+  const leftGutterScroll = document.getElementById('textLeftGutterScroll');
+
+  if (diffResult.isSingleSide === 'left') {
+    containerL.style.position = '';
+    containerL.style.inset = '';
+    containerL.style.display = '';
+    containerL.style.overflow = '';
+    containerL.style.height = `${totalHeight}px`;
+    containerL.style.minWidth = `${maxLineWidthPx}px`;
+    containerL.style.width = 'max-content';
+
+    containerR.style.position = 'absolute';
+    containerR.style.inset = '0';
+    containerR.style.height = '100%';
+    containerR.style.minWidth = '0';
+    containerR.style.width = '100%';
+    containerR.style.display = 'flex';
+    containerR.style.alignItems = 'center';
+    containerR.style.justifyContent = 'center';
+    containerR.style.overflow = 'hidden';
+
+    if (leftGutterScroll) leftGutterScroll.style.display = 'none';
+  } else if (diffResult.isSingleSide === 'right') {
+    containerR.style.position = '';
+    containerR.style.inset = '';
+    containerR.style.display = '';
+    containerR.style.overflow = '';
+    containerR.style.height = `${totalHeight}px`;
+    containerR.style.minWidth = `${maxLineWidthPx}px`;
+    containerR.style.width = 'max-content';
+
+    containerL.style.position = 'absolute';
+    containerL.style.inset = '0';
+    containerL.style.height = '100%';
+    containerL.style.minWidth = '0';
+    containerL.style.width = '100%';
+    containerL.style.display = 'flex';
+    containerL.style.alignItems = 'center';
+    containerL.style.justifyContent = 'center';
+    containerL.style.overflow = 'hidden';
+
+    if (leftGutterScroll) leftGutterScroll.style.display = 'none';
+  } else {
+    containerL.style.position = '';
+    containerL.style.inset = '';
+    containerL.style.display = '';
+    containerL.style.overflow = '';
+    containerL.style.height = `${totalHeight}px`;
+    containerL.style.minWidth = `${maxLineWidthPx}px`;
+    containerL.style.width = 'max-content';
+
+    containerR.style.position = '';
+    containerR.style.inset = '';
+    containerR.style.display = '';
+    containerR.style.overflow = '';
+    containerR.style.height = `${totalHeight}px`;
+    containerR.style.minWidth = `${maxLineWidthPx}px`;
+    containerR.style.width = 'max-content';
+
+    if (leftGutterScroll) leftGutterScroll.style.display = '';
+  }
+
   if (gutter) gutter.style.height = `${totalHeight}px`;
   if (leftGutter) leftGutter.style.height = `${totalHeight}px`;
 
@@ -7641,8 +7739,10 @@ function renderVisibleTextWindow(force = false) {
   const gutter = document.getElementById('textCenterGutter');
   if (!scrollL || !containerL || !containerR) return;
 
-  const scrollTop = Math.round(scrollL ? scrollL.scrollTop : 0);
-  const viewportHeight = scrollL.clientHeight || 600;
+  const isRightOnly = diffResult.isSingleSide === 'right';
+  const activeScroll = isRightOnly ? scrollR : scrollL;
+  const scrollTop = Math.round(activeScroll ? activeScroll.scrollTop : 0);
+  const viewportHeight = (activeScroll && activeScroll.clientHeight) ? activeScroll.clientHeight : 600;
   const totalRows = diffResult.totalRows;
 
   const firstVis = Math.floor(scrollTop / TEXT_ROW_HEIGHT);
@@ -7731,12 +7831,34 @@ function renderVisibleTextWindow(force = false) {
 
   if (diffResult.isSingleSide === 'left') {
     containerL.innerHTML = htmlL;
-    containerR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('right')"><div class="dropzone-icon">📄</div><div>Drop right file here, or click 📁 to browse</div></div>`;
-    containerR.style.height = '100%';
+    const dropR = window.i18n ? window.i18n.t('text.dropzone_right') : 'Drop right file here, or click 📁 to browse';
+    if (!containerR.querySelector('.text-empty-dropzone') || force) {
+      containerR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('right')"><div class="dropzone-icon">📄</div><div>${dropR}</div></div>`;
+      containerR.style.position = 'absolute';
+      containerR.style.inset = '0';
+      containerR.style.height = '100%';
+      containerR.style.minWidth = '0';
+      containerR.style.width = '100%';
+      containerR.style.display = 'flex';
+      containerR.style.alignItems = 'center';
+      containerR.style.justifyContent = 'center';
+      containerR.style.overflow = 'hidden';
+    }
   } else if (diffResult.isSingleSide === 'right') {
     containerR.innerHTML = htmlR;
-    containerL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('left')"><div class="dropzone-icon">📄</div><div>Drop left file here, or click 📁 to browse</div></div>`;
-    containerL.style.height = '100%';
+    const dropL = window.i18n ? window.i18n.t('text.dropzone_left') : 'Drop left file here, or click 📁 to browse';
+    if (!containerL.querySelector('.text-empty-dropzone') || force) {
+      containerL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTextFile('left')"><div class="dropzone-icon">📄</div><div>${dropL}</div></div>`;
+      containerL.style.position = 'absolute';
+      containerL.style.inset = '0';
+      containerL.style.height = '100%';
+      containerL.style.minWidth = '0';
+      containerL.style.width = '100%';
+      containerL.style.display = 'flex';
+      containerL.style.alignItems = 'center';
+      containerL.style.justifyContent = 'center';
+      containerL.style.overflow = 'hidden';
+    }
   } else {
     containerL.innerHTML = htmlL;
     containerR.innerHTML = htmlR;
@@ -7794,7 +7916,7 @@ function handleOverviewRailClick(event) {
   const rect = rail.getBoundingClientRect();
   const clickY = event.clientY - rect.top;
   const pct = Math.max(0, Math.min(1, clickY / rect.height));
-  const diffResult = appState.currentTextFile.diffResult;
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
   if (!diffResult || !diffResult.totalRows) return;
 
   const targetRow = Math.floor(pct * diffResult.totalRows);
@@ -7803,7 +7925,11 @@ function handleOverviewRailClick(event) {
   const scrollG = document.getElementById('textGutterScroll');
   const scrollLeftG = document.getElementById('textLeftGutterScroll');
   
-  const clientH = scrollL ? scrollL.clientHeight : 400;
+  const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
+  const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+  const activeScroll = isRightOnly ? scrollR : scrollL;
+
+  const clientH = activeScroll ? activeScroll.clientHeight : 400;
   const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
   const halfView = clientH / 2;
   let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
@@ -7819,10 +7945,18 @@ function handleOverviewRailClick(event) {
     textScrollDriver = null;
   }, 150);
 
-  if (scrollL) scrollL.scrollTop = targetTop;
-  if (scrollR) scrollR.scrollTop = targetTop;
-  if (scrollG) scrollG.scrollTop = targetTop;
-  if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
+  if (isRightOnly) {
+    if (scrollR) scrollR.scrollTop = targetTop;
+    if (scrollG) scrollG.scrollTop = targetTop;
+  } else if (isLeftOnly) {
+    if (scrollL) scrollL.scrollTop = targetTop;
+    if (scrollG) scrollG.scrollTop = targetTop;
+  } else {
+    if (scrollL) scrollL.scrollTop = targetTop;
+    if (scrollR) scrollR.scrollTop = targetTop;
+    if (scrollG) scrollG.scrollTop = targetTop;
+    if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
+  }
   renderVisibleTextWindow(true);
   updateOverviewViewport();
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
@@ -7838,7 +7972,7 @@ function setupOverviewRailDrag() {
     const rect = rail.getBoundingClientRect();
     const clickY = clientY - rect.top;
     const pct = Math.max(0, Math.min(1, clickY / rect.height));
-    const diffResult = appState.currentTextFile.diffResult;
+    const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
     if (!diffResult || !diffResult.totalRows) return;
 
     const targetRow = Math.floor(pct * diffResult.totalRows);
@@ -7847,7 +7981,11 @@ function setupOverviewRailDrag() {
     const scrollG = document.getElementById('textGutterScroll');
     const scrollLeftG = document.getElementById('textLeftGutterScroll');
 
-    const clientH = scrollL ? scrollL.clientHeight : 400;
+    const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
+    const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+    const activeScroll = isRightOnly ? scrollR : scrollL;
+
+    const clientH = activeScroll ? activeScroll.clientHeight : 400;
     const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
     const halfView = clientH / 2;
     let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView + 10);
@@ -7859,10 +7997,18 @@ function setupOverviewRailDrag() {
 
     textScrollDriver = 'custom_vscroll';
 
-    if (scrollL) scrollL.scrollTop = targetTop;
-    if (scrollR) scrollR.scrollTop = targetTop;
-    if (scrollG) scrollG.scrollTop = targetTop;
-    if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
+    if (isRightOnly) {
+      if (scrollR) scrollR.scrollTop = targetTop;
+      if (scrollG) scrollG.scrollTop = targetTop;
+    } else if (isLeftOnly) {
+      if (scrollL) scrollL.scrollTop = targetTop;
+      if (scrollG) scrollG.scrollTop = targetTop;
+    } else {
+      if (scrollL) scrollL.scrollTop = targetTop;
+      if (scrollR) scrollR.scrollTop = targetTop;
+      if (scrollG) scrollG.scrollTop = targetTop;
+      if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
+    }
 
     renderVisibleTextWindow();
     updateOverviewViewport();
@@ -7930,7 +8076,11 @@ function jumpToSection(sectionIndex) {
   const scrollG = document.getElementById('textGutterScroll');
   const scrollLeftG = document.getElementById('textLeftGutterScroll');
 
-  const clientH = scrollL ? scrollL.clientHeight : 400;
+  const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
+  const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+  const activeScroll = isRightOnly ? scrollR : scrollL;
+
+  const clientH = activeScroll ? activeScroll.clientHeight : 400;
   const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
   const halfView = clientH / 2;
 
@@ -7949,10 +8099,18 @@ function jumpToSection(sectionIndex) {
     textScrollDriver = null;
   }, 150);
 
-  if (scrollL) scrollL.scrollTop = targetTop;
-  if (scrollR) scrollR.scrollTop = targetTop;
-  if (scrollG) scrollG.scrollTop = targetTop;
-  if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
+  if (isRightOnly) {
+    if (scrollR) scrollR.scrollTop = targetTop;
+    if (scrollG) scrollG.scrollTop = targetTop;
+  } else if (isLeftOnly) {
+    if (scrollL) scrollL.scrollTop = targetTop;
+    if (scrollG) scrollG.scrollTop = targetTop;
+  } else {
+    if (scrollL) scrollL.scrollTop = targetTop;
+    if (scrollR) scrollR.scrollTop = targetTop;
+    if (scrollG) scrollG.scrollTop = targetTop;
+    if (scrollLeftG) scrollLeftG.scrollTop = targetTop;
+  }
   renderVisibleTextWindow(true);
   updateOverviewViewport();
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
@@ -8133,15 +8291,20 @@ function navDiff(direction) {
 
 function updateOverviewViewport() {
   const scrollL = document.getElementById('textLeftScroll');
+  const scrollR = document.getElementById('textRightScroll');
   const thumb = document.getElementById('overviewViewportThumb');
-  const diffResult = appState.currentTextFile.diffResult;
-  if (!scrollL || !thumb || !diffResult || !diffResult.totalRows) return;
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+  if (!thumb || !diffResult || !diffResult.totalRows) return;
+
+  const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
+  const activeScroll = isRightOnly ? scrollR : scrollL;
+  if (!activeScroll) return;
 
   const totalHeight = diffResult.totalRows * TEXT_ROW_HEIGHT;
   if (totalHeight <= 0) return;
 
-  const viewH = scrollL.clientHeight || 400;
-  const scrollY = scrollL.scrollTop || 0;
+  const viewH = activeScroll.clientHeight || 400;
+  const scrollY = activeScroll.scrollTop || 0;
 
   const topPct = (scrollY / totalHeight) * 100;
   const heightPct = Math.max(4, (viewH / totalHeight) * 100);
@@ -8191,27 +8354,42 @@ function setupTextSyncScroll() {
         activeTextScrollSource = null;
       }, 80);
 
-      const maxScrollY = Math.max(
-        0,
-        Math.max(scrollL.scrollHeight, scrollR.scrollHeight) - scrollL.clientHeight
-      );
+      const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+      const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
+      const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+      const activeScroll = isRightOnly ? scrollR : scrollL;
+
+      const scrollH = Math.max(scrollL.scrollHeight, scrollR.scrollHeight);
+      const clientH = activeScroll ? activeScroll.clientHeight : scrollL.clientHeight;
+      const maxScrollY = Math.max(0, scrollH - clientH);
       const deltaY = e.shiftKey ? 0 : e.deltaY;
-      const newTop = Math.max(0, Math.min(maxScrollY, scrollL.scrollTop + deltaY));
+      const currentTop = activeScroll ? activeScroll.scrollTop : 0;
+      const newTop = Math.max(0, Math.min(maxScrollY, currentTop + deltaY));
 
-      const maxScrollX = Math.max(
-        0,
-        Math.max(scrollL.scrollWidth, scrollR.scrollWidth) - scrollL.clientWidth
-      );
+      const scrollW = Math.max(scrollL.scrollWidth, scrollR.scrollWidth);
+      const clientW = activeScroll ? activeScroll.clientWidth : scrollL.clientWidth;
+      const maxScrollX = Math.max(0, scrollW - clientW);
       const deltaX = Math.abs(e.deltaX) > 0 ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
-      const newLeft = Math.max(0, Math.min(maxScrollX, scrollL.scrollLeft + deltaX));
+      const currentLeft = activeScroll ? activeScroll.scrollLeft : 0;
+      const newLeft = Math.max(0, Math.min(maxScrollX, currentLeft + deltaX));
 
-      scrollL.scrollTop = newTop;
-      scrollR.scrollTop = newTop;
-      if (scrollG) scrollG.scrollTop = newTop;
-      if (scrollLeftG) scrollLeftG.scrollTop = newTop;
+      if (isRightOnly) {
+        scrollR.scrollTop = newTop;
+        scrollR.scrollLeft = newLeft;
+        if (scrollG) scrollG.scrollTop = newTop;
+      } else if (isLeftOnly) {
+        scrollL.scrollTop = newTop;
+        scrollL.scrollLeft = newLeft;
+        if (scrollG) scrollG.scrollTop = newTop;
+      } else {
+        scrollL.scrollTop = newTop;
+        scrollR.scrollTop = newTop;
+        if (scrollG) scrollG.scrollTop = newTop;
+        if (scrollLeftG) scrollLeftG.scrollTop = newTop;
 
-      scrollL.scrollLeft = newLeft;
-      scrollR.scrollLeft = newLeft;
+        scrollL.scrollLeft = newLeft;
+        scrollR.scrollLeft = newLeft;
+      }
 
       renderVisibleTextWindow();
       updateOverviewViewport();
@@ -8231,6 +8409,14 @@ function setupTextSyncScroll() {
 function syncTextScroll(source) {
   if (textScrollDriver === 'wheel' || textScrollDriver === 'programmatic' || textScrollDriver === 'custom_vscroll') return;
   if (isSyncingText && activeTextScrollSource !== source) return;
+
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+  if (diffResult && diffResult.isSingleSide) {
+    renderVisibleTextWindow();
+    updateOverviewViewport();
+    if (textSyncScrollbar) textSyncScrollbar.update();
+    return;
+  }
 
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
@@ -8272,6 +8458,25 @@ function syncHorizontalScrollWidths() {
   const containerR = document.getElementById('textRightLines');
   const scrollL = document.getElementById('textLeftScroll');
   if (!containerL || !containerR || !scrollL) return;
+
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+
+  if (diffResult && diffResult.isSingleSide === 'left') {
+    containerR.style.minWidth = '0';
+    containerR.style.width = '100%';
+    const w = virtualTextState.maxLineWidthPx || 900;
+    containerL.style.minWidth = scrollL.classList.contains('word-wrap-enabled') ? '100%' : `${w}px`;
+    if (textSyncScrollbar) textSyncScrollbar.update();
+    return;
+  }
+  if (diffResult && diffResult.isSingleSide === 'right') {
+    containerL.style.minWidth = '0';
+    containerL.style.width = '100%';
+    const w = virtualTextState.maxLineWidthPx || 900;
+    containerR.style.minWidth = scrollL.classList.contains('word-wrap-enabled') ? '100%' : `${w}px`;
+    if (textSyncScrollbar) textSyncScrollbar.update();
+    return;
+  }
 
   if (scrollL.classList.contains('word-wrap-enabled')) {
     containerL.style.minWidth = '100%';

@@ -2821,25 +2821,31 @@ body.theme-light .text-encoding-badge:hover {
 }
 
 .text-empty-dropzone {
-  height: 100%;
-  min-height: 250px;
+  width: calc(100% - 60px);
+  max-width: 520px;
+  height: calc(100% - 60px);
+  max-height: 320px;
+  min-height: 180px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #666;
-  font-size: 12px;
+  color: #888;
+  font-size: 13px;
   cursor: pointer;
   user-select: none;
   border: 2px dashed #2a2e38;
-  border-radius: 6px;
-  margin: 30px;
-  background: rgba(255, 255, 255, 0.01);
+  border-radius: 8px;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.015);
   transition: all 0.2s ease;
+  box-sizing: border-box;
+  text-align: center;
+  padding: 24px;
 }
 .text-empty-dropzone:hover {
-  color: #aaa;
+  color: #ccc;
   border-color: #388bfd;
   background: rgba(56, 139, 253, 0.04);
 }
@@ -2847,8 +2853,8 @@ body.theme-light .text-encoding-badge:hover {
   pointer-events: none;
 }
 .text-empty-dropzone .dropzone-icon {
-  font-size: 32px;
-  opacity: 0.6;
+  font-size: 36px;
+  opacity: 0.7;
 }
 
 .text-pane-scroll.drag-over,
@@ -2880,6 +2886,8 @@ body.theme-light .text-encoding-badge:hover {
 }
 .text-pane-scroll {
   flex: 1;
+  height: 100%;
+  position: relative;
   overflow-x: auto;
   overflow-y: auto;
   font-family: var(--font-mono);
