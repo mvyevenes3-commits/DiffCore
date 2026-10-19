@@ -113,7 +113,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   // Help Documentation
   openHelp: (topic) => ipcRenderer.invoke('help:open', topic),
-  openHelpInBrowser: () => ipcRenderer.invoke('help:openInBrowser'),
+  openHelpInBrowser: (topic) => ipcRenderer.invoke('help:openInBrowser', topic),
   onOpenHelp: (callback) => {
     const handler = () => callback();
     ipcRenderer.on('menu:openHelp', handler);

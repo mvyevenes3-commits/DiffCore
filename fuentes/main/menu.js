@@ -367,9 +367,9 @@ function buildMenuTemplate(lang, mainWindow) {
       {
         label: t.openHelpInBrowser || 'Open Manual in Web Browser...',
         click: () => {
-          const { shell } = require('electron');
-          const path = require('path');
-          shell.openExternal(`file://${path.join(__dirname, '../renderer/help.html')}`);
+          if (typeof helpBrowserOpener === 'function') {
+            helpBrowserOpener();
+          }
         }
       },
       { type: 'separator' },
@@ -390,6 +390,11 @@ function buildMenuTemplate(lang, mainWindow) {
 let helpOpener = null;
 function setHelpOpener(fn) {
   helpOpener = fn;
+}
+
+let helpBrowserOpener = null;
+function setHelpBrowserOpener(fn) {
+  helpBrowserOpener = fn;
 }
 
 function setupApplicationMenu(mainWindow, initialLang) {
@@ -447,5 +452,6 @@ module.exports = {
   updateActiveView,
   getContextMenuForEditable,
   getContextMenuForSelection,
-  setHelpOpener
+  setHelpOpener,
+  setHelpBrowserOpener
 };

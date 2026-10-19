@@ -3,12 +3,14 @@ const { app, BrowserWindow, ipcMain, dialog, nativeImage, Menu, shell } = requir
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const http = require('http');
+const url = require('url');
 const { compareFolderTrees, compareFolderTreesAsync, compareFilesDeep, compareFilesDeepAsync, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
 const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
 const archiveHandler = require('./archiveHandler');
 const javaDecompiler = require('./javaDecompiler');
-const { setupApplicationMenu, updateMenuLanguage, updateActiveView, getContextMenuForEditable, getContextMenuForSelection, setHelpOpener } = require('./menu');
+const { setupApplicationMenu, updateMenuLanguage, updateActiveView, getContextMenuForEditable, getContextMenuForSelection, setHelpOpener, setHelpBrowserOpener } = require('./menu');
 
 // Set application identity
 app.name = 'DiffCore';
@@ -128,6 +130,7 @@ app.whenReady().then(() => {
   createWindow();
   setupApplicationMenu(mainWindow);
   setHelpOpener(openHelpWindow);
+  setHelpBrowserOpener(openHelpInBrowser);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -742,20 +745,133 @@ function openHelpWindow(topic = '') {
   });
 }
 
+// Local HTTP Server & File Exporter for external browser access
+let helpHttpServer = null;
+let helpHttpPort = null;
+
+function ensureHelpHttpServer() {
+  if (helpHttpServer && helpHttpPort) {
+    return Promise.resolve(helpHttpPort);
+  }
+  return new Promise((resolve) => {
+    helpHttpServer = http.createServer((req, res) => {
+      let reqPath = (req.url || '').split('?')[0];
+      if (!reqPath || reqPath === '/' || reqPath === '/help' || reqPath === '/help.html') {
+        reqPath = 'help.html';
+      } else if (reqPath.startsWith('/')) {
+        reqPath = reqPath.slice(1);
+      }
+
+      const rendererDir = path.join(__dirname, '../renderer');
+      const filePath = path.join(rendererDir, reqPath);
+      if (!filePath.startsWith(rendererDir)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
+
+      let contentType = 'text/html; charset=utf-8';
+      if (filePath.endsWith('.css')) contentType = 'text/css; charset=utf-8';
+      else if (filePath.endsWith('.js')) contentType = 'application/javascript; charset=utf-8';
+      else if (filePath.endsWith('.svg')) contentType = 'image/svg+xml';
+      else if (filePath.endsWith('.png')) contentType = 'image/png';
+
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(404);
+          res.end('Not found');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(data);
+      });
+    });
+
+    helpHttpServer.listen(0, '127.0.0.1', () => {
+      try {
+        helpHttpPort = helpHttpServer.address().port;
+        console.log(`[Help] Documentation web server running at http://127.0.0.1:${helpHttpPort}`);
+        resolve(helpHttpPort);
+      } catch (err) {
+        console.error('[Help] Error getting server port:', err);
+        resolve(null);
+      }
+    });
+
+    helpHttpServer.on('error', (err) => {
+      console.error('[Help] Error on documentation HTTP server:', err);
+      resolve(null);
+    });
+  });
+}
+
+function getExtractedHelpUrl(topic = '') {
+  try {
+    const helpDir = path.join(app.getPath('userData'), 'help');
+    const cssDir = path.join(helpDir, 'css');
+    const jsDir = path.join(helpDir, 'js');
+    fs.mkdirSync(cssDir, { recursive: true });
+    fs.mkdirSync(jsDir, { recursive: true });
+
+    const srcHelp = path.join(__dirname, '../renderer/help.html');
+    const srcCss = path.join(__dirname, '../renderer/css/help.css');
+    const srcJs = path.join(__dirname, '../renderer/js/help.js');
+
+    const destHelp = path.join(helpDir, 'help.html');
+    const destCss = path.join(cssDir, 'help.css');
+    const destJs = path.join(jsDir, 'help.js');
+
+    fs.writeFileSync(destHelp, fs.readFileSync(srcHelp));
+    fs.writeFileSync(destCss, fs.readFileSync(srcCss));
+    fs.writeFileSync(destJs, fs.readFileSync(srcJs));
+
+    const fileUrl = url.pathToFileURL(destHelp);
+    if (topic) fileUrl.searchParams.set('topic', topic);
+    return fileUrl.href;
+  } catch (err) {
+    console.error('[Help] Error extracting help to userData:', err);
+    return null;
+  }
+}
+
+async function openHelpInBrowser(topic = '') {
+  try {
+    const port = await ensureHelpHttpServer();
+    if (port) {
+      const targetUrl = topic
+        ? `http://127.0.0.1:${port}/help.html?topic=${encodeURIComponent(topic)}`
+        : `http://127.0.0.1:${port}/help.html`;
+      await shell.openExternal(targetUrl);
+      return { success: true, url: targetUrl };
+    }
+  } catch (err) {
+    console.warn('[Help] Could not launch HTTP server, using extracted file fallback:', err);
+  }
+
+  // Fallback: extract to userData folder where external browsers have full read access
+  const fallbackUrl = getExtractedHelpUrl(topic);
+  if (fallbackUrl) {
+    await shell.openExternal(fallbackUrl);
+    return { success: true, url: fallbackUrl };
+  }
+
+  return { success: false, error: 'Could not open help in browser' };
+}
+
 // Help IPC Handlers
 ipcMain.handle('help:open', (_event, topic) => {
   openHelpWindow(topic);
   return { success: true };
 });
 
-ipcMain.handle('help:openInBrowser', async () => {
-  const helpPath = path.join(__dirname, '../renderer/help.html');
-  await shell.openExternal(`file://${helpPath}`);
-  return { success: true };
+ipcMain.handle('help:openInBrowser', async (_event, topic) => {
+  return await openHelpInBrowser(topic);
 });
 
 module.exports = {
-  openHelpWindow
+  openHelpWindow,
+  openHelpInBrowser
 };
+
 
 

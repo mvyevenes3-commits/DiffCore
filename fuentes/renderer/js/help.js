@@ -292,7 +292,7 @@ function buildIndexList() {
 // Open manual in external browser
 function openInExternalBrowser() {
   if (window.api && typeof window.api.openHelpInBrowser === 'function') {
-    window.api.openHelpInBrowser();
+    window.api.openHelpInBrowser(helpState.currentTopic);
   } else {
     window.open(window.location.href, '_blank');
   }
