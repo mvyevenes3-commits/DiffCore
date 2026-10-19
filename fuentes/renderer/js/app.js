@@ -6218,9 +6218,14 @@ function closeTextMergeTab(event) {
 
 function renderEmptyTextMerge() {
   const dropMsg = window.i18n ? window.i18n.t('tmerge.drop_prompt') : 'Select file or drop here';
-  ['tMergeLeftLines', 'tMergeBaseLines', 'tMergeRightLines'].forEach(id => {
+  const configs = [
+    { id: 'tMergeLeftLines', side: 'left' },
+    { id: 'tMergeBaseLines', side: 'base' },
+    { id: 'tMergeRightLines', side: 'right' }
+  ];
+  configs.forEach(({ id, side }) => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
+    if (el) el.innerHTML = `<div class="text-empty-dropzone" style="cursor: pointer;" onclick="browseTMergeFile('${side}')"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
   });
   const out = document.getElementById('tMergeOutputEditor');
   if (out) out.value = '';
@@ -6241,9 +6246,9 @@ function renderPartialThreeWayTextMerge(left, tL, base, tB, right, tR) {
   const dR = document.getElementById('tMergeRightLines');
   const dropMsg = window.i18n ? window.i18n.t('tmerge.drop_prompt') : 'Select file or drop here';
 
-  if (dL) dL.innerHTML = left ? renderLines(tL) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
-  if (dB) dB.innerHTML = base ? renderLines(tB) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
-  if (dR) dR.innerHTML = right ? renderLines(tR) : `<div class="text-empty-dropzone"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
+  if (dL) dL.innerHTML = left ? renderLines(tL) : `<div class="text-empty-dropzone" style="cursor: pointer;" onclick="browseTMergeFile('left')"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
+  if (dB) dB.innerHTML = base ? renderLines(tB) : `<div class="text-empty-dropzone" style="cursor: pointer;" onclick="browseTMergeFile('base')"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
+  if (dR) dR.innerHTML = right ? renderLines(tR) : `<div class="text-empty-dropzone" style="cursor: pointer;" onclick="browseTMergeFile('right')"><div class="dropzone-icon">📑</div><div>${dropMsg}</div></div>`;
 
   const out = document.getElementById('tMergeOutputEditor');
   if (out) out.value = '';
