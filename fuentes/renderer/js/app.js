@@ -2586,6 +2586,7 @@ function handleOpenInHexCompare() {
   const p = pendingBinaryPath;
   closeBinaryAlertModal();
   if (p) {
+    closeActiveTextSessionForRedirect();
     const base = p.split(/[/\\]/).pop();
     openHexCompare(p, '', base);
   }
@@ -7592,12 +7593,37 @@ function executeCloseTextSession(sessionId) {
   }
 }
 
+function closeActiveTextSessionForRedirect() {
+  const currentId = appState.activeTextSessionId;
+  const list = appState.textSessions || [];
+  if (currentId) {
+    const idx = list.findIndex(s => s.id === currentId);
+    if (idx !== -1) {
+      list.splice(idx, 1);
+    }
+  } else if (list.length > 0) {
+    const emptyIdx = list.findIndex(s => !s.leftFullPath && !s.rightFullPath);
+    if (emptyIdx !== -1) {
+      list.splice(emptyIdx, 1);
+    } else {
+      list.pop();
+    }
+  }
+
+  appState.activeTextSessionId = list.length > 0 ? list[list.length - 1].id : null;
+  appState.currentTextFile = appState.activeTextSessionId ? list.find(s => s.id === appState.activeTextSessionId) : null;
+  renderDynamicTextTabs();
+  clearTextCompareDOM();
+  if (typeof updateWatchedFiles === 'function') updateWatchedFiles();
+}
+
 async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'Text Compare', isChildCompare = false) {
   // Check if any path is an archive (.jar, .war, .ear, .zip) -> redirect to Folder Compare
   const leftIsArch = leftFullPath && isArchiveContainer(leftFullPath);
   const rightIsArch = rightFullPath && isArchiveContainer(rightFullPath);
   if (leftIsArch || rightIsArch) {
     showToast('Empaquetado detectado — Abriendo en Comparador de Carpetas', 'info');
+    closeActiveTextSessionForRedirect();
     openFolderCompare(leftFullPath || '', rightFullPath || '', label || 'Comparación de Empaquetados');
     return;
   }
@@ -7704,7 +7730,7 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   ]);
 
   if (resLeft.isArchive || resRight.isArchive) {
-    executeCloseTextSession(sessionId);
+    closeActiveTextSessionForRedirect();
     showToast('Empaquetado detectado — Abriendo en Comparador de Carpetas', 'info');
     openFolderCompare(leftFullPath, rightFullPath, label || 'Comparación de Empaquetados');
     return;
@@ -7923,6 +7949,7 @@ async function loadTextFileForSide(side, filePath) {
   if (!res.success) {
     if (res.isArchive) {
       showToast('Empaquetado detectado — Abriendo en Comparador de Carpetas', 'info');
+      closeActiveTextSessionForRedirect();
       openFolderCompare(side === 'left' ? filePath : '', side === 'right' ? filePath : '', filePath);
       return;
     }
@@ -8261,6 +8288,7 @@ function setupAllDragAndDrop() {
         const isDir2 = (await isDirectoryPath(paths[1])) || isArchiveContainer(paths[1]);
         if (isDir1 && isDir2) {
           showToast('Empaquetados/Carpetas detectados — Abriendo Comparador de Carpetas', 'info');
+          closeActiveTextSessionForRedirect();
           openFolderCompare(paths[0], paths[1], 'Folder Compare');
           return;
         }
@@ -8273,6 +8301,7 @@ function setupAllDragAndDrop() {
       const isArch = isArchiveContainer(p);
       if (isDir || isArch) {
         showToast(isArch ? 'Empaquetado Java detectado — Redirigiendo a Comparador de Carpetas' : 'Carpeta detectada — Abriendo Comparador de Carpetas', 'info');
+        closeActiveTextSessionForRedirect();
         openFolderCompare(side === 'left' ? p : '', side === 'right' ? p : '', 'Folder Compare');
         return;
       }
