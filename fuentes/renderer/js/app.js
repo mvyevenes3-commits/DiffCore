@@ -7711,8 +7711,11 @@ function renderSingleSideText(loadedSide) {
   updateTextFormatBadges();
 
   const content = loadedSide === 'left' ? appState.currentTextFile.leftContent : appState.currentTextFile.rightContent;
-  const rawLines = (content || '').split(/\r\n|\r|\n/);
-  if (rawLines.length > 0 && rawLines[rawLines.length - 1] === '') rawLines.pop();
+  let rawLines = (content !== null && content !== undefined) ? String(content).split(/\r\n|\r|\n/) : [];
+  if (rawLines.length > 1 && rawLines[rawLines.length - 1] === '') rawLines.pop();
+  if (rawLines.length === 0) {
+    rawLines = [''];
+  }
 
   const rows = [];
   for (let i = 0; i < rawLines.length; i++) {
