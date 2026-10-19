@@ -2115,17 +2115,23 @@ function openNewCompareTab() {
 
 // --- BROWSE FOLDERS ---
 async function browseFolder(side) {
-  const currentPath = side === 'left' ? 
-    document.getElementById('leftPathInput').value : 
-    document.getElementById('rightPathInput').value;
+  const currentPath = (side === 'left' ? 
+    document.getElementById('leftPathInput')?.value : 
+    document.getElementById('rightPathInput')?.value) || '';
+  const otherPath = (side === 'left' ?
+    document.getElementById('rightPathInput')?.value :
+    document.getElementById('leftPathInput')?.value) || '';
+  const hintPath = currentPath || otherPath || appState.leftPath || appState.rightPath || '';
 
-  const selected = await window.api.selectFolder(currentPath);
+  const selected = await window.api.selectFolder(hintPath);
   if (selected) {
     if (side === 'left') {
-      document.getElementById('leftPathInput').value = selected;
+      const el = document.getElementById('leftPathInput');
+      if (el) el.value = selected;
       appState.leftPath = selected;
     } else {
-      document.getElementById('rightPathInput').value = selected;
+      const el = document.getElementById('rightPathInput');
+      if (el) el.value = selected;
       appState.rightPath = selected;
     }
     runFolderComparison();
@@ -4370,7 +4376,9 @@ function updateHexDiffBadge() {
 
 async function browseHexFile(side) {
   const current = side === 'left' ? hexCompareState.leftPath : hexCompareState.rightPath;
-  const selected = await window.api.selectFile(current || '');
+  const other = side === 'left' ? hexCompareState.rightPath : hexCompareState.leftPath;
+  const hint = current || other || appState.leftPath || appState.rightPath || '';
+  const selected = await window.api.selectFile(hint);
   if (!selected) return;
   await loadHexFileForSide(side, selected);
 }
@@ -4825,7 +4833,9 @@ function renderPictureDiffCanvas(urlL, urlR) {
 
 async function browsePicFile(side) {
   const current = side === 'left' ? picCompareState.leftPath : picCompareState.rightPath;
-  const selected = await window.api.selectFile(current || '');
+  const other = side === 'left' ? picCompareState.rightPath : picCompareState.leftPath;
+  const hint = current || other || appState.leftPath || appState.rightPath || '';
+  const selected = await window.api.selectFile(hint);
   if (!selected) return;
   await loadPicFileForSide(side, selected);
 }
@@ -4980,7 +4990,10 @@ function renderMediaTagsComparison() {
 }
 
 async function browseMediaFile(side) {
-  const selected = await window.api.selectFile('');
+  const current = side === 'left' ? mediaCompareState.leftPath : mediaCompareState.rightPath;
+  const other = side === 'left' ? mediaCompareState.rightPath : mediaCompareState.leftPath;
+  const hint = current || other || appState.leftPath || appState.rightPath || '';
+  const selected = await window.api.selectFile(hint);
   if (selected) {
     const input = document.getElementById(side === 'left' ? 'mediaLeftPathInput' : 'mediaRightPathInput');
     if (input) input.value = selected;
@@ -5225,7 +5238,10 @@ function handleTableDelimiterChange(val) {
 }
 
 async function browseTableFile(side) {
-  const selected = await window.api.selectFile('');
+  const current = side === 'left' ? tableCompareState.leftPath : tableCompareState.rightPath;
+  const other = side === 'left' ? tableCompareState.rightPath : tableCompareState.leftPath;
+  const hint = current || other || appState.leftPath || appState.rightPath || '';
+  const selected = await window.api.selectFile(hint);
   if (selected) {
     const input = document.getElementById(side === 'left' ? 'tblLeftPathInput' : 'tblRightPathInput');
     if (input) input.value = selected;
@@ -5508,7 +5524,9 @@ async function executeSyncPlan() {
 
 async function browseSyncFolder(side) {
   const cur = side === 'left' ? folderSyncState.leftPath : folderSyncState.rightPath;
-  const selected = await window.api.selectFolder(cur || '');
+  const other = side === 'left' ? folderSyncState.rightPath : folderSyncState.leftPath;
+  const hint = cur || other || appState.leftPath || appState.rightPath || '';
+  const selected = await window.api.selectFolder(hint);
   if (selected) {
     if (side === 'left') folderSyncState.leftPath = selected;
     else folderSyncState.rightPath = selected;
@@ -5693,7 +5711,9 @@ function renderFolderMergeItems() {
 }
 
 async function browseFMergeFolder(side) {
-  const selected = await window.api.selectFolder('');
+  const current = folderMergeState ? (side === 'left' ? folderMergeState.leftPath : (side === 'base' ? folderMergeState.basePath : folderMergeState.rightPath)) : '';
+  const hint = current || folderMergeState?.leftPath || folderMergeState?.basePath || folderMergeState?.rightPath || appState.leftPath || appState.rightPath || '';
+  const selected = await window.api.selectFolder(hint);
   if (selected) {
     if (side === 'left') folderMergeState.leftPath = selected;
     else if (side === 'base') folderMergeState.basePath = selected;
@@ -5922,7 +5942,8 @@ function takeMergeSelection(choice) {
 async function saveMergedOutputFile() {
   const outPath = document.getElementById('tMergeOutputPathInput')?.value.trim();
   if (!outPath) {
-    const selected = await window.api.selectFile('');
+    const hint = (document.getElementById('tMergeLeftPathInput')?.value || appState.leftPath || '').trim();
+    const selected = await window.api.selectFile(hint);
     if (selected) {
       document.getElementById('tMergeOutputPathInput').value = selected;
       saveMergedOutputFile();
@@ -5939,9 +5960,13 @@ async function saveMergedOutputFile() {
 }
 
 async function browseTMergeFile(side) {
-  const selected = await window.api.selectFile('');
+  const targetId = side === 'left' ? 'tMergeLeftPathInput' : (side === 'base' ? 'tMergeBasePathInput' : 'tMergeRightPathInput');
+  const curVal = document.getElementById(targetId)?.value?.trim() || '';
+  const fallbackVal = document.getElementById('tMergeLeftPathInput')?.value?.trim() || document.getElementById('tMergeBasePathInput')?.value?.trim() || appState.leftPath || '';
+  const hint = curVal || fallbackVal || '';
+  const selected = await window.api.selectFile(hint);
   if (selected) {
-    const inEl = document.getElementById(side === 'left' ? 'tMergeLeftPathInput' : (side === 'base' ? 'tMergeBasePathInput' : 'tMergeRightPathInput'));
+    const inEl = document.getElementById(targetId);
     if (inEl) inEl.value = selected;
     runThreeWayTextMerge();
   }
@@ -5950,7 +5975,10 @@ function handleTMergePathKeydown(event, side) {
   if (event.key === 'Enter') runThreeWayTextMerge();
 }
 async function browseTMergeOutputFile() {
-  const selected = await window.api.selectFile('');
+  const curVal = document.getElementById('tMergeOutputPathInput')?.value?.trim() || '';
+  const fallbackVal = document.getElementById('tMergeLeftPathInput')?.value?.trim() || appState.leftPath || '';
+  const hint = curVal || fallbackVal || '';
+  const selected = await window.api.selectFile(hint);
   if (selected) {
     const inEl = document.getElementById('tMergeOutputPathInput');
     if (inEl) inEl.value = selected;
@@ -6032,7 +6060,8 @@ function updateTextEditStats() {
 async function saveTextEditContent() {
   let path = (document.getElementById('textEditPathInput')?.value || textEditState.filePath || '').trim();
   if (!path) {
-    const selected = await window.api.selectFile('');
+    const hint = textEditState.filePath || appState.leftPath || '';
+    const selected = await window.api.selectFile(hint);
     if (!selected) return;
     path = selected;
     document.getElementById('textEditPathInput').value = path;
@@ -6048,7 +6077,8 @@ async function saveTextEditContent() {
 }
 
 async function openTextEditFile() {
-  const selected = await window.api.selectFile('');
+  const hint = (document.getElementById('textEditPathInput')?.value || textEditState.filePath || appState.leftPath || '').trim();
+  const selected = await window.api.selectFile(hint);
   if (selected) {
     openTextEdit(selected, selected);
   }
@@ -7275,7 +7305,9 @@ function renderSingleSideText(loadedSide) {
 
 async function browseTextFile(side) {
   const currentPath = side === 'left' ? appState.currentTextFile.leftFullPath : appState.currentTextFile.rightFullPath;
-  const selected = await window.api.selectFile(currentPath || appState.leftPath);
+  const otherPath = side === 'left' ? appState.currentTextFile.rightFullPath : appState.currentTextFile.leftFullPath;
+  const hintPath = currentPath || otherPath || appState.leftPath || appState.rightPath || '';
+  const selected = await window.api.selectFile(hintPath);
   if (!selected) return;
   await loadTextFileForSide(side, selected);
 }

@@ -163,26 +163,71 @@ ipcMain.handle('menu:setActiveView', async (_event, viewName) => {
   return true;
 });
 
-// Folder Picker Dialog
+let lastBrowsedDir = '';
+
+function resolveDefaultPath(requestedPath) {
+  try {
+    if (requestedPath && typeof requestedPath === 'string' && requestedPath.trim()) {
+      const clean = requestedPath.trim();
+      if (fs.existsSync(clean)) {
+        const stat = fs.statSync(clean);
+        return stat.isDirectory() ? clean : path.dirname(clean);
+      }
+      const parent = path.dirname(clean);
+      if (fs.existsSync(parent)) {
+        return parent;
+      }
+    }
+  } catch {}
+
+  try {
+    if (lastBrowsedDir && fs.existsSync(lastBrowsedDir)) {
+      return lastBrowsedDir;
+    }
+  } catch {}
+
+  try {
+    const projDir = path.join(os.homedir(), '01.-PROGRAMACION');
+    if (fs.existsSync(projDir)) return projDir;
+    const docs = app.getPath('documents');
+    if (fs.existsSync(docs)) return docs;
+    const downloads = app.getPath('downloads');
+    if (fs.existsSync(downloads)) return downloads;
+  } catch {}
+
+  return os.homedir();
+}
+
+// Folder Picker Dialog (Instant Standalone OpenPanel with Path Memory)
 ipcMain.handle('dialog:selectFolder', async (_event, defaultPath) => {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openDirectory'],
-    defaultPath: defaultPath && fs.existsSync(defaultPath) ? defaultPath : os.homedir()
+  const resolvedPath = resolveDefaultPath(defaultPath);
+  const result = await dialog.showOpenDialog({
+    title: 'Select Folder',
+    defaultPath: resolvedPath,
+    properties: ['openDirectory', 'dontAddToRecent']
   });
   if (!result.canceled && result.filePaths.length > 0) {
-    return result.filePaths[0];
+    const selected = result.filePaths[0];
+    lastBrowsedDir = selected;
+    return selected;
   }
   return null;
 });
 
-// File Picker Dialog (for Text / Hex Compare)
+// File Picker Dialog (Instant Standalone OpenPanel with Path Memory)
 ipcMain.handle('dialog:selectFile', async (_event, defaultPath) => {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openFile'],
-    defaultPath: defaultPath && fs.existsSync(defaultPath) ? defaultPath : os.homedir()
+  const resolvedPath = resolveDefaultPath(defaultPath);
+  const result = await dialog.showOpenDialog({
+    title: 'Select File',
+    defaultPath: resolvedPath,
+    properties: ['openFile', 'dontAddToRecent']
   });
   if (!result.canceled && result.filePaths.length > 0) {
-    return result.filePaths[0];
+    const selected = result.filePaths[0];
+    try {
+      lastBrowsedDir = path.dirname(selected);
+    } catch {}
+    return selected;
   }
   return null;
 });
