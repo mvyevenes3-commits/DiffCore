@@ -203,9 +203,10 @@ async function main() {
   }
 
   if (winExe) {
+    const cleanWinName = winExe.replace(/\s+/g, '.');
     filesToUpload.push({
       path: path.join(DIST_DIR, winExe),
-      name: winExe,
+      name: cleanWinName,
       label: 'DiffCore 1.0.0 Windows (Instalador Setup x64)'
     });
   }
@@ -269,12 +270,19 @@ async function main() {
     console.log(`✓ Release encontrado: ${release.name || release.tag_name} (${release.html_url})`);
   }
 
-  // Delete existing assets with same name if any
+  function normalizeAssetName(name) {
+    return (name || '').replace(/[\s\.\-_]+/g, '').toLowerCase();
+  }
+
+  // Delete existing assets with same name or normalized name if any
   if (Array.isArray(release.assets) && release.assets.length > 0) {
     for (const file of filesToUpload) {
-      const existing = release.assets.find(a => a.name === file.name);
-      if (existing) {
-        console.log(`Eliminando versión previa de ${file.name} (Asset ID: ${existing.id})...`);
+      const match = release.assets.filter(a => 
+        a.name === file.name || 
+        normalizeAssetName(a.name) === normalizeAssetName(file.name)
+      );
+      for (const existing of match) {
+        console.log(`Eliminando versión previa de ${existing.name} (Asset ID: ${existing.id})...`);
         await githubRequest({
           hostname: 'api.github.com',
           path: `/repos/${repo}/releases/assets/${existing.id}`,
