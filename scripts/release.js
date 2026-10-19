@@ -159,10 +159,10 @@ async function main() {
   console.log('========================================================');
 
   if (!skipBuild) {
-    console.log('\n[1/4] Compilando instaladores macOS (Apple Silicon arm64 + Intel x64)...');
+    console.log('\n[1/5] Compilando instaladores macOS (Apple Silicon arm64 + Intel x64)...');
     runCommand('npx electron-builder --mac dmg --x64 --arm64');
 
-    console.log('\n[2/4] Compilando instalador Windows (.exe x64)...');
+    console.log('\n[2/5] Compilando instalador Windows (.exe x64)...');
     runCommand('npx electron-builder --win nsis');
 
     console.log('\n[3/5] Compilando paquetes Linux (.deb, AppImage, tar.gz)...');
