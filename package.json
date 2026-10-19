@@ -12,10 +12,12 @@
   "main": "fuentes/main/main.js",
   "scripts": {
     "start": "electron .",
-    "build:mac": "electron-builder --mac dmg",
+    "build:mac": "electron-builder --mac dmg --x64 --arm64",
     "build:dir": "electron-builder --dir",
     "build:linux": "electron-builder --linux deb",
-    "build:win": "electron-builder --win nsis"
+    "build:win": "electron-builder --win nsis",
+    "build:all": "electron-builder --mac dmg --x64 --arm64 && electron-builder --win nsis",
+    "release": "node scripts/release.js"
   },
   "build": {
     "appId": "com.miguelvergara.diffcore",
@@ -31,9 +33,15 @@
     "mac": {
       "icon": "iconos/icon.icns",
       "category": "public.app-category.developer-tools",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "target": [
-        "dir",
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "hardenedRuntime": false,
       "gatekeeperAssess": false
