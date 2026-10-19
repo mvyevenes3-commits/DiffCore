@@ -255,6 +255,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupFolderKeyboardNavigation();
   setupTextKeyboardNavigation();
   setupWindowClickHandlers();
+  setupUniversalInputClipboardShortcuts();
   setupFileWatcherListeners();
   initFooterTelemetry();
 
@@ -460,6 +461,85 @@ function setupWindowClickHandlers() {
       closeRecentFoldersDropdown('right');
     }
   });
+}
+
+// --- UNIVERSAL INPUT CLIPBOARD & EDITING SHORTCUTS (macOS & Cross-Platform) ---
+// Guarantees Cmd+C, Cmd+V, Cmd+A, Cmd+X work universally in inputs even when Edit menu is hidden in Home/Folder
+function setupUniversalInputClipboardShortcuts() {
+  window.addEventListener('keydown', (event) => {
+    const isMod = event.metaKey || event.ctrlKey;
+    if (!isMod || event.altKey) return;
+
+    const key = event.key.toLowerCase();
+    const activeEl = document.activeElement;
+    const isInput = activeEl && (
+      activeEl.tagName === 'INPUT' ||
+      activeEl.tagName === 'TEXTAREA' ||
+      activeEl.isContentEditable
+    );
+
+    if (!isInput) return;
+
+    if (key === 'a') {
+      event.preventDefault();
+      if (typeof activeEl.select === 'function') {
+        activeEl.select();
+      }
+      if (typeof activeEl.setSelectionRange === 'function' && typeof activeEl.value === 'string') {
+        activeEl.setSelectionRange(0, activeEl.value.length);
+      }
+    } else if (key === 'c') {
+      const start = activeEl.selectionStart;
+      const end = activeEl.selectionEnd;
+      if (typeof start === 'number' && typeof end === 'number' && start !== end && typeof activeEl.value === 'string') {
+        event.preventDefault();
+        const text = activeEl.value.substring(start, end);
+        navigator.clipboard.writeText(text);
+      }
+    } else if (key === 'x') {
+      const start = activeEl.selectionStart;
+      const end = activeEl.selectionEnd;
+      if (typeof start === 'number' && typeof end === 'number' && start !== end && typeof activeEl.value === 'string') {
+        event.preventDefault();
+        const text = activeEl.value.substring(start, end);
+        navigator.clipboard.writeText(text);
+        const prev = activeEl.value;
+        activeEl.value = prev.substring(0, start) + prev.substring(end);
+        activeEl.setSelectionRange(start, start);
+        activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+        activeEl.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    } else if (key === 'v') {
+      event.preventDefault();
+      navigator.clipboard.readText().then(pastedText => {
+        if (pastedText === undefined || pastedText === null) return;
+
+        // If the element has a custom onpaste handler (like handleFolderPathPaste), dispatch synthetic paste
+        const pasteEv = new ClipboardEvent('paste', {
+          bubbles: true,
+          cancelable: true,
+          clipboardData: new DataTransfer()
+        });
+        pasteEv.clipboardData.setData('text/plain', pastedText);
+        const notCancelled = activeEl.dispatchEvent(pasteEv);
+
+        if (notCancelled && typeof activeEl.value === 'string') {
+          const start = typeof activeEl.selectionStart === 'number' ? activeEl.selectionStart : activeEl.value.length;
+          const end = typeof activeEl.selectionEnd === 'number' ? activeEl.selectionEnd : activeEl.value.length;
+          const prev = activeEl.value;
+          activeEl.value = prev.substring(0, start) + pastedText + prev.substring(end);
+          const newPos = start + pastedText.length;
+          if (typeof activeEl.setSelectionRange === 'function') {
+            activeEl.setSelectionRange(newPos, newPos);
+          }
+          activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+          activeEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }).catch(() => {
+        try { document.execCommand('paste'); } catch (_) {}
+      });
+    }
+  }, true);
 }
 
 // --- CROSS-PLATFORM EXTERNAL FILE WATCHER & AUTO-RELOAD (macOS, Linux, Windows) ---

@@ -202,6 +202,7 @@ const MENU_TRANSLATIONS = {
 };
 
 let currentMenuLang = 'es';
+let isTextEditActive = false;
 
 function buildMenuTemplate(lang, mainWindow) {
   const t = MENU_TRANSLATIONS[lang] || MENU_TRANSLATIONS['es'] || MENU_TRANSLATIONS['en'];
@@ -287,20 +288,22 @@ function buildMenuTemplate(lang, mainWindow) {
     submenu: fileSubmenu
   });
 
-  // 3. Edit Menu (Always present so clipboard shortcuts Cmd+C, Cmd+V, Cmd+A, Cmd+X, Cmd+Z work universally across all views on macOS and all OSs)
-  template.push({
-    label: t.edit,
-    submenu: [
-      { label: t.undo, role: 'undo' },
-      { label: t.redo, role: 'redo' },
-      { type: 'separator' },
-      { label: t.cut, role: 'cut' },
-      { label: t.copy, role: 'copy' },
-      { label: t.paste, role: 'paste' },
-      { type: 'separator' },
-      { label: t.selectAll, role: 'selectAll' }
-    ]
-  });
+  // 3. Edit Menu (Hidden on Home/Folder, shown when entering Text Compare / Text Edit)
+  if (isTextEditActive) {
+    template.push({
+      label: t.edit,
+      submenu: [
+        { label: t.undo, role: 'undo' },
+        { label: t.redo, role: 'redo' },
+        { type: 'separator' },
+        { label: t.cut, role: 'cut' },
+        { label: t.copy, role: 'copy' },
+        { label: t.paste, role: 'paste' },
+        { type: 'separator' },
+        { label: t.selectAll, role: 'selectAll' }
+      ]
+    });
+  }
 
   // 4. View Menu (Toggle Developer Tools removed as requested)
   template.push({
@@ -371,8 +374,11 @@ function updateMenuLanguage(mainWindow, lang) {
 }
 
 function updateActiveView(mainWindow, viewName) {
-  // Edit menu is now universally active across all views for seamless clipboard support.
-  // Retained for IPC backwards compatibility.
+  // Show Edit menu when entering Text Compare, Text Edit, or Text Merge; hide on Home, Folder Compare, etc.
+  const nextState = (viewName === 'text' || viewName === 'textedit' || viewName === 'textmerge');
+  if (isTextEditActive === nextState) return;
+  isTextEditActive = nextState;
+  setupApplicationMenu(mainWindow, currentMenuLang);
 }
 
 function getContextMenuForEditable() {
