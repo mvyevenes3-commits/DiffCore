@@ -1894,6 +1894,25 @@
     </div>
   </div>
 
+  <!-- MODAL: UNSUPPORTED BINARY FILE ALERT -->
+  <div class="modal-backdrop" id="binaryAlertModal" style="display: none;" onclick="if(event.target === this) closeBinaryAlertModal()">
+    <div class="modal-window save-confirm-window" style="width: 500px;">
+      <div class="save-confirm-body">
+        <div class="save-confirm-icon" style="font-size: 38px;">⚠️</div>
+        <div style="flex: 1;">
+          <div style="font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 6px;" id="binaryAlertTitle">Archivo Binario No Soportado como Texto</div>
+          <div class="save-confirm-message" id="binaryAlertMessage" style="font-size: 13px; color: #bbb; line-height: 1.4;">
+            El archivo seleccionado contiene datos binarios que no corresponden a texto plano ni a clases Java compiladas.
+          </div>
+        </div>
+      </div>
+      <div class="save-confirm-footer">
+        <button class="btn-secondary save-confirm-btn" onclick="closeBinaryAlertModal()">Cancelar</button>
+        <button class="btn-primary save-confirm-btn" id="btnOpenInHexCompare" onclick="handleOpenInHexCompare()">Abrir en Comparador Hexadecimal</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: ABOUT DIFFCORE (Beyond Compare 5 style) -->
   <div class="modal-backdrop" id="aboutModal" onclick="if(event.target === this) closeAboutModal()">
     <div class="modal-window about-modal-window">

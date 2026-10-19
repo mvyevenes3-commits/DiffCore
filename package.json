@@ -77,6 +77,8 @@
     "electron-builder": "^26.7.0"
   },
   "dependencies": {
+    "@run-slicer/vf": "^0.6.4-1.12.0",
+    "adm-zip": "^0.6.1",
     "diff": "^9.0.0",
     "xlsx": "^0.18.5"
   }

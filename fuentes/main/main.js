@@ -6,6 +6,8 @@ const os = require('os');
 const { compareFolderTrees, compareFolderTreesAsync, compareFilesDeep, compareFilesDeepAsync, computeAlignedDiff, compareFolderMergeTrees, computeThreeWayTextMerge } = require('./diffEngine');
 const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
+const archiveHandler = require('./archiveHandler');
+const javaDecompiler = require('./javaDecompiler');
 const { setupApplicationMenu, updateMenuLanguage, updateActiveView, getContextMenuForEditable, getContextMenuForSelection } = require('./menu');
 
 // Set application identity
@@ -203,11 +205,19 @@ ipcMain.handle('fs:listDirectory', async (_event, targetPath) => {
   try {
     const dir = resolveDefaultPath(targetPath);
     let resolvedDir = dir;
+    let isArchive = false;
+    let resolvedArchive = null;
+
     try {
       if (fs.existsSync(dir)) {
-        const st = fs.statSync(dir);
-        if (!st.isDirectory()) {
-          resolvedDir = path.dirname(dir);
+        if (archiveHandler.isArchiveFile(dir)) {
+          isArchive = true;
+          resolvedArchive = archiveHandler.resolveFolderOrArchive(dir);
+        } else {
+          const st = fs.statSync(dir);
+          if (!st.isDirectory()) {
+            resolvedDir = path.dirname(dir);
+          }
         }
       } else {
         resolvedDir = path.join(os.homedir(), '01.-PROGRAMACION');
@@ -217,16 +227,18 @@ ipcMain.handle('fs:listDirectory', async (_event, targetPath) => {
       resolvedDir = os.homedir();
     }
 
-    lastBrowsedDir = resolvedDir;
+    const targetDir = (isArchive && resolvedArchive) ? resolvedArchive.expandedPath : resolvedDir;
 
-    const entries = fs.readdirSync(resolvedDir, { withFileTypes: true });
+    lastBrowsedDir = targetDir;
+
+    const entries = fs.readdirSync(targetDir, { withFileTypes: true });
     const items = [];
 
     for (const ent of entries) {
       if (ent.name.startsWith('.')) continue; // ignore hidden items
 
       try {
-        const full = path.join(resolvedDir, ent.name);
+        const full = path.join(targetDir, ent.name);
         let isDir = false;
         let size = 0;
         let mtimeMs = 0;
@@ -240,13 +252,17 @@ ipcMain.handle('fs:listDirectory', async (_event, targetPath) => {
           isDir = ent.isDirectory();
         }
 
+        const ext = path.extname(ent.name).toLowerCase();
+        const isChildArchive = archiveHandler.isArchiveFile(full);
+
         items.push({
           name: ent.name,
           fullPath: full,
           isDirectory: isDir,
+          isArchive: isChildArchive,
           size,
           mtimeMs,
-          ext: path.extname(ent.name).toLowerCase()
+          ext
         });
       } catch {}
     }
@@ -286,9 +302,9 @@ ipcMain.handle('fs:listDirectory', async (_event, targetPath) => {
 ipcMain.handle('dialog:selectFolder', async (_event, defaultPath) => {
   const resolvedPath = resolveDefaultPath(defaultPath);
   const result = await dialog.showOpenDialog({
-    title: 'Select Folder',
+    title: 'Select Folder or Archive',
     defaultPath: resolvedPath,
-    properties: ['openDirectory', 'dontAddToRecent', 'noResolveAliases']
+    properties: ['openDirectory', 'openFile', 'dontAddToRecent', 'noResolveAliases']
   });
   if (!result.canceled && result.filePaths.length > 0) {
     const selected = result.filePaths[0];
@@ -316,12 +332,27 @@ ipcMain.handle('dialog:selectFile', async (_event, defaultPath) => {
   return null;
 });
 
-// Compare Folders (Fast Tree Walk with Beyond Compare Rules)
+// Compare Folders (Fast Tree Walk with Beyond Compare Rules, supports .jar, .war, .ear, .zip)
 ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath, rules }) => {
   sendLog(`Load comparison: ${leftPath || '(none)'} <-> ${rightPath || '(none)'}`);
   try {
-    const items = await compareFolderTreesAsync(leftPath, rightPath, rules);
-    return { success: true, items };
+    const leftRes = archiveHandler.resolveFolderOrArchive(leftPath);
+    const rightRes = archiveHandler.resolveFolderOrArchive(rightPath);
+
+    const actualLeft = leftRes.expandedPath;
+    const actualRight = rightRes.expandedPath;
+
+    const items = await compareFolderTreesAsync(actualLeft, actualRight, rules);
+    return {
+      success: true,
+      items,
+      leftOriginal: leftRes.originalPath,
+      rightOriginal: rightRes.originalPath,
+      leftExpanded: leftRes.expandedPath,
+      rightExpanded: rightRes.expandedPath,
+      leftIsArchive: leftRes.isArchive,
+      rightIsArchive: rightRes.isArchive
+    };
   } catch (err) {
     sendLog(`Error comparing folders: ${err.message}`);
     return { success: false, error: err.message };
@@ -336,6 +367,11 @@ ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath,
   let matchCount = 0;
   let diffCount = 0;
   let processedCount = 0;
+
+  const leftRes = archiveHandler.resolveFolderOrArchive(leftPath);
+  const rightRes = archiveHandler.resolveFolderOrArchive(rightPath);
+  const effectiveLeft = leftRes.expandedPath;
+  const effectiveRight = rightRes.expandedPath;
 
   const CONCURRENCY = 64; // Beyond Compare multi-threaded parallel comparison
   let currentIndex = 0;
@@ -354,8 +390,8 @@ ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath,
         };
         diffCount++;
       } else {
-        const fullLeft = path.join(leftPath, item.relativePath);
-        const fullRight = path.join(rightPath, item.relativePath);
+        const fullLeft = path.join(effectiveLeft, item.relativePath);
+        const fullRight = path.join(effectiveRight, item.relativePath);
 
         const knownLeftSize = (item.left && typeof item.left.size === 'number') ? item.left.size : undefined;
         const knownRightSize = (item.right && typeof item.right.size === 'number') ? item.right.size : undefined;

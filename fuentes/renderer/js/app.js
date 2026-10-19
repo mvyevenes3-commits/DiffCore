@@ -2397,8 +2397,11 @@ function handleQuickPickerItemDblClick(idx) {
   const it = quickPickerState.filteredItems[idx];
   if (!it) return;
 
+  const isArchive = it.isArchive || isArchiveContainer(it.name);
   if (it.isDirectory) {
     loadQuickPickerPath(it.fullPath);
+  } else if (isArchive && quickPickerState.mode === 'folder') {
+    confirmWithResult(it.fullPath);
   } else {
     if (quickPickerState.mode === 'file') {
       confirmWithResult(it.fullPath);
@@ -2413,16 +2416,21 @@ function updateQuickPickerSelectionHint() {
 
   const it = quickPickerState.filteredItems[quickPickerState.selectedIndex];
   if (quickPickerState.mode === 'folder') {
+    const isArchive = it && (it.isArchive || isArchiveContainer(it.name));
     if (it && it.isDirectory) {
       hintEl.textContent = `📁 ${it.name}`;
       if (confirmBtn) confirmBtn.textContent = 'Seleccionar carpeta';
+    } else if (it && isArchive) {
+      hintEl.textContent = `📦 ${it.name} (Empaquetado Java)`;
+      if (confirmBtn) confirmBtn.textContent = 'Seleccionar empaquetado';
     } else {
       hintEl.textContent = `📁 (Carpeta actual)`;
       if (confirmBtn) confirmBtn.textContent = 'Seleccionar esta carpeta';
     }
   } else {
     if (it) {
-      hintEl.textContent = `${it.isDirectory ? '📁 ' : '📄 '}${it.name}`;
+      const isArchive = it.isArchive || isArchiveContainer(it.name);
+      hintEl.textContent = `${it.isDirectory ? '📁 ' : (isArchive ? '📦 ' : '📄 ')}${it.name}`;
       if (confirmBtn) confirmBtn.textContent = it.isDirectory ? 'Abrir carpeta' : 'Seleccionar archivo';
     } else {
       hintEl.textContent = '';
@@ -2434,7 +2442,8 @@ function updateQuickPickerSelectionHint() {
 function confirmQuickPickerSelection() {
   const it = quickPickerState.filteredItems[quickPickerState.selectedIndex];
   if (quickPickerState.mode === 'folder') {
-    if (it && it.isDirectory) {
+    const isArchive = it && (it.isArchive || isArchiveContainer(it.name));
+    if (it && (it.isDirectory || isArchive)) {
       confirmWithResult(it.fullPath);
     } else {
       confirmWithResult(quickPickerState.currentPath);
@@ -2519,13 +2528,15 @@ function getFileIconByExt(ext) {
   switch (ext) {
     case '.js': case '.ts': case '.jsx': case '.tsx': case '.py': case '.c': case '.cpp': case '.go': case '.rs': case '.java': case '.php': case '.rb': case '.html': case '.css':
       return '💻';
+    case '.class':
+      return '☕';
     case '.json': case '.xml': case '.yaml': case '.yml': case '.toml': case '.ini': case '.config':
       return '⚙️';
     case '.png': case '.jpg': case '.jpeg': case '.gif': case '.webp': case '.bmp': case '.svg': case '.ico':
       return '🖼️';
     case '.xlsx': case '.xls': case '.csv': case '.tsv':
       return '📊';
-    case '.zip': case '.tar': case '.gz': case '.7z': case '.rar':
+    case '.zip': case '.tar': case '.gz': case '.7z': case '.rar': case '.jar': case '.war': case '.ear':
       return '📦';
     case '.mp3': case '.wav': case '.ogg': case '.flac': case '.m4a':
       return '🎵';
@@ -2537,6 +2548,46 @@ function getFileIconByExt(ext) {
       return '🔢';
     default:
       return '📄';
+  }
+}
+
+function isArchiveContainer(filePath) {
+  if (!filePath || typeof filePath !== 'string') return false;
+  return /\.(jar|war|ear|zip)$/i.test(filePath.trim());
+}
+
+function isJavaClassFile(filePath) {
+  if (!filePath || typeof filePath !== 'string') return false;
+  return /\.class$/i.test(filePath.trim());
+}
+
+let pendingBinaryPath = '';
+
+function showUnsupportedBinaryModal(fileName, filePath) {
+  pendingBinaryPath = filePath;
+  const modal = document.getElementById('binaryAlertModal');
+  const msgEl = document.getElementById('binaryAlertMessage');
+  const displayName = fileName || (filePath ? filePath.split(/[/\\]/).pop() : 'desconocido');
+  if (msgEl) {
+    msgEl.innerHTML = `El archivo <strong>${escapeHtml(displayName)}</strong> contiene datos binarios que no corresponden a texto plano ni a clases Java compiladas.<br><br>¿Deseas abrirlo en el Comparador Hexadecimal?`;
+  }
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeBinaryAlertModal() {
+  const modal = document.getElementById('binaryAlertModal');
+  if (modal) modal.style.display = 'none';
+  pendingBinaryPath = '';
+}
+
+function handleOpenInHexCompare() {
+  const p = pendingBinaryPath;
+  closeBinaryAlertModal();
+  if (p) {
+    const base = p.split(/[/\\]/).pop();
+    openHexCompare(p, '', base);
   }
 }
 
@@ -3716,8 +3767,10 @@ function handleRowDoubleClick(item) {
     openTableCompare(fullLeft, fullRight, item.name);
   } else if (['mp3', 'wav', 'ogg', 'mp4', 'm4a', 'flac'].includes(ext)) {
     openMediaCompare(fullLeft, fullRight, item.name);
+  } else if (['jar', 'war', 'ear', 'zip'].includes(ext)) {
+    openFolderCompare(fullLeft, fullRight, item.name);
   } else {
-    // Open in Text Compare (code, properties, xml, text, etc.) as child inspection
+    // Open in Text Compare (code, properties, xml, text, java class, etc.) as child inspection
     openTextCompare(fullLeft, fullRight, item.relativePath, true);
   }
 }
@@ -7070,7 +7123,8 @@ function detectLanguage(filePath) {
   if (!filePath) return 'generic';
   const ext = filePath.split('.').pop().toLowerCase();
   switch (ext) {
-    case 'java': return 'java';
+    case 'java':
+    case 'class': return 'java';
     case 'js':
     case 'jsx':
     case 'mjs':
@@ -7162,7 +7216,8 @@ function updateTextFileMetadata(side, fileRes, fullPath, content) {
   const byteCount = (fileRes.size !== undefined ? fileRes.size : (content ? content.length : 0));
   const sizeStr = `${Number(byteCount).toLocaleString('es-ES')} bytes`;
   const lang = detectLanguage(fullPath);
-  const formatStr = getLanguageDisplayName(lang);
+  const isDecomp = (fileRes && fileRes.isDecompiled) || isJavaClassFile(fullPath);
+  const formatStr = isDecomp ? 'Java class to source ▾' : getLanguageDisplayName(lang);
   const eolStr = (content && content.includes('\r\n')) ? 'CRLF' : ((content && content.includes('\r')) ? 'MAC' : 'UNIX');
 
   if (dateEl) dateEl.textContent = dateStr;
@@ -7177,8 +7232,8 @@ function updateTextFormatBadges() {
   const pathR = appState.currentTextFile ? appState.currentTextFile.rightFullPath : '';
   const badgeL = document.getElementById('textLeftFormatBadge');
   const badgeR = document.getElementById('textRightFormatBadge');
-  if (badgeL && pathL) badgeL.textContent = getLanguageDisplayName(detectLanguage(pathL));
-  if (badgeR && pathR) badgeR.textContent = getLanguageDisplayName(detectLanguage(pathR));
+  if (badgeL && pathL) badgeL.textContent = isJavaClassFile(pathL) ? 'Java class to source ▾' : getLanguageDisplayName(detectLanguage(pathL));
+  if (badgeR && pathR) badgeR.textContent = isJavaClassFile(pathR) ? 'Java class to source ▾' : getLanguageDisplayName(detectLanguage(pathR));
 }
 
 function highlightSyntax(line, lang = 'generic', isDiff = false, isComment = false) {
@@ -7538,6 +7593,15 @@ function executeCloseTextSession(sessionId) {
 }
 
 async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'Text Compare', isChildCompare = false) {
+  // Check if any path is an archive (.jar, .war, .ear, .zip) -> redirect to Folder Compare
+  const leftIsArch = leftFullPath && isArchiveContainer(leftFullPath);
+  const rightIsArch = rightFullPath && isArchiveContainer(rightFullPath);
+  if (leftIsArch || rightIsArch) {
+    showToast('Empaquetado detectado — Abriendo en Comparador de Carpetas', 'info');
+    openFolderCompare(leftFullPath || '', rightFullPath || '', label || 'Comparación de Empaquetados');
+    return;
+  }
+
   if (!appState.textSessions) {
     appState.textSessions = [];
   }
@@ -7638,6 +7702,29 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
     window.api.readTextFile(leftFullPath),
     window.api.readTextFile(rightFullPath)
   ]);
+
+  if (resLeft.isArchive || resRight.isArchive) {
+    executeCloseTextSession(sessionId);
+    showToast('Empaquetado detectado — Abriendo en Comparador de Carpetas', 'info');
+    openFolderCompare(leftFullPath, rightFullPath, label || 'Comparación de Empaquetados');
+    return;
+  }
+
+  if (resLeft.isBinary) {
+    executeCloseTextSession(sessionId);
+    showUnsupportedBinaryModal(resLeft.fileName || leftFullPath, leftFullPath);
+    return;
+  }
+
+  if (resRight.isBinary) {
+    executeCloseTextSession(sessionId);
+    showUnsupportedBinaryModal(resRight.fileName || rightFullPath, rightFullPath);
+    return;
+  }
+
+  if (resLeft.isDecompiled || resRight.isDecompiled) {
+    showToast('Clase(s) Java descompilada(s) con éxito (Vineflower/Fernflower)', 'info');
+  }
 
   const contentLeft = resLeft.success ? (resLeft.content || '') : '';
   const contentRight = resRight.success ? (resRight.content || '') : '';
@@ -7834,8 +7921,21 @@ async function loadTextFileForSide(side, filePath) {
   if (!filePath) return;
   const res = await window.api.readTextFile(filePath);
   if (!res.success) {
-    showToast(`Error opening file: ${res.error}`, 'error');
+    if (res.isArchive) {
+      showToast('Empaquetado detectado — Abriendo en Comparador de Carpetas', 'info');
+      openFolderCompare(side === 'left' ? filePath : '', side === 'right' ? filePath : '', filePath);
+      return;
+    }
+    if (res.isBinary) {
+      showUnsupportedBinaryModal(res.fileName || filePath, filePath);
+      return;
+    }
+    showToast(`Error al abrir archivo: ${res.error}`, 'error');
     return;
+  }
+
+  if (res.isDecompiled) {
+    showToast('Clase Java descompilada con éxito (Vineflower/Fernflower)', 'info');
   }
 
   const content = res.content || '';
@@ -8157,10 +8257,10 @@ function setupAllDragAndDrop() {
       if (paths.length === 0) return;
 
       if (paths.length >= 2) {
-        const isDir1 = await isDirectoryPath(paths[0]);
-        const isDir2 = await isDirectoryPath(paths[1]);
+        const isDir1 = (await isDirectoryPath(paths[0])) || isArchiveContainer(paths[0]);
+        const isDir2 = (await isDirectoryPath(paths[1])) || isArchiveContainer(paths[1]);
         if (isDir1 && isDir2) {
-          showToast('Folders dropped — Opening Folder Compare', 'info');
+          showToast('Empaquetados/Carpetas detectados — Abriendo Comparador de Carpetas', 'info');
           openFolderCompare(paths[0], paths[1], 'Folder Compare');
           return;
         }
@@ -8170,8 +8270,9 @@ function setupAllDragAndDrop() {
 
       const p = paths[0];
       const isDir = await isDirectoryPath(p);
-      if (isDir) {
-        showToast('Folder dropped — Opening Folder Compare', 'info');
+      const isArch = isArchiveContainer(p);
+      if (isDir || isArch) {
+        showToast(isArch ? 'Empaquetado Java detectado — Redirigiendo a Comparador de Carpetas' : 'Carpeta detectada — Abriendo Comparador de Carpetas', 'info');
         openFolderCompare(side === 'left' ? p : '', side === 'right' ? p : '', 'Folder Compare');
         return;
       }
@@ -8226,10 +8327,10 @@ function setupAllDragAndDrop() {
         if (paths.length === 0) return;
 
         if (paths.length >= 2) {
-          const isDir1 = await isDirectoryPath(paths[0]);
-          const isDir2 = await isDirectoryPath(paths[1]);
+          const isDir1 = (await isDirectoryPath(paths[0])) || isArchiveContainer(paths[0]);
+          const isDir2 = (await isDirectoryPath(paths[1])) || isArchiveContainer(paths[1]);
           if (!isDir1 && !isDir2) {
-            showToast('Files dropped — Opening Text Compare', 'info');
+            showToast('Archivos detectados — Abriendo Comparador de Texto', 'info');
             await openTextCompare(paths[0], paths[1], paths[0]);
             return;
           }
@@ -8246,8 +8347,9 @@ function setupAllDragAndDrop() {
 
         const p = paths[0];
         const isDir = await isDirectoryPath(p);
-        if (!isDir) {
-          showToast('File dropped — Opening Text Compare', 'info');
+        const isArch = isArchiveContainer(p);
+        if (!isDir && !isArch) {
+          showToast('Archivo detectado — Abriendo Comparador de Texto', 'info');
           await openTextCompare(side === 'left' ? p : '', side === 'right' ? p : '', p);
           return;
         }
@@ -8304,8 +8406,8 @@ function setupAllDragAndDrop() {
       const paths = extractPathsFromDataTransfer(e.dataTransfer);
       if (paths.length === 0) return;
 
-      const isFirstDir = await isDirectoryPath(paths[0]);
-      if (isFirstDir) {
+      const isFirstFolderLike = (await isDirectoryPath(paths[0])) || isArchiveContainer(paths[0]);
+      if (isFirstFolderLike) {
         if (paths.length >= 2) {
           openFolderCompare(paths[0], paths[1], 'Folder Compare');
         } else {
@@ -8363,7 +8465,14 @@ function setupAllDragAndDrop() {
       } else if (onclickAttr.includes('text_edit')) {
         openTextEdit(paths[0] || '', 'Text Edit');
       } else if (onclickAttr.includes('text_compare') || onclickAttr.includes('text_')) {
-        openTextCompare(paths[0] || '', paths[1] || '', paths[0] || 'Text Compare');
+        const isFirstArch = isArchiveContainer(paths[0]);
+        const isSecondArch = paths[1] && isArchiveContainer(paths[1]);
+        if (isFirstArch || isSecondArch) {
+          showToast('Empaquetado Java detectado — Redirigiendo al Comparador de Carpetas', 'info');
+          openFolderCompare(paths[0] || '', paths[1] || '', 'Folder Compare');
+        } else {
+          openTextCompare(paths[0] || '', paths[1] || '', paths[0] || 'Text Compare');
+        }
       } else if (onclickAttr.includes('hex_')) {
         openHexCompare(paths[0] || '', paths[1] || '', paths[0] || 'Hex Compare');
       } else if (onclickAttr.includes('picture_')) {
@@ -8374,7 +8483,8 @@ function setupAllDragAndDrop() {
         openTableCompare(paths[0] || '', paths[1] || '', paths[0] || 'Table Compare');
       } else {
         const isDir = await isDirectoryPath(paths[0]);
-        if (isDir) {
+        const isArch = isArchiveContainer(paths[0]);
+        if (isDir || isArch) {
           openFolderCompare(paths[0] || '', paths[1] || '', 'Folder Compare');
         } else {
           openTextCompare(paths[0] || '', paths[1] || '', paths[0] || 'Text Compare');

@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const { shell } = require('electron');
+const javaDecompiler = require('./javaDecompiler');
+const archiveHandler = require('./archiveHandler');
 
 /**
  * File Operations for DiffCore
@@ -64,16 +66,89 @@ function revealInFinder(targetPath) {
   }
 }
 
-function readTextFile(filePath, maxBytes = 10 * 1024 * 1024) {
+async function readTextFile(filePath, maxBytes = 10 * 1024 * 1024) {
   try {
-    if (!fs.existsSync(filePath)) return { success: false, error: 'File does not exist' };
+    if (!filePath || typeof filePath !== 'string') {
+      return { success: false, error: 'Invalid path' };
+    }
+    if (!fs.existsSync(filePath)) {
+      return { success: false, error: 'File does not exist' };
+    }
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
       return { success: false, isDirectory: true, error: 'Path is a folder, not a text file' };
     }
+
+    // 1. Check if file is a Java archive container (.jar, .war, .ear, .zip)
+    if (archiveHandler.isArchiveFile(filePath)) {
+      return {
+        success: false,
+        isArchive: true,
+        fileName: path.basename(filePath),
+        filePath,
+        size: stat.size,
+        error: 'Path is a Java archive container (.jar/.war/.ear)'
+      };
+    }
+
     if (stat.size > maxBytes) {
       return { success: false, error: `File too large (${(stat.size / 1024 / 1024).toFixed(1)} MB)` };
     }
+
+    // 2. Read first chunk or full buffer to inspect binary vs class vs text
+    const sampleSize = Math.min(stat.size, 8192);
+    let sampleBuf = Buffer.alloc(0);
+    if (sampleSize > 0) {
+      const fd = fs.openSync(filePath, 'r');
+      sampleBuf = Buffer.alloc(sampleSize);
+      fs.readSync(fd, sampleBuf, 0, sampleSize, 0);
+      fs.closeSync(fd);
+    }
+
+    // 3. Check for Java Bytecode (.class or 0xCAFEBABE)
+    if (javaDecompiler.isJavaClassPath(filePath) || javaDecompiler.isJavaClassBuffer(sampleBuf)) {
+      const decompileRes = await javaDecompiler.decompileClassFile(filePath);
+      if (decompileRes.success) {
+        const content = decompileRes.content || '';
+        let lineCount = 1;
+        for (let i = 0; i < content.length; i++) {
+          if (content.charCodeAt(i) === 10) lineCount++;
+        }
+        return {
+          success: true,
+          content,
+          lineCount,
+          size: stat.size,
+          mtime: stat.mtime,
+          mtimeMs: stat.mtimeMs,
+          isDecompiled: true,
+          language: 'java',
+          isReadonly: true
+        };
+      }
+    }
+
+    // 4. Check for arbitrary binary files (NULL bytes in sample)
+    let isBinary = false;
+    for (let i = 0; i < sampleSize; i++) {
+      if (sampleBuf[i] === 0) {
+        isBinary = true;
+        break;
+      }
+    }
+
+    if (isBinary) {
+      return {
+        success: false,
+        isBinary: true,
+        fileName: path.basename(filePath),
+        filePath,
+        size: stat.size,
+        error: 'Binary file detected (not readable as text)'
+      };
+    }
+
+    // 5. Standard Text file reading
     const content = fs.readFileSync(filePath, 'utf8');
     let lineCount = 1;
     for (let i = 0; i < content.length; i++) {
@@ -94,6 +169,9 @@ function readTextFile(filePath, maxBytes = 10 * 1024 * 1024) {
 
 function writeTextFile(filePath, content) {
   try {
+    if (javaDecompiler.isJavaClassPath(filePath)) {
+      return { success: false, error: 'No se puede sobrescribir una clase .class compilada con código fuente. Es de solo lectura.' };
+    }
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(filePath, content, 'utf8');
