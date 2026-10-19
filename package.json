@@ -14,9 +14,9 @@
     "start": "electron .",
     "build:mac": "electron-builder --mac dmg --x64 --arm64",
     "build:dir": "electron-builder --dir",
-    "build:linux": "electron-builder --linux deb",
+    "build:linux": "electron-builder --linux deb AppImage tar.gz",
     "build:win": "electron-builder --win nsis",
-    "build:all": "electron-builder --mac dmg --x64 --arm64 && electron-builder --win nsis",
+    "build:all": "electron-builder --mac dmg --x64 --arm64 && electron-builder --win nsis && electron-builder --linux deb AppImage tar.gz",
     "release": "node scripts/release.js"
   },
   "build": {
@@ -50,7 +50,8 @@
       "icon": "iconos/icons",
       "target": [
         "deb",
-        "AppImage"
+        "AppImage",
+        "tar.gz"
       ],
       "maintainer": "Miguel Vergara <miguelvergara@diffcore.local>",
       "category": "Development",

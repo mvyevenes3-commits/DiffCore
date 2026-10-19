@@ -159,17 +159,20 @@ async function main() {
   console.log('========================================================');
 
   if (!skipBuild) {
-    console.log('\n[1/3] Compilando instaladores macOS (Apple Silicon arm64 + Intel x64)...');
+    console.log('\n[1/4] Compilando instaladores macOS (Apple Silicon arm64 + Intel x64)...');
     runCommand('npx electron-builder --mac dmg --x64 --arm64');
 
-    console.log('\n[2/3] Compilando instalador Windows (.exe x64)...');
+    console.log('\n[2/4] Compilando instalador Windows (.exe x64)...');
     runCommand('npx electron-builder --win nsis');
+
+    console.log('\n[3/4] Compilando paquetes Linux (.deb, AppImage, tar.gz)...');
+    runCommand('npx electron-builder --linux deb AppImage tar.gz');
   } else {
     console.log('Saltando compilación (--upload-only activado).');
   }
 
   // Identify generated installers
-  console.log('\n[3/3] Buscando instaladores generados en empaquetado/dist...');
+  console.log('\n[4/4] Buscando instaladores generados en empaquetado/dist...');
   if (!fs.existsSync(DIST_DIR)) {
     console.error(`Error: El directorio ${DIST_DIR} no existe.`);
     process.exit(1);
@@ -183,6 +186,12 @@ async function main() {
   const macX64 = allFiles.find(f => f.endsWith('.dmg') && (f.includes('x64') || (!f.includes('arm64') && !f.includes('arm')) && f !== macArm64));
   // Find Windows exe
   const winExe = allFiles.find(f => f.endsWith('.exe') && !f.includes('uninstaller') && !f.includes('elevate'));
+  // Find Linux deb
+  const linuxDeb = allFiles.find(f => f.endsWith('.deb'));
+  // Find Linux AppImage
+  const linuxAppImage = allFiles.find(f => f.endsWith('.AppImage'));
+  // Find Linux tar.gz
+  const linuxTar = allFiles.find(f => f.endsWith('.tar.gz') && f.includes('diffcore'));
 
   const filesToUpload = [];
 
@@ -208,6 +217,30 @@ async function main() {
       path: path.join(DIST_DIR, winExe),
       name: cleanWinName,
       label: 'DiffCore 1.0.0 Windows (Instalador Setup x64)'
+    });
+  }
+
+  if (linuxDeb) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, linuxDeb),
+      name: linuxDeb,
+      label: 'DiffCore 1.0.0 Linux (Debian / Ubuntu / Mint .deb)'
+    });
+  }
+
+  if (linuxAppImage) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, linuxAppImage),
+      name: linuxAppImage,
+      label: 'DiffCore 1.0.0 Linux (Universal AppImage - Fedora / Arch / SUSE / all)'
+    });
+  }
+
+  if (linuxTar) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, linuxTar),
+      name: linuxTar,
+      label: 'DiffCore 1.0.0 Linux (Generic Portable Tarball .tar.gz)'
     });
   }
 
@@ -253,8 +286,8 @@ async function main() {
     }, {
       tag_name: branch,
       target_commitish: branch,
-      name: `DiffCore 1.0.0 — Release (${branch})`,
-      body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales para macOS (Apple Silicon y Apple Intel) y Windows.`,
+      name: 'Release 1.0.0',
+      body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu, Fedora/Arch/Universal AppImage, y Tarball genérico).`,
       draft: false,
       prerelease: false
     });
@@ -268,6 +301,26 @@ async function main() {
     }
   } else {
     console.log(`✓ Release encontrado: ${release.name || release.tag_name} (${release.html_url})`);
+    if (release.name !== 'Release 1.0.0') {
+      console.log(`Actualizando nombre de la release a "Release 1.0.0"...`);
+      const patchRes = await githubRequest({
+        hostname: 'api.github.com',
+        path: `/repos/${repo}/releases/${release.id}`,
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${token}`,
+          'User-Agent': 'DiffCore-Release-Script',
+          'Content-Type': 'application/json'
+        }
+      }, {
+        name: 'Release 1.0.0',
+        body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu, Fedora/Arch/Universal AppImage, y Tarball genérico).`
+      });
+      if (patchRes.status === 200 && patchRes.data) {
+        release = patchRes.data;
+        console.log(`✓ Nombre actualizado exitosamente a: ${release.name}`);
+      }
+    }
   }
 
   function normalizeAssetName(name) {
