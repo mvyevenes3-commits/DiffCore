@@ -1,6 +1,9 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+  // Host OS Platform ('darwin', 'win32', 'linux')
+  platform: process.platform,
+
   // Cross-Platform Drag and Drop file resolver (macOS, Windows, Linux)
   getPathForFile: (file) => {
     try {

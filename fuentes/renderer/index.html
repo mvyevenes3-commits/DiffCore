@@ -1897,14 +1897,16 @@
   <!-- MODAL: ABOUT DIFFCORE (Beyond Compare 5 style) -->
   <div class="modal-backdrop" id="aboutModal" onclick="if(event.target === this) closeAboutModal()">
     <div class="modal-window about-modal-window">
-      <!-- Titlebar with macOS style dots and title -->
+      <!-- Titlebar with macOS style dots and OS adaptive controls -->
       <div class="about-titlebar">
-        <div class="about-window-dots">
-          <span class="about-dot about-dot-close" title="Close" onclick="closeAboutModal()"></span>
-          <span class="about-dot about-dot-min"></span>
+        <div class="modal-controls-mac">
+          <button class="mac-dot mac-dot-close" title="Cerrar" aria-label="Cerrar" onclick="closeAboutModal()"></button>
+          <span class="mac-dot mac-dot-min"></span>
+          <span class="mac-dot mac-dot-zoom"></span>
         </div>
         <div class="about-window-title" data-i18n="about.title">About DiffCore</div>
-        <button class="about-window-close-x" onclick="closeAboutModal()" title="Close">✕</button>
+        <button class="modal-close-btn about-window-close-x" onclick="closeAboutModal()" title="Cerrar">✕</button>
+        <div class="modal-mac-spacer" aria-hidden="true"></div>
       </div>
 
       <!-- Main Upper Body -->
@@ -1940,8 +1942,14 @@
       <!-- Inner License Agreement Drawer / Overlay -->
       <div class="about-license-overlay" id="aboutLicenseOverlay" style="display: none;">
         <div class="about-license-header">
-          <span data-i18n="about.license_title">DiffCore - End User License Agreement</span>
-          <button class="modal-close-btn" onclick="toggleAboutLicense(event)">✕</button>
+          <div class="modal-controls-mac">
+            <button class="mac-dot mac-dot-close" title="Cerrar" aria-label="Cerrar" onclick="toggleAboutLicense(event)"></button>
+            <span class="mac-dot mac-dot-min"></span>
+            <span class="mac-dot mac-dot-zoom"></span>
+          </div>
+          <span class="modal-title" data-i18n="about.license_title">DiffCore - End User License Agreement</span>
+          <button class="modal-close-btn" onclick="toggleAboutLicense(event)" title="Cerrar">✕</button>
+          <div class="modal-mac-spacer" aria-hidden="true"></div>
         </div>
         <div class="about-license-body">
           <pre class="about-license-text">DiffCore End User License Agreement (EULA)
@@ -1977,11 +1985,17 @@ SOFTWARE.</pre>
   <div class="modal-backdrop" id="quickPickerModal" style="display: none;" onclick="if(event.target === this) closeQuickPickerModal()">
     <div class="modal-window quick-picker-window">
       <div class="modal-header quick-picker-header">
+        <div class="modal-controls-mac">
+          <button class="mac-dot mac-dot-close" title="Cerrar" aria-label="Cerrar" onclick="closeQuickPickerModal()"></button>
+          <span class="mac-dot mac-dot-min"></span>
+          <span class="mac-dot mac-dot-zoom"></span>
+        </div>
         <div class="modal-title" id="quickPickerTitle">
           <span class="quick-picker-icon" id="quickPickerTitleIcon">📁</span>
           <span id="quickPickerTitleText">Examinar</span>
         </div>
-        <button class="modal-close-btn" onclick="closeQuickPickerModal()">✕</button>
+        <button class="modal-close-btn" onclick="closeQuickPickerModal()" title="Cerrar">✕</button>
+        <div class="modal-mac-spacer" aria-hidden="true"></div>
       </div>
       
       <div class="quick-picker-nav-bar">

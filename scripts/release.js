@@ -165,14 +165,17 @@ async function main() {
     console.log('\n[2/4] Compilando instalador Windows (.exe x64)...');
     runCommand('npx electron-builder --win nsis');
 
-    console.log('\n[3/4] Compilando paquetes Linux (.deb, AppImage, tar.gz)...');
+    console.log('\n[3/5] Compilando paquetes Linux (.deb, AppImage, tar.gz)...');
     runCommand('npx electron-builder --linux deb AppImage tar.gz');
+
+    console.log('\n[4/5] Compilando paquete Fedora / RedHat / openSUSE (.rpm)...');
+    runCommand('node scripts/build-rpm.js');
   } else {
     console.log('Saltando compilación (--upload-only activado).');
   }
 
   // Identify generated installers
-  console.log('\n[4/4] Buscando instaladores generados en empaquetado/dist...');
+  console.log('\n[5/5] Buscando instaladores generados en empaquetado/dist...');
   if (!fs.existsSync(DIST_DIR)) {
     console.error(`Error: El directorio ${DIST_DIR} no existe.`);
     process.exit(1);
@@ -188,6 +191,8 @@ async function main() {
   const winExe = allFiles.find(f => f.endsWith('.exe') && !f.includes('uninstaller') && !f.includes('elevate'));
   // Find Linux deb
   const linuxDeb = allFiles.find(f => f.endsWith('.deb'));
+  // Find Linux rpm
+  const linuxRpm = allFiles.find(f => f.endsWith('.rpm'));
   // Find Linux AppImage
   const linuxAppImage = allFiles.find(f => f.endsWith('.AppImage'));
   // Find Linux tar.gz
@@ -225,6 +230,14 @@ async function main() {
       path: path.join(DIST_DIR, linuxDeb),
       name: linuxDeb,
       label: 'DiffCore 1.0.0 Linux (Debian / Ubuntu / Mint .deb)'
+    });
+  }
+
+  if (linuxRpm) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, linuxRpm),
+      name: linuxRpm,
+      label: 'DiffCore 1.0.0 Linux (Fedora / RHEL / openSUSE .rpm)'
     });
   }
 
@@ -287,7 +300,7 @@ async function main() {
       tag_name: branch,
       target_commitish: branch,
       name: 'Release 1.0.0',
-      body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu, Fedora/Arch/Universal AppImage, y Tarball genérico).`,
+      body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu .deb, Fedora/RHEL/openSUSE .rpm, Universal AppImage, y Tarball genérico .tar.gz).`,
       draft: false,
       prerelease: false
     });
@@ -314,7 +327,7 @@ async function main() {
         }
       }, {
         name: 'Release 1.0.0',
-        body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu, Fedora/Arch/Universal AppImage, y Tarball genérico).`
+        body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu .deb, Fedora/RHEL/openSUSE .rpm, Universal AppImage, y Tarball genérico .tar.gz).`
       });
       if (patchRes.status === 200 && patchRes.data) {
         release = patchRes.data;

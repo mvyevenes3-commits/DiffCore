@@ -227,6 +227,70 @@ function initFooterTelemetry() {
   }, 4000);
 }
 
+/**
+ * Detect host OS platform and configure platform-adaptive window controls
+ * on all in-app modal headers (macOS traffic lights vs Windows flat caption vs Linux circular button)
+ */
+function initModalControls() {
+  const currentPlatform = (window.api && window.api.platform) || 
+    (navigator.platform && navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? 'darwin' : 
+    (navigator.platform && navigator.platform.toUpperCase().indexOf('WIN') >= 0 ? 'win32' : 'linux'));
+  
+  document.body.classList.remove('platform-darwin', 'platform-win32', 'platform-linux');
+  document.body.classList.add('platform-' + currentPlatform);
+
+  // Auto-enhance modal headers with macOS traffic lights and balanced layout
+  document.querySelectorAll('.modal-header, .about-titlebar, .about-license-header').forEach(header => {
+    let macControls = header.querySelector('.modal-controls-mac');
+    const closeBtn = header.querySelector('.modal-close-btn, .about-window-close-x');
+    
+    if (!macControls) {
+      macControls = document.createElement('div');
+      macControls.className = 'modal-controls-mac';
+      
+      const closeDot = document.createElement('button');
+      closeDot.type = 'button';
+      closeDot.className = 'mac-dot mac-dot-close';
+      closeDot.title = 'Cerrar';
+      closeDot.setAttribute('aria-label', 'Cerrar');
+      if (closeBtn) {
+        closeDot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeBtn.click();
+        });
+      }
+      
+      const minDot = document.createElement('span');
+      minDot.className = 'mac-dot mac-dot-min';
+      
+      const zoomDot = document.createElement('span');
+      zoomDot.className = 'mac-dot mac-dot-zoom';
+      
+      macControls.appendChild(closeDot);
+      macControls.appendChild(minDot);
+      macControls.appendChild(zoomDot);
+      
+      header.insertBefore(macControls, header.firstChild);
+    } else {
+      // Ensure existing mac dot close button triggers close action if not already wired
+      const closeDot = macControls.querySelector('.mac-dot-close');
+      if (closeDot && !closeDot.getAttribute('onclick') && closeBtn) {
+        closeDot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeBtn.click();
+        });
+      }
+    }
+    
+    if (!header.querySelector('.modal-mac-spacer')) {
+      const spacer = document.createElement('div');
+      spacer.className = 'modal-mac-spacer';
+      spacer.setAttribute('aria-hidden', 'true');
+      header.appendChild(spacer);
+    }
+  });
+}
+
 // --- INITIALIZATION ---
 window.addEventListener('DOMContentLoaded', async () => {
   if (window.i18n && typeof window.i18n.init === 'function') {
@@ -243,6 +307,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       });
     }
   }
+  initModalControls();
   initTheme();
   setupLogging();
   setupCliListener();
