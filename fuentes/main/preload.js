@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('api', {
   // Folder & File Selection
   selectFolder: (defaultPath) => ipcRenderer.invoke('dialog:selectFolder', defaultPath),
   selectFile: (defaultPath) => ipcRenderer.invoke('dialog:selectFile', defaultPath),
+  listDirectory: (dirPath) => ipcRenderer.invoke('fs:listDirectory', dirPath),
   
   // Folder Comparison
   compareFolders: (leftPath, rightPath, rules) => ipcRenderer.invoke('diff:compareFolders', { leftPath, rightPath, rules }),

@@ -1971,6 +1971,65 @@ SOFTWARE.</pre>
         </div>
       </div>
     </div>
+  <!-- MODAL: QUICK PICKER (ULTRA-FAST IN-APP EXPLORER) -->
+  <div class="modal-backdrop" id="quickPickerModal" style="display: none;" onclick="if(event.target === this) closeQuickPickerModal()">
+    <div class="modal-window quick-picker-window">
+      <div class="modal-header quick-picker-header">
+        <div class="modal-title" id="quickPickerTitle">
+          <span class="quick-picker-icon" id="quickPickerTitleIcon">📁</span>
+          <span id="quickPickerTitleText">Examinar</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeQuickPickerModal()">✕</button>
+      </div>
+      
+      <div class="quick-picker-nav-bar">
+        <button class="quick-nav-btn" id="btnQuickPickerUp" title="Subir un nivel (Alt+Up)" onclick="quickPickerGoUp()">⬆</button>
+        <input type="text" class="quick-picker-path-input" id="quickPickerPathInput" onkeydown="handleQuickPickerPathKey(event)" placeholder="/ruta/de/carpeta" />
+        <button class="quick-nav-btn" title="Ir a ruta" onclick="quickPickerNavigateToInput()">➔</button>
+        <button class="quick-nav-btn" title="Recargar (F5)" onclick="quickPickerReload()">🔄</button>
+      </div>
+
+      <div class="quick-picker-filter-bar">
+        <span class="quick-picker-filter-icon">🔍</span>
+        <input type="text" class="quick-picker-filter-input" id="quickPickerFilterInput" oninput="handleQuickPickerFilter(event)" onkeydown="handleQuickPickerListNavKey(event)" placeholder="Escribe para filtrar archivos y carpetas..." />
+        <span class="quick-picker-count-badge" id="quickPickerCountBadge">0 elementos</span>
+      </div>
+
+      <div class="quick-picker-main-layout">
+        <!-- Shortcuts Sidebar -->
+        <div class="quick-picker-sidebar">
+          <div class="quick-picker-sidebar-title">Accesos Rápidos</div>
+          <div class="quick-picker-shortcut-list" id="quickPickerShortcutList">
+            <!-- Dynamic shortcuts injected here -->
+          </div>
+        </div>
+
+        <!-- Files and Folders View -->
+        <div class="quick-picker-list-container">
+          <div class="quick-picker-list-header">
+            <span class="col-name">Nombre</span>
+            <span class="col-size">Tamaño</span>
+            <span class="col-date">Modificado</span>
+          </div>
+          <div class="quick-picker-list" id="quickPickerList" tabindex="0" onkeydown="handleQuickPickerListNavKey(event)">
+            <!-- Dynamic rows injected here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer quick-picker-footer">
+        <div class="quick-picker-footer-left">
+          <button class="btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="fallbackToSystemDialog()" title="Abrir la ventana de selección estándar del sistema operativo">
+            🖥️ Abrir selector del sistema...
+          </button>
+        </div>
+        <div class="quick-picker-footer-right" style="display: flex; gap: 8px; align-items: center;">
+          <span class="quick-picker-selected-hint" id="quickPickerSelectedHint" style="font-size: 11px; color: #888; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+          <button class="btn-secondary" onclick="closeQuickPickerModal()">Cancelar</button>
+          <button class="btn-primary" id="btnQuickPickerConfirm" onclick="confirmQuickPickerSelection()">Seleccionar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- FLOATING TOAST NOTIFICATION -->

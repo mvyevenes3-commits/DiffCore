@@ -1609,7 +1609,11 @@ async function browseModalFolder(side) {
   const currentVal = side === 'left' ? 
     document.getElementById('editSessionLeft').value : 
     document.getElementById('editSessionRight').value;
-  const selected = await window.api.selectFolder(currentVal);
+  const selected = await showQuickPicker({
+    mode: 'folder',
+    defaultPath: currentVal,
+    title: side === 'left' ? 'Examinar Carpeta Izquierda' : 'Examinar Carpeta Derecha'
+  });
   if (selected) {
     if (side === 'left') document.getElementById('editSessionLeft').value = selected;
     else document.getElementById('editSessionRight').value = selected;
@@ -1689,9 +1693,17 @@ function openTool(toolName) {
 }
 
 async function openTextCompareDialog() {
-  const leftFile = await window.api.selectFile(appState.leftPath);
+  const leftFile = await showQuickPicker({
+    mode: 'file',
+    defaultPath: appState.leftPath,
+    title: 'Seleccionar Archivo Izquierdo para Comparar'
+  });
   if (!leftFile) return;
-  const rightFile = await window.api.selectFile(appState.rightPath || leftFile);
+  const rightFile = await showQuickPicker({
+    mode: 'file',
+    defaultPath: appState.rightPath || leftFile,
+    title: 'Seleccionar Archivo Derecho para Comparar'
+  });
   if (!rightFile) return;
   openTextCompare(leftFile, rightFile, leftFile);
 }
@@ -2113,6 +2125,374 @@ function openNewCompareTab() {
   promptNewSession();
 }
 
+// ========================================================
+// QUICK PICKER (ULTRA-FAST IN-APP EXPLORER)
+// ========================================================
+let quickPickerState = {
+  active: false,
+  mode: 'file', // 'file' | 'folder'
+  currentPath: '',
+  parentPath: null,
+  items: [],
+  filteredItems: [],
+  selectedIndex: -1,
+  shortcuts: [],
+  resolvePromise: null,
+  filterQuery: ''
+};
+
+async function showQuickPicker({ mode = 'file', defaultPath = '', title = '' } = {}) {
+  return new Promise(async (resolve) => {
+    quickPickerState.active = true;
+    quickPickerState.mode = mode;
+    quickPickerState.resolvePromise = resolve;
+    quickPickerState.filterQuery = '';
+
+    const modal = document.getElementById('quickPickerModal');
+    if (!modal) {
+      // Fallback if modal DOM not found
+      const res = mode === 'folder' 
+        ? await window.api.selectFolder(defaultPath)
+        : await window.api.selectFile(defaultPath);
+      return resolve(res);
+    }
+
+    const titleText = document.getElementById('quickPickerTitleText');
+    const titleIcon = document.getElementById('quickPickerTitleIcon');
+    if (titleText) {
+      titleText.textContent = title || (mode === 'folder' ? 'Examinar Carpeta' : 'Examinar Archivo');
+    }
+    if (titleIcon) {
+      titleIcon.textContent = mode === 'folder' ? '📁' : '📄';
+    }
+
+    const filterInput = document.getElementById('quickPickerFilterInput');
+    if (filterInput) filterInput.value = '';
+
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+
+    await loadQuickPickerPath(defaultPath);
+
+    if (filterInput) {
+      filterInput.focus();
+    }
+  });
+}
+
+function closeQuickPickerModal() {
+  const modal = document.getElementById('quickPickerModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
+  quickPickerState.active = false;
+  if (quickPickerState.resolvePromise) {
+    quickPickerState.resolvePromise(null);
+    quickPickerState.resolvePromise = null;
+  }
+}
+
+async function fallbackToSystemDialog() {
+  const current = quickPickerState.currentPath;
+  const mode = quickPickerState.mode;
+  const resolver = quickPickerState.resolvePromise;
+  quickPickerState.resolvePromise = null;
+
+  closeQuickPickerModal();
+
+  const selected = mode === 'folder' 
+    ? await window.api.selectFolder(current)
+    : await window.api.selectFile(current);
+
+  if (resolver) resolver(selected);
+}
+
+async function loadQuickPickerPath(targetPath) {
+  const listEl = document.getElementById('quickPickerList');
+  if (listEl) {
+    listEl.innerHTML = `<div class="quick-picker-empty" style="color: #888;">Cargando...</div>`;
+  }
+
+  const res = await window.api.listDirectory(targetPath);
+  if (!res || !res.success) {
+    showToast(`Error al leer carpeta: ${res ? res.error : 'Desconocido'}`, 'error');
+    if (listEl) {
+      listEl.innerHTML = `<div class="quick-picker-empty" style="color: #ff6b6b;">No se pudo acceder a la carpeta</div>`;
+    }
+    return;
+  }
+
+  quickPickerState.currentPath = res.currentPath;
+  quickPickerState.parentPath = res.parentPath;
+  quickPickerState.items = res.items || [];
+  quickPickerState.shortcuts = res.shortcuts || [];
+  quickPickerState.selectedIndex = 0;
+
+  const pathIn = document.getElementById('quickPickerPathInput');
+  if (pathIn) pathIn.value = res.currentPath;
+
+  const upBtn = document.getElementById('btnQuickPickerUp');
+  if (upBtn) upBtn.disabled = !res.parentPath;
+
+  renderQuickPickerShortcuts();
+  applyQuickPickerFilter();
+}
+
+function renderQuickPickerShortcuts() {
+  const scList = document.getElementById('quickPickerShortcutList');
+  if (!scList) return;
+
+  let html = '';
+  for (const sc of quickPickerState.shortcuts) {
+    const isActive = sc.path === quickPickerState.currentPath;
+    html += `
+      <div class="quick-picker-shortcut-item ${isActive ? 'active' : ''}" onclick="loadQuickPickerPath('${escapeJsPath(sc.path)}')">
+        <span>${sc.icon || '📁'}</span>
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(sc.name)}</span>
+      </div>
+    `;
+  }
+  scList.innerHTML = html;
+}
+
+function applyQuickPickerFilter() {
+  const q = (quickPickerState.filterQuery || '').trim().toLowerCase();
+  if (!q) {
+    quickPickerState.filteredItems = [...quickPickerState.items];
+  } else {
+    quickPickerState.filteredItems = quickPickerState.items.filter(it => 
+      it.name.toLowerCase().includes(q)
+    );
+  }
+
+  quickPickerState.selectedIndex = quickPickerState.filteredItems.length > 0 ? 0 : -1;
+  renderQuickPickerItems();
+}
+
+function renderQuickPickerItems() {
+  const listEl = document.getElementById('quickPickerList');
+  const badgeEl = document.getElementById('quickPickerCountBadge');
+  if (!listEl) return;
+
+  const items = quickPickerState.filteredItems;
+  if (badgeEl) {
+    badgeEl.textContent = `${items.length} elemento${items.length === 1 ? '' : 's'}`;
+  }
+
+  if (items.length === 0) {
+    listEl.innerHTML = `<div class="quick-picker-empty">Carpeta vacía o sin coincidencias</div>`;
+    updateQuickPickerSelectionHint();
+    return;
+  }
+
+  let html = '';
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const isSelected = i === quickPickerState.selectedIndex;
+    const icon = it.isDirectory ? '📁' : getFileIconByExt(it.ext);
+    const sizeStr = it.isDirectory ? '-' : formatBytes(it.size);
+    const dateStr = it.mtimeMs ? formatQuickDate(it.mtimeMs) : '-';
+
+    html += `
+      <div class="quick-picker-row ${isSelected ? 'selected' : ''}" 
+           data-idx="${i}" 
+           onclick="handleQuickPickerItemClick(${i})"
+           ondblclick="handleQuickPickerItemDblClick(${i})">
+        <div class="col-name">
+          <span style="font-size: 14px;">${icon}</span>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(it.name)}</span>
+        </div>
+        <div class="col-size">${sizeStr}</div>
+        <div class="col-date">${dateStr}</div>
+      </div>
+    `;
+  }
+
+  listEl.innerHTML = html;
+  updateQuickPickerSelectionHint();
+
+  const selectedRow = listEl.querySelector('.quick-picker-row.selected');
+  if (selectedRow) {
+    selectedRow.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function handleQuickPickerItemClick(idx) {
+  quickPickerState.selectedIndex = idx;
+  const listEl = document.getElementById('quickPickerList');
+  if (listEl) {
+    const rows = listEl.querySelectorAll('.quick-picker-row');
+    rows.forEach((r, i) => r.classList.toggle('selected', i === idx));
+  }
+  updateQuickPickerSelectionHint();
+}
+
+function handleQuickPickerItemDblClick(idx) {
+  const it = quickPickerState.filteredItems[idx];
+  if (!it) return;
+
+  if (it.isDirectory) {
+    loadQuickPickerPath(it.fullPath);
+  } else {
+    if (quickPickerState.mode === 'file') {
+      confirmWithResult(it.fullPath);
+    }
+  }
+}
+
+function updateQuickPickerSelectionHint() {
+  const hintEl = document.getElementById('quickPickerSelectedHint');
+  const confirmBtn = document.getElementById('btnQuickPickerConfirm');
+  if (!hintEl) return;
+
+  const it = quickPickerState.filteredItems[quickPickerState.selectedIndex];
+  if (quickPickerState.mode === 'folder') {
+    if (it && it.isDirectory) {
+      hintEl.textContent = `📁 ${it.name}`;
+      if (confirmBtn) confirmBtn.textContent = 'Seleccionar carpeta';
+    } else {
+      hintEl.textContent = `📁 (Carpeta actual)`;
+      if (confirmBtn) confirmBtn.textContent = 'Seleccionar esta carpeta';
+    }
+  } else {
+    if (it) {
+      hintEl.textContent = `${it.isDirectory ? '📁 ' : '📄 '}${it.name}`;
+      if (confirmBtn) confirmBtn.textContent = it.isDirectory ? 'Abrir carpeta' : 'Seleccionar archivo';
+    } else {
+      hintEl.textContent = '';
+      if (confirmBtn) confirmBtn.textContent = 'Seleccionar';
+    }
+  }
+}
+
+function confirmQuickPickerSelection() {
+  const it = quickPickerState.filteredItems[quickPickerState.selectedIndex];
+  if (quickPickerState.mode === 'folder') {
+    if (it && it.isDirectory) {
+      confirmWithResult(it.fullPath);
+    } else {
+      confirmWithResult(quickPickerState.currentPath);
+    }
+  } else {
+    if (it) {
+      if (it.isDirectory) {
+        loadQuickPickerPath(it.fullPath);
+      } else {
+        confirmWithResult(it.fullPath);
+      }
+    } else {
+      showToast('Selecciona un archivo válido', 'info');
+    }
+  }
+}
+
+function confirmWithResult(selectedPath) {
+  const resolver = quickPickerState.resolvePromise;
+  quickPickerState.resolvePromise = null;
+  closeQuickPickerModal();
+  if (resolver) resolver(selectedPath);
+}
+
+function quickPickerGoUp() {
+  if (quickPickerState.parentPath) {
+    loadQuickPickerPath(quickPickerState.parentPath);
+  }
+}
+
+function quickPickerReload() {
+  if (quickPickerState.currentPath) {
+    loadQuickPickerPath(quickPickerState.currentPath);
+  }
+}
+
+function quickPickerNavigateToInput() {
+  const pathIn = document.getElementById('quickPickerPathInput');
+  if (pathIn && pathIn.value.trim()) {
+    loadQuickPickerPath(pathIn.value.trim());
+  }
+}
+
+function handleQuickPickerPathKey(event) {
+  if (event.key === 'Enter') {
+    quickPickerNavigateToInput();
+  }
+}
+
+function handleQuickPickerFilter(event) {
+  quickPickerState.filterQuery = event.target.value;
+  applyQuickPickerFilter();
+}
+
+function handleQuickPickerListNavKey(event) {
+  const items = quickPickerState.filteredItems;
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    if (items.length > 0) {
+      quickPickerState.selectedIndex = Math.min(items.length - 1, quickPickerState.selectedIndex + 1);
+      renderQuickPickerItems();
+    }
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    if (items.length > 0) {
+      quickPickerState.selectedIndex = Math.max(0, quickPickerState.selectedIndex - 1);
+      renderQuickPickerItems();
+    }
+  } else if (event.key === 'Enter') {
+    event.preventDefault();
+    confirmQuickPickerSelection();
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    closeQuickPickerModal();
+  } else if (event.key === 'Backspace' && (event.altKey || event.target.id !== 'quickPickerFilterInput')) {
+    event.preventDefault();
+    quickPickerGoUp();
+  }
+}
+
+function getFileIconByExt(ext) {
+  switch (ext) {
+    case '.js': case '.ts': case '.jsx': case '.tsx': case '.py': case '.c': case '.cpp': case '.go': case '.rs': case '.java': case '.php': case '.rb': case '.html': case '.css':
+      return '💻';
+    case '.json': case '.xml': case '.yaml': case '.yml': case '.toml': case '.ini': case '.config':
+      return '⚙️';
+    case '.png': case '.jpg': case '.jpeg': case '.gif': case '.webp': case '.bmp': case '.svg': case '.ico':
+      return '🖼️';
+    case '.xlsx': case '.xls': case '.csv': case '.tsv':
+      return '📊';
+    case '.zip': case '.tar': case '.gz': case '.7z': case '.rar':
+      return '📦';
+    case '.mp3': case '.wav': case '.ogg': case '.flac': case '.m4a':
+      return '🎵';
+    case '.mp4': case '.mov': case '.avi': case '.mkv': case '.webm':
+      return '🎬';
+    case '.pdf':
+      return '📕';
+    case '.bin': case '.dat': case '.hex': case '.exe': case '.dmg':
+      return '🔢';
+    default:
+      return '📄';
+  }
+}
+
+function formatQuickDate(ms) {
+  try {
+    const d = new Date(ms);
+    const yr = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    const hr = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yr}-${mo}-${da} ${hr}:${mi}`;
+  } catch {
+    return '-';
+  }
+}
+
+function escapeJsPath(p) {
+  return (p || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 // --- BROWSE FOLDERS ---
 async function browseFolder(side) {
   const currentPath = (side === 'left' ? 
@@ -2123,7 +2503,12 @@ async function browseFolder(side) {
     document.getElementById('leftPathInput')?.value) || '';
   const hintPath = currentPath || otherPath || appState.leftPath || appState.rightPath || '';
 
-  const selected = await window.api.selectFolder(hintPath);
+  const selected = await showQuickPicker({
+    mode: 'folder',
+    defaultPath: hintPath,
+    title: side === 'left' ? 'Examinar Carpeta Izquierda' : 'Examinar Carpeta Derecha'
+  });
+
   if (selected) {
     if (side === 'left') {
       const el = document.getElementById('leftPathInput');
@@ -3579,7 +3964,11 @@ async function contextAction(action) {
       const currentPath = (side === 'left' && item.left) ? item.left.fullPath :
                           (side === 'right' && item.right) ? item.right.fullPath :
                           (item.left ? item.left.fullPath : (item.right ? item.right.fullPath : ''));
-      const chosen = await window.api.selectFile(currentPath);
+      const chosen = await showQuickPicker({
+        mode: 'file',
+        defaultPath: currentPath,
+        title: `Comparar "${item.name}" con...`
+      });
       if (chosen) {
         openTextCompare(currentPath, chosen, item.name);
       }
@@ -3831,7 +4220,11 @@ async function copyItemToFolder(item, clickedSide) {
   if (!item) return;
   const srcPath = clickedSide === 'left' ? (item.left && item.left.fullPath) : ((item.right && item.right.fullPath) || (item.left && item.left.fullPath));
   if (!srcPath) return;
-  const targetDir = await window.api.selectFolder(srcPath);
+  const targetDir = await showQuickPicker({
+    mode: 'folder',
+    defaultPath: srcPath,
+    title: `Copiar "${item.name}" a carpeta...`
+  });
   if (targetDir) {
     const destPath = `${targetDir}/${item.name}`;
     const res = await window.api.copyItem(srcPath, destPath);
@@ -3847,7 +4240,11 @@ async function moveItemToFolder(item, clickedSide) {
   if (!item) return;
   const srcPath = clickedSide === 'left' ? (item.left && item.left.fullPath) : ((item.right && item.right.fullPath) || (item.left && item.left.fullPath));
   if (!srcPath) return;
-  const targetDir = await window.api.selectFolder(srcPath);
+  const targetDir = await showQuickPicker({
+    mode: 'folder',
+    defaultPath: srcPath,
+    title: `Mover "${item.name}" a carpeta...`
+  });
   if (targetDir) {
     const destPath = `${targetDir}/${item.name}`;
     const res = await window.api.moveItem(srcPath, destPath);
@@ -4378,7 +4775,11 @@ async function browseHexFile(side) {
   const current = side === 'left' ? hexCompareState.leftPath : hexCompareState.rightPath;
   const other = side === 'left' ? hexCompareState.rightPath : hexCompareState.leftPath;
   const hint = current || other || appState.leftPath || appState.rightPath || '';
-  const selected = await window.api.selectFile(hint);
+  const selected = await showQuickPicker({
+    mode: 'file',
+    defaultPath: hint,
+    title: side === 'left' ? 'Examinar Archivo Hex / Binario Izquierdo' : 'Examinar Archivo Hex / Binario Derecho'
+  });
   if (!selected) return;
   await loadHexFileForSide(side, selected);
 }
@@ -4835,7 +5236,11 @@ async function browsePicFile(side) {
   const current = side === 'left' ? picCompareState.leftPath : picCompareState.rightPath;
   const other = side === 'left' ? picCompareState.rightPath : picCompareState.leftPath;
   const hint = current || other || appState.leftPath || appState.rightPath || '';
-  const selected = await window.api.selectFile(hint);
+  const selected = await showQuickPicker({
+    mode: 'file',
+    defaultPath: hint,
+    title: side === 'left' ? 'Examinar Imagen Izquierda' : 'Examinar Imagen Derecha'
+  });
   if (!selected) return;
   await loadPicFileForSide(side, selected);
 }
@@ -4993,7 +5398,11 @@ async function browseMediaFile(side) {
   const current = side === 'left' ? mediaCompareState.leftPath : mediaCompareState.rightPath;
   const other = side === 'left' ? mediaCompareState.rightPath : mediaCompareState.leftPath;
   const hint = current || other || appState.leftPath || appState.rightPath || '';
-  const selected = await window.api.selectFile(hint);
+  const selected = await showQuickPicker({
+    mode: 'file',
+    defaultPath: hint,
+    title: side === 'left' ? 'Examinar Multimedia Izquierdo' : 'Examinar Multimedia Derecho'
+  });
   if (selected) {
     const input = document.getElementById(side === 'left' ? 'mediaLeftPathInput' : 'mediaRightPathInput');
     if (input) input.value = selected;
@@ -5241,7 +5650,11 @@ async function browseTableFile(side) {
   const current = side === 'left' ? tableCompareState.leftPath : tableCompareState.rightPath;
   const other = side === 'left' ? tableCompareState.rightPath : tableCompareState.leftPath;
   const hint = current || other || appState.leftPath || appState.rightPath || '';
-  const selected = await window.api.selectFile(hint);
+  const selected = await showQuickPicker({
+    mode: 'file',
+    defaultPath: hint,
+    title: side === 'left' ? 'Examinar Tabla Izquierda' : 'Examinar Tabla Derecha'
+  });
   if (selected) {
     const input = document.getElementById(side === 'left' ? 'tblLeftPathInput' : 'tblRightPathInput');
     if (input) input.value = selected;
@@ -5526,7 +5939,11 @@ async function browseSyncFolder(side) {
   const cur = side === 'left' ? folderSyncState.leftPath : folderSyncState.rightPath;
   const other = side === 'left' ? folderSyncState.rightPath : folderSyncState.leftPath;
   const hint = cur || other || appState.leftPath || appState.rightPath || '';
-  const selected = await window.api.selectFolder(hint);
+  const selected = await showQuickPicker({
+    mode: 'folder',
+    defaultPath: hint,
+    title: side === 'left' ? 'Examinar Carpeta Origen (Sync)' : 'Examinar Carpeta Destino (Sync)'
+  });
   if (selected) {
     if (side === 'left') folderSyncState.leftPath = selected;
     else folderSyncState.rightPath = selected;
@@ -5713,7 +6130,11 @@ function renderFolderMergeItems() {
 async function browseFMergeFolder(side) {
   const current = folderMergeState ? (side === 'left' ? folderMergeState.leftPath : (side === 'base' ? folderMergeState.basePath : folderMergeState.rightPath)) : '';
   const hint = current || folderMergeState?.leftPath || folderMergeState?.basePath || folderMergeState?.rightPath || appState.leftPath || appState.rightPath || '';
-  const selected = await window.api.selectFolder(hint);
+  const selected = await showQuickPicker({
+    mode: 'folder',
+    defaultPath: hint,
+    title: `Examinar Carpeta ${side.toUpperCase()} (Folder Merge)`
+  });
   if (selected) {
     if (side === 'left') folderMergeState.leftPath = selected;
     else if (side === 'base') folderMergeState.basePath = selected;
@@ -5943,7 +6364,11 @@ async function saveMergedOutputFile() {
   const outPath = document.getElementById('tMergeOutputPathInput')?.value.trim();
   if (!outPath) {
     const hint = (document.getElementById('tMergeLeftPathInput')?.value || appState.leftPath || '').trim();
-    const selected = await window.api.selectFile(hint);
+    const selected = await showQuickPicker({
+      mode: 'file',
+      defaultPath: hint,
+      title: 'Guardar Archivo Combinado'
+    });
     if (selected) {
       document.getElementById('tMergeOutputPathInput').value = selected;
       saveMergedOutputFile();
@@ -5964,7 +6389,11 @@ async function browseTMergeFile(side) {
   const curVal = document.getElementById(targetId)?.value?.trim() || '';
   const fallbackVal = document.getElementById('tMergeLeftPathInput')?.value?.trim() || document.getElementById('tMergeBasePathInput')?.value?.trim() || appState.leftPath || '';
   const hint = curVal || fallbackVal || '';
-  const selected = await window.api.selectFile(hint);
+  const selected = await showQuickPicker({
+    mode: 'file',
+    defaultPath: hint,
+    title: `Examinar Archivo ${side.toUpperCase()} (3-Way Text Merge)`
+  });
   if (selected) {
     const inEl = document.getElementById(targetId);
     if (inEl) inEl.value = selected;
@@ -5978,7 +6407,11 @@ async function browseTMergeOutputFile() {
   const curVal = document.getElementById('tMergeOutputPathInput')?.value?.trim() || '';
   const fallbackVal = document.getElementById('tMergeLeftPathInput')?.value?.trim() || appState.leftPath || '';
   const hint = curVal || fallbackVal || '';
-  const selected = await window.api.selectFile(hint);
+  const selected = await showQuickPicker({
+    mode: 'file',
+    defaultPath: hint,
+    title: 'Examinar Archivo de Salida (Merge)'
+  });
   if (selected) {
     const inEl = document.getElementById('tMergeOutputPathInput');
     if (inEl) inEl.value = selected;
@@ -6061,7 +6494,11 @@ async function saveTextEditContent() {
   let path = (document.getElementById('textEditPathInput')?.value || textEditState.filePath || '').trim();
   if (!path) {
     const hint = textEditState.filePath || appState.leftPath || '';
-    const selected = await window.api.selectFile(hint);
+    const selected = await showQuickPicker({
+      mode: 'file',
+      defaultPath: hint,
+      title: 'Guardar Archivo de Texto'
+    });
     if (!selected) return;
     path = selected;
     document.getElementById('textEditPathInput').value = path;
@@ -6078,7 +6515,11 @@ async function saveTextEditContent() {
 
 async function openTextEditFile() {
   const hint = (document.getElementById('textEditPathInput')?.value || textEditState.filePath || appState.leftPath || '').trim();
-  const selected = await window.api.selectFile(hint);
+  const selected = await showQuickPicker({
+    mode: 'file',
+    defaultPath: hint,
+    title: 'Abrir Archivo en Editor'
+  });
   if (selected) {
     openTextEdit(selected, selected);
   }
@@ -7307,7 +7748,11 @@ async function browseTextFile(side) {
   const currentPath = side === 'left' ? appState.currentTextFile.leftFullPath : appState.currentTextFile.rightFullPath;
   const otherPath = side === 'left' ? appState.currentTextFile.rightFullPath : appState.currentTextFile.leftFullPath;
   const hintPath = currentPath || otherPath || appState.leftPath || appState.rightPath || '';
-  const selected = await window.api.selectFile(hintPath);
+  const selected = await showQuickPicker({
+    mode: 'file',
+    defaultPath: hintPath,
+    title: side === 'left' ? 'Examinar Archivo de Texto Izquierdo' : 'Examinar Archivo de Texto Derecho'
+  });
   if (!selected) return;
   await loadTextFileForSide(side, selected);
 }
