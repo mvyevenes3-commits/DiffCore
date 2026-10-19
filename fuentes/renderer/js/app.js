@@ -471,8 +471,23 @@ function setupMenuListeners() {
     });
   }
 
-  // Global shortcut for settings (Cmd+, or Ctrl+,)
+  if (window.api && typeof window.api.onOpenHelp === 'function') {
+    window.api.onOpenHelp(() => {
+      if (window.api && typeof window.api.openHelp === 'function') {
+        window.api.openHelp();
+      }
+    });
+  }
+
+  // Global shortcuts (Settings, Help, Escape)
   window.addEventListener('keydown', (event) => {
+    if (event.key === 'F1' || ((event.metaKey || event.ctrlKey) && (event.key === '?' || event.key === '/'))) {
+      event.preventDefault();
+      if (window.api && typeof window.api.openHelp === 'function') {
+        window.api.openHelp();
+      }
+      return;
+    }
     if ((event.metaKey || event.ctrlKey) && event.key === ',') {
       event.preventDefault();
       openNextDiffOptionsModal();

@@ -111,6 +111,20 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('diff:compareProgress', handler);
     return () => ipcRenderer.removeListener('diff:compareProgress', handler);
   },
+  // Help Documentation
+  openHelp: (topic) => ipcRenderer.invoke('help:open', topic),
+  openHelpInBrowser: () => ipcRenderer.invoke('help:openInBrowser'),
+  onOpenHelp: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:openHelp', handler);
+    return () => ipcRenderer.removeListener('menu:openHelp', handler);
+  },
+  onNavigateHelp: (callback) => {
+    const handler = (_event, topic) => callback(topic);
+    ipcRenderer.on('help:navigateTo', handler);
+    return () => ipcRenderer.removeListener('help:navigateTo', handler);
+  },
+
   onFileChanged: (callback) => {
     const handler = (_event, data) => callback(data);
     ipcRenderer.on('file:changed', handler);

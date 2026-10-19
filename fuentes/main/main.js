@@ -1,5 +1,5 @@
 process.env.UV_THREADPOOL_SIZE = '64';
-const { app, BrowserWindow, ipcMain, dialog, nativeImage, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeImage, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -8,7 +8,7 @@ const sessionManager = require('./sessionManager');
 const fileOps = require('./fileOps');
 const archiveHandler = require('./archiveHandler');
 const javaDecompiler = require('./javaDecompiler');
-const { setupApplicationMenu, updateMenuLanguage, updateActiveView, getContextMenuForEditable, getContextMenuForSelection } = require('./menu');
+const { setupApplicationMenu, updateMenuLanguage, updateActiveView, getContextMenuForEditable, getContextMenuForSelection, setHelpOpener } = require('./menu');
 
 // Set application identity
 app.name = 'DiffCore';
@@ -127,6 +127,7 @@ app.whenReady().then(() => {
 
   createWindow();
   setupApplicationMenu(mainWindow);
+  setHelpOpener(openHelpWindow);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -697,4 +698,64 @@ ipcMain.handle('system:getTelemetry', async () => {
     uptime: Math.round(process.uptime())
   };
 });
+
+// Help Window Management (Dedicated Independent Documentation Window)
+let helpWindow = null;
+
+function openHelpWindow(topic = '') {
+  if (helpWindow && !helpWindow.isDestroyed()) {
+    if (topic) {
+      helpWindow.webContents.send('help:navigateTo', topic);
+    }
+    helpWindow.show();
+    helpWindow.focus();
+    return;
+  }
+
+  const appIcon = getAppIcon();
+
+  helpWindow = new BrowserWindow({
+    width: 1060,
+    height: 740,
+    minWidth: 800,
+    minHeight: 520,
+    title: 'Manual de Usuario - DiffCore Help',
+    backgroundColor: '#181b20',
+    icon: appIcon,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  if (appIcon && process.platform !== 'darwin') {
+    helpWindow.setIcon(appIcon);
+  }
+
+  helpWindow.loadFile(path.join(__dirname, '../renderer/help.html'), {
+    query: topic ? { topic } : {}
+  });
+
+  helpWindow.on('closed', () => {
+    helpWindow = null;
+  });
+}
+
+// Help IPC Handlers
+ipcMain.handle('help:open', (_event, topic) => {
+  openHelpWindow(topic);
+  return { success: true };
+});
+
+ipcMain.handle('help:openInBrowser', async () => {
+  const helpPath = path.join(__dirname, '../renderer/help.html');
+  await shell.openExternal(`file://${helpPath}`);
+  return { success: true };
+});
+
+module.exports = {
+  openHelpWindow
+};
+
 

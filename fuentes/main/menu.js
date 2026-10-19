@@ -32,6 +32,8 @@ const MENU_TRANSLATIONS = {
     zoom: 'Zoom',
     front: 'Bring All to Front',
     help: 'Help',
+    diffCoreHelp: 'DiffCore Help',
+    openHelpInBrowser: 'Open Manual in Web Browser...',
     exit: 'Exit'
   },
   es: {
@@ -65,6 +67,8 @@ const MENU_TRANSLATIONS = {
     zoom: 'Maximizar',
     front: 'Traer todo al frente',
     help: 'Ayuda',
+    diffCoreHelp: 'Ayuda de DiffCore',
+    openHelpInBrowser: 'Abrir Manual en el Navegador...',
     exit: 'Salir'
   },
   'pt-BR': {
@@ -98,6 +102,8 @@ const MENU_TRANSLATIONS = {
     zoom: 'Zoom',
     front: 'Trazer Tudo para a Frente',
     help: 'Ajuda',
+    diffCoreHelp: 'Ajuda do DiffCore',
+    openHelpInBrowser: 'Abrir Manual no Navegador...',
     exit: 'Sair'
   },
   fr: {
@@ -131,6 +137,8 @@ const MENU_TRANSLATIONS = {
     zoom: 'Zoom',
     front: 'Tout ramener au premier plan',
     help: 'Aide',
+    diffCoreHelp: 'Aide de DiffCore',
+    openHelpInBrowser: 'Ouvrir le Manuel dans le Navigateur...',
     exit: 'Quitter'
   },
   it: {
@@ -164,6 +172,8 @@ const MENU_TRANSLATIONS = {
     zoom: 'Zoom',
     front: 'Porta tutto in primo piano',
     help: 'Aiuto',
+    diffCoreHelp: 'Guida di DiffCore',
+    openHelpInBrowser: 'Apri il Manuale nel Browser...',
     exit: 'Esci'
   },
   ru: {
@@ -197,6 +207,8 @@ const MENU_TRANSLATIONS = {
     zoom: 'Масштабировать',
     front: 'Все окна — на передний план',
     help: 'Справка',
+    diffCoreHelp: 'Справка DiffCore',
+    openHelpInBrowser: 'Открыть руководство в браузере...',
     exit: 'Выход'
   }
 };
@@ -342,6 +354,26 @@ function buildMenuTemplate(lang, mainWindow) {
     label: t.help,
     submenu: [
       {
+        label: t.diffCoreHelp || 'DiffCore Help',
+        accelerator: isMac ? 'Cmd+?' : 'F1',
+        click: () => {
+          if (typeof helpOpener === 'function') {
+            helpOpener();
+          } else if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('menu:openHelp');
+          }
+        }
+      },
+      {
+        label: t.openHelpInBrowser || 'Open Manual in Web Browser...',
+        click: () => {
+          const { shell } = require('electron');
+          const path = require('path');
+          shell.openExternal(`file://${path.join(__dirname, '../renderer/help.html')}`);
+        }
+      },
+      { type: 'separator' },
+      {
         label: t.about,
         click: () => {
           if (mainWindow && !mainWindow.isDestroyed()) {
@@ -353,6 +385,11 @@ function buildMenuTemplate(lang, mainWindow) {
   });
 
   return template;
+}
+
+let helpOpener = null;
+function setHelpOpener(fn) {
+  helpOpener = fn;
 }
 
 function setupApplicationMenu(mainWindow, initialLang) {
@@ -409,5 +446,6 @@ module.exports = {
   updateMenuLanguage,
   updateActiveView,
   getContextMenuForEditable,
-  getContextMenuForSelection
+  getContextMenuForSelection,
+  setHelpOpener
 };

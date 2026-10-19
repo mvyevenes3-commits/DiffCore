@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual de Usuario - DiffCore Help</title>
+  <link rel="stylesheet" href="css/help.css">
+</head>
+<body>
+
+  <!-- TOP TOOLBAR -->
+  <header class="help-topbar">
+    <div class="help-topbar-left">
+      <div class="help-brand">
+        <span style="font-size: 18px;">⚡</span>
+        <span>DiffCore Help</span>
+        <span class="badge">v1.0.0</span>
+      </div>
+      <div class="help-nav-btns">
+        <button class="nav-btn" id="navPrevBtn" title="Atrás" disabled>◀</button>
+        <button class="nav-btn" id="navNextBtn" title="Adelante" disabled>▶</button>
+        <button class="nav-btn" title="Inicio" onclick="navigateTo('welcome')">🏠</button>
+      </div>
+    </div>
+    <div class="help-topbar-right">
+      <button class="top-action-btn" title="Abrir en el Navegador Web" onclick="openInExternalBrowser()">
+        <span>🌐</span> <span>Abrir en Navegador</span>
+      </button>
+      <button class="top-action-btn" title="Imprimir o Exportar PDF" onclick="printDocument()">
+        <span>🖨️</span> <span>Imprimir</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN HELP LAYOUT -->
+  <div class="help-layout">
+    
+    <!-- LEFT SIDEBAR: CONTENTS | INDEX | SEARCH -->
+    <aside class="help-sidebar" id="helpSidebar">
+      <!-- Search Input -->
+      <div class="sidebar-search-box">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="sidebar-search-input" id="sidebarSearchInput" placeholder="Buscar en el manual...">
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab-btn active" data-target="panelContents">Contents</button>
+        <button class="sidebar-tab-btn" data-target="panelIndex">Index</button>
+        <button class="sidebar-tab-btn" data-target="panelSearch">Search</button>
+      </div>
+
+      <!-- Tab Panels -->
+      <div class="sidebar-panels">
+        
+        <!-- PANEL 1: CONTENTS TREE -->
+        <div class="sidebar-panel active" id="panelContents">
+          <!-- 1. Bienvenido -->
+          <div class="tree-item active" data-topic="welcome" onclick="navigateTo('welcome')">
+            <span class="item-icon">📖</span> <span>Bienvenido a DiffCore</span>
+          </div>
+
+          <!-- 2. Inicio y Sesiones -->
+          <div class="tree-item" data-topic="home-screen" onclick="navigateTo('home-screen')">
+            <span class="item-icon">🏠</span> <span>Pantalla de Inicio y Sesiones</span>
+          </div>
+
+          <!-- 3. Comparador de Carpetas -->
+          <div class="tree-group expanded">
+            <div class="tree-folder-header" onclick="toggleFolder(this)">
+              <span class="tree-arrow">▶</span>
+              <span class="item-icon">📁</span>
+              <span>Comparador de Carpetas</span>
+            </div>
+            <div class="tree-children">
+              <div class="tree-item" data-topic="folder-compare" onclick="navigateTo('folder-compare')">
+                <span class="item-icon">📄</span> <span>Uso y Filtros (✳ ≠ ＝)</span>
+              </div>
+              <div class="tree-item" data-topic="folder-merge" onclick="navigateTo('folder-merge')">
+                <span class="item-icon">📄</span> <span>Fusión y Sincronización</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Comparador de Texto -->
+          <div class="tree-group expanded">
+            <div class="tree-folder-header" onclick="toggleFolder(this)">
+              <span class="tree-arrow">▶</span>
+              <span class="item-icon">📝</span>
+              <span>Comparador de Texto</span>
+            </div>
+            <div class="tree-children">
+              <div class="tree-item" data-topic="text-compare" onclick="navigateTo('text-compare')">
+                <span class="item-icon">📄</span> <span>Myers Diff y Edición en Vivo</span>
+              </div>
+              <div class="tree-item" data-topic="text-merge" onclick="navigateTo('text-merge')">
+                <span class="item-icon">📄</span> <span>Fusión 3-Way y Editor Rápido</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Soporte Java -->
+          <div class="tree-item" data-topic="java-support" onclick="navigateTo('java-support')">
+            <span class="item-icon">☕</span> <span>Descompilador Java y Empaquetados</span>
+          </div>
+
+          <!-- 6. Visores Especializados -->
+          <div class="tree-group">
+            <div class="tree-folder-header" onclick="toggleFolder(this)">
+              <span class="tree-arrow">▶</span>
+              <span class="item-icon">🔬</span>
+              <span>Visores Especializados</span>
+            </div>
+            <div class="tree-children">
+              <div class="tree-item" data-topic="hex-compare" onclick="navigateTo('hex-compare')">
+                <span class="item-icon">📄</span> <span>Comparador Hexadecimal</span>
+              </div>
+              <div class="tree-item" data-topic="table-compare" onclick="navigateTo('table-compare')">
+                <span class="item-icon">📄</span> <span>Tablas (Excel, CSV, TSV)</span>
+              </div>
+              <div class="tree-item" data-topic="picture-compare" onclick="navigateTo('picture-compare')">
+                <span class="item-icon">📄</span> <span>Comparador de Imágenes</span>
+              </div>
+              <div class="tree-item" data-topic="media-compare" onclick="navigateTo('media-compare')">
+                <span class="item-icon">📄</span> <span>Comparador Multimedia</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Reglas y Configuración -->
+          <div class="tree-item" data-topic="rules-settings" onclick="navigateTo('rules-settings')">
+            <span class="item-icon">⚙️</span> <span>Reglas y Configuración</span>
+          </div>
+
+          <!-- 8. Atajos de Teclado -->
+          <div class="tree-item" data-topic="shortcuts" onclick="navigateTo('shortcuts')">
+            <span class="item-icon">⌨️</span> <span>Atajos de Teclado</span>
+          </div>
+
+          <!-- 9. Git y CLI -->
+          <div class="tree-item" data-topic="cli-git" onclick="navigateTo('cli-git')">
+            <span class="item-icon">💻</span> <span>Línea de Comandos y Git</span>
+          </div>
+
+          <!-- 10. Glosario -->
+          <div class="tree-item" data-topic="glossary" onclick="navigateTo('glossary')">
+            <span class="item-icon">📚</span> <span>Glosario y Solución de Problemas</span>
+          </div>
+        </div>
+
+        <!-- PANEL 2: INDEX ALPHABETICAL -->
+        <div class="sidebar-panel" id="panelIndex">
+          <ul class="index-list" id="indexList"></ul>
+        </div>
+
+        <!-- PANEL 3: SEARCH RESULTS -->
+        <div class="sidebar-panel" id="panelSearch">
+          <ul class="search-results-list" id="searchResultsList">
+            <li style="padding: 16px; color: var(--text-muted); text-align: center;">Escribe en la caja de búsqueda superior para encontrar temas.</li>
+          </ul>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- RESIZER SPLITTER -->
+    <div class="help-resizer" id="helpResizer" title="Arrastrar para ajustar ancho"></div>
+
+    <!-- RIGHT MAIN CONTENT AREA -->
+    <main class="help-content" id="helpContentArea">
+      <div class="content-inner">
+
+        <!-- ========================================== -->
+        <!-- TOPIC 1: WELCOME                           -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-welcome">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Bienvenido</span>
+          </div>
+
+          <h1 class="doc-title">
+            <span>Bienvenido a DiffCore</span>
+            <div class="platform-badges">
+              <span class="plat-badge plat-mac">🍎 macOS</span>
+              <span class="plat-badge plat-win">🪟 Windows</span>
+              <span class="plat-badge plat-linux">🐧 Linux</span>
+            </div>
+          </h1>
+
+          <p class="doc-p">
+            <strong>DiffCore</strong> es una suite multiplataforma de comparación y sincronización de alto rendimiento, diseñada para replicar y modernizar con fidelidad milimétrica la experiencia de <strong>Beyond Compare 5</strong>.
+          </p>
+
+          <p class="doc-p">
+            Permite comparar código fuente, directorios completos, imágenes, hojas de cálculo, archivos binarios y multimedia con algoritmos paralelos ultra-rápidos en JavaScript y C++, ofreciendo latencias inferiores a 40ms incluso en carpetas con decenas de miles de archivos.
+          </p>
+
+          <div class="callout callout-tip">
+            <div class="callout-icon">💡</div>
+            <div class="callout-body">
+              <strong>Zero Dependencias de Java</strong>
+              DiffCore cuenta con un motor de descompilación Java nativo en WebAssembly. Puedes abrir archivos <code>.class</code> compilados y contenedores <code>.jar</code>, <code>.war</code> y <code>.ear</code> sin tener instalado Java (ni JDK ni JRE) en tu equipo.
+            </div>
+          </div>
+
+          <h2 class="doc-subtitle">🌟 Módulos Principales de DiffCore</h2>
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th style="width: 25%;">Herramienta</th>
+                <th style="width: 45%;">Descripción</th>
+                <th style="width: 30%;">Atajo Rápido</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>📁 Folder Compare</strong></td>
+                <td>Comparación recursiva lado a lado de carpetas y empaquetados.</td>
+                <td><kbd class="key-pill">Cmd/Ctrl + 1</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>📝 Text Compare</strong></td>
+                <td>Alineación Myers Diff, edición interactiva y detección de cambios intra-línea.</td>
+                <td><kbd class="key-pill">Cmd/Ctrl + 2</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>☕ Java to Source</strong></td>
+                <td>Descompilación al vuelo de bytecode <code>.class</code> y apertura de <code>.jar</code>.</td>
+                <td>Automático</td>
+              </tr>
+              <tr>
+                <td><strong>🔀 Folder Merge / Sync</strong></td>
+                <td>Fusión de 3 vías y sincronización espejo/actualización con reglas de seguridad.</td>
+                <td>Menú Sesiones</td>
+              </tr>
+              <tr>
+                <td><strong>🔢 Hex Compare</strong></td>
+                <td>Inspección hexadecimal byte a byte para ejecutables y datos binarios.</td>
+                <td>Automático / Tarjeta</td>
+              </tr>
+              <tr>
+                <td><strong>📊 Table Compare</strong></td>
+                <td>Comparación celda a celda de libros Excel (<code>.xlsx</code>) y <code>.csv</code>.</td>
+                <td>Tarjeta</td>
+              </tr>
+              <tr>
+                <td><strong>🖼️ Picture Compare</strong></td>
+                <td>Superposición y detección de tolerancias en imágenes PNG, JPG, WebP, SVG.</td>
+                <td>Tarjeta</td>
+              </tr>
+              <tr>
+                <td><strong>🎵 Media Compare</strong></td>
+                <td>Análisis de metadatos ID3, tasas de bits y codecs de audio y video.</td>
+                <td>Tarjeta</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="help-doc-footer">
+            <span></span>
+            <span class="doc-nav-next" onclick="navigateTo('home-screen')">Siguiente: Pantalla de Inicio ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 2: HOME SCREEN                       -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-home-screen" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Pantalla de Inicio</span>
+          </div>
+
+          <h1 class="doc-title">Pantalla de Inicio y Gestión de Sesiones</h1>
+
+          <p class="doc-p">
+            La pantalla de inicio de DiffCore actúa como centro de control centralizado, idéntico a Beyond Compare 5, permitiendo lanzar comparadores con un solo clic o arrastrando elementos directamente sobre los iconos de herramientas.
+          </p>
+
+          <!-- SVG DIAGRAM: HOME SCREEN ARCHITECTURE -->
+          <div class="diagram-card">
+            <div class="diagram-header">
+              <span>Arquitectura Visual de la Pantalla de Inicio</span>
+              <span style="color: var(--accent-color); font-size: 11px;">DiffCore 1.0</span>
+            </div>
+            <div class="diagram-body">
+              <svg viewBox="0 0 760 220" width="100%" height="220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Sidebar -->
+                <rect x="10" y="10" width="180" height="200" rx="6" fill="#1e2229" stroke="#2e3440" stroke-width="1.5"/>
+                <text x="24" y="36" fill="#fff" font-size="12" font-weight="bold">Sessions</text>
+                <text x="24" y="65" fill="#38bdf8" font-size="11">➕ New</text>
+                <text x="24" y="90" fill="#94a3b8" font-size="11">▼ Auto-saved</text>
+                <text x="38" y="115" fill="#e2e8f0" font-size="10">📁 Today (GestorOTT)</text>
+                <text x="38" y="135" fill="#94a3b8" font-size="10">📁 Yesterday</text>
+                <text x="38" y="155" fill="#94a3b8" font-size="10">📁 2 days ago</text>
+                <rect x="20" y="175" width="160" height="24" rx="4" fill="#121417" stroke="#2e3440"/>
+                <text x="30" y="191" fill="#64748b" font-size="10">🔍 Search session...</text>
+
+                <!-- Launcher Grid -->
+                <rect x="205" y="10" width="545" height="150" rx="6" fill="#121417" stroke="#2e3440" stroke-width="1.5"/>
+                <text x="225" y="32" fill="#94a3b8" font-size="11">Drag folders or files onto session icon to begin:</text>
+
+                <!-- Cards -->
+                <rect x="230" y="50" width="85" height="85" rx="6" fill="#1e2229" stroke="#38bdf8" stroke-width="1.2"/>
+                <text x="260" y="90" font-size="24">📁</text>
+                <text x="238" y="118" fill="#fff" font-size="10" font-weight="bold">Folder Compare</text>
+
+                <rect x="330" y="50" width="85" height="85" rx="6" fill="#1e2229" stroke="#2e3440"/>
+                <text x="360" y="90" font-size="24">🔀</text>
+                <text x="342" y="118" fill="#e2e8f0" font-size="10">Folder Merge</text>
+
+                <rect x="430" y="50" width="85" height="85" rx="6" fill="#1e2229" stroke="#2e3440"/>
+                <text x="460" y="90" font-size="24">🔄</text>
+                <text x="444" y="118" fill="#e2e8f0" font-size="10">Folder Sync</text>
+
+                <rect x="530" y="50" width="85" height="85" rx="6" fill="#1e2229" stroke="#2e3440"/>
+                <text x="560" y="90" font-size="24">📄</text>
+                <text x="540" y="118" fill="#e2e8f0" font-size="10">Text Compare</text>
+
+                <rect x="630" y="50" width="85" height="85" rx="6" fill="#1e2229" stroke="#2e3440"/>
+                <text x="660" y="90" font-size="24">☕</text>
+                <text x="642" y="118" fill="#e2e8f0" font-size="10">Java / Jar</text>
+
+                <!-- Telemetry Banner -->
+                <rect x="205" y="170" width="545" height="40" rx="6" fill="#1a1e24" stroke="#2e3440"/>
+                <text x="225" y="195" fill="#38bdf8" font-size="11" font-weight="bold">RAM: 182 MB</text>
+                <text x="380" y="195" fill="#4ade80" font-size="11" font-weight="bold">Latencia: 0.04s</text>
+                <text x="530" y="195" fill="#a855f7" font-size="11" font-weight="bold">Motor: Listo (Myers Diff)</text>
+              </svg>
+            </div>
+          </div>
+
+          <h2 class="doc-subtitle">1. Panel Lateral de Sesiones</h2>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Auto-saved (Auto-guardadas):</strong> DiffCore registra de forma inteligente las últimas comparaciones realizadas y las agrupa automáticamente en carpetas cronológicas (<em>Today</em>, <em>Yesterday</em>, <em>2 days ago</em>, etc.). Al hacer doble clic sobre cualquier sesión, se reabren de inmediato las rutas exactas.</li>
+            <li class="doc-list-item"><strong>Guardar Sesión:</strong> Puedes nombrar y fijar comparaciones recurrentes para abrirlas con un solo clic.</li>
+            <li class="doc-list-item"><strong>Filtro de búsqueda:</strong> Escribe en el campo de texto inferior para filtrar instantáneamente el árbol de sesiones.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">2. Barra de Telemetría en Vivo</h2>
+          <p class="doc-p">
+            En la base de la pantalla de inicio, DiffCore incluye un panel de estado en vivo que monitoriza:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Consumo de RAM:</strong> Monitor en tiempo real de la memoria del proceso con barra de color dinámico.</li>
+            <li class="doc-list-item"><strong>Latencia del Motor:</strong> Tiempo de ejecución medido en centésimas de segundo.</li>
+            <li class="doc-list-item"><strong>Estado del Motor:</strong> Notifica si el algoritmo Myers Diff está activo o en espera.</li>
+          </ul>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('welcome')">‹ Anterior: Bienvenido</span>
+            <span class="doc-nav-next" onclick="navigateTo('folder-compare')">Siguiente: Comparador de Carpetas ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 3: FOLDER COMPARE                    -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-folder-compare" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Comparador de Carpetas</span>
+          </div>
+
+          <h1 class="doc-title">Comparador de Carpetas (Folder Compare)</h1>
+
+          <p class="doc-p">
+            El Comparador de Carpetas permite alinear y comparar recursivamente estructuras completas de directorios o empaquetados en dos paneles independientes (Izquierda y Derecha).
+          </p>
+
+          <h2 class="doc-subtitle">🎯 Filtros de Visualización de la Barra de Herramientas</h2>
+          <p class="doc-p">
+            Igual que en Beyond Compare 5, la barra superior dispone de tres botones clave para filtrar los resultados de la comparación:
+          </p>
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th>Botón</th>
+                <th>Nombre</th>
+                <th>Comportamiento</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong style="color: #38bdf8;">✳ All</strong></td>
+                <td>Mostrar Todo</td>
+                <td>Muestra el árbol completo, incluyendo archivos idénticos, modificados y huérfanos.</td>
+              </tr>
+              <tr>
+                <td><strong style="color: #f87171;">≠ Diffs</strong></td>
+                <td>Diferencias</td>
+                <td>Oculta los archivos iguales y despliega exclusivamente los elementos con cambios o archivos que solo existen en un lado.</td>
+              </tr>
+              <tr>
+                <td><strong style="color: #4ade80;">＝ Same</strong></td>
+                <td>Iguales</td>
+                <td>Muestra únicamente los archivos idénticos en ambos lados.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2 class="doc-subtitle">📋 Menús Contextuales Nativos (Clic Derecho)</h2>
+          <p class="doc-p">
+            Al hacer clic derecho sobre cualquier fila, se despliega el menú contextual auténtico de Beyond Compare:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Abrir / Abrir con:</strong> Ejecuta el archivo con el editor de DiffCore o aplicaciones externas (Finder / Explorador de archivos, Terminal, o aplicación predeterminada del sistema).</li>
+            <li class="doc-list-item"><strong>Copiar a la derecha / izquierda:</strong> Copia quirúrgica del elemento o carpeta seleccionada preservando permisos y marcas de tiempo.</li>
+            <li class="doc-list-item"><strong>Comparar Contenido (<code>=?</code>):</strong> Abre el modal de comparación profunda para verificar sumas de comprobación CRC32, SHA-256 o comparación binaria byte a byte en segundo plano con motor multi-hilo.</li>
+            <li class="doc-list-item"><strong>Eliminar:</strong> Soporta envío seguro a la Papelera del sistema o borrado permanente forzado.</li>
+          </ul>
+
+          <div class="callout callout-note">
+            <div class="callout-icon">📌</div>
+            <div class="callout-body">
+              <strong>Doble Clic Inteligente</strong>
+              Al hacer doble clic sobre un archivo de código o texto, se abre una pestaña hija en el Comparador de Texto manteniendo el contexto del directorio. Si es una imagen o tabla, se abre en sus respectivos visores. Si es un archivo <code>.class</code>, se descompila automáticamente a código Java.
+            </div>
+          </div>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('home-screen')">‹ Anterior: Pantalla de Inicio</span>
+            <span class="doc-nav-next" onclick="navigateTo('folder-merge')">Siguiente: Fusión y Sincronización ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 4: FOLDER MERGE & SYNC               -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-folder-merge" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Fusión y Sincronización</span>
+          </div>
+
+          <h1 class="doc-title">Fusión de Carpetas (Folder Merge) y Sincronización (Sync)</h1>
+
+          <p class="doc-p">
+            DiffCore incorpora herramientas profesionales de reconciliación de datos para ramas de Git, copias de seguridad de servidores y despliegues sincronizados.
+          </p>
+
+          <h2 class="doc-subtitle">🔀 Folder Merge (Fusión 3-Way de Carpetas)</h2>
+          <p class="doc-p">
+            Compara simultáneamente tres ubicaciones:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Left (Izquierda):</strong> Tu versión de trabajo (Your branch / changes).</li>
+            <li class="doc-list-item"><strong>Base (Centro):</strong> El ancestro común (Base ancestor).</li>
+            <li class="doc-list-item"><strong>Right (Derecha):</strong> La versión remota o de otros desarrolladores (Their changes).</li>
+          </ul>
+          <p class="doc-p">
+            DiffCore detecta automáticamente adiciones no conflictivas y resalta los conflictos reales donde el mismo archivo fue modificado en ambas ramas.
+          </p>
+
+          <h2 class="doc-subtitle">🔄 Folder Sync (Sincronización de Carpetas)</h2>
+          <p class="doc-p">
+            Permite mantener dos carpetas sincronizadas bajo cuatro métodos estándar:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Update Right (Actualizar Derecha):</strong> Copia archivos nuevos o más recientes desde la izquierda hacia la derecha. No elimina archivos huérfanos.</li>
+            <li class="doc-list-item"><strong>Update Left (Actualizar Izquierda):</strong> Copia archivos nuevos o más recientes desde la derecha hacia la izquierda.</li>
+            <li class="doc-list-item"><strong>Mirror Right (Espejo a Derecha):</strong> Hace que el lado derecho sea una copia idéntica del izquierdo. Copia los archivos modificados y <em>elimina</em> de la derecha aquellos que no existan en la izquierda.</li>
+            <li class="doc-list-item"><strong>Mirror Left (Espejo a Izquierda):</strong> Hace que el lado izquierdo sea una copia idéntica del derecho.</li>
+          </ul>
+
+          <div class="callout callout-warning">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-body">
+              <strong>Vista Previa Antes de Ejecutar</strong>
+              Antes de aplicar cambios destructivos en modo Espejo, DiffCore presenta una lista completa de acciones (copias y eliminaciones previstas) para revisión y confirmación del usuario.
+            </div>
+          </div>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('folder-compare')">‹ Anterior: Comparador de Carpetas</span>
+            <span class="doc-nav-next" onclick="navigateTo('text-compare')">Siguiente: Comparador de Texto ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 5: TEXT COMPARE                      -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-text-compare" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Comparador de Texto</span>
+          </div>
+
+          <h1 class="doc-title">Comparador de Texto (Text Compare)</h1>
+
+          <p class="doc-p">
+            El Comparador de Texto implementa el algoritmo <strong>Myers Diff</strong> de longitud mínima con alineación bi-dimensional idéntica a Beyond Compare 5.
+          </p>
+
+          <h2 class="doc-subtitle">✨ Características Clave del Motor de Texto</h2>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Alineación Intra-línea:</strong> Cuando dos líneas son similares pero difieren en algunas palabras o caracteres, DiffCore resalta en rojo brillante las diferencias exactas dentro de la línea.</li>
+            <li class="doc-list-item"><strong>Líneas Fantasma (Ghost Lines):</strong> Si un bloque de código fue insertado o eliminado, el lado opuesto dibuja automáticamente un relleno estriado para mantener sincronizado el número de línea visual en ambos paneles.</li>
+            <li class="doc-list-item"><strong>Edición en Vivo:</strong> Puedes escribir, pegar o borrar código directamente en cualquiera de los dos lados. El motor recalcula las diferencias de forma instantánea en memoria sin bloquear la interfaz.</li>
+            <li class="doc-list-item"><strong>Deshacer y Rehacer Ilimitado:</strong> Cada panel mantiene su pila de cambios independiente con <kbd class="key-pill">Cmd/Ctrl + Z</kbd> y <kbd class="key-pill">Cmd/Ctrl + Y</kbd>.</li>
+            <li class="doc-list-item"><strong>Riel de Visión General (Overview Rail):</strong> Una franja vertical en el extremo derecho muestra un mapa térmico de todo el archivo con marcas de color rojo (diferencias) y verde (inserciones) para saltar rápidamente a cualquier punto del documento.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">🔍 Búsqueda y Reemplazo Integrado</h2>
+          <p class="doc-p">
+            Presiona <kbd class="key-pill">Cmd/Ctrl + F</kbd> para activar la barra de búsqueda y <kbd class="key-pill">Cmd/Ctrl + H</kbd> para reemplazar texto con soporte para:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item">Coincidencia de mayúsculas y minúsculas (Match Case).</li>
+            <li class="doc-list-item">Palabras completas (Whole Words).</li>
+            <li class="doc-list-item">Expresiones regulares (Regex).</li>
+          </ul>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('folder-merge')">‹ Anterior: Fusión y Sincronización</span>
+            <span class="doc-nav-next" onclick="navigateTo('text-merge')">Siguiente: Fusión 3-Way y Editor Rápido ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 5b: TEXT MERGE & QUICK EDIT          -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-text-merge" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span class="breadcrumb-link" onclick="navigateTo('text-compare')">Comparador de Texto</span> › <span>Fusión 3-Way y Editor Rápido</span>
+          </div>
+
+          <h1 class="doc-title">Fusión 3-Way de Texto (Text Merge) y Editor Rápido</h1>
+
+          <p class="doc-p">
+            La herramienta de <strong>Text Merge</strong> está diseñada para resolver colisiones y conflictos complejos al integrar ramas de control de versiones o conciliar diferentes revisiones de código fuente.
+          </p>
+
+          <h2 class="doc-subtitle">🔀 Disposición de los 3 Paneles Superiores y Panel de Salida</h2>
+          <p class="doc-p">
+            A diferencia de la comparación estándar de dos vías, la fusión 3-way presenta tres paneles de entrada en la parte superior y un panel de resultado consolidado en la parte inferior:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Panel Izquierdo (Left / Your branch):</strong> Contiene tus cambios locales en curso.</li>
+            <li class="doc-list-item"><strong>Panel Central (Center / Base Ancestor):</strong> La versión base u origen común antes de que ambas partes realizaran modificaciones.</li>
+            <li class="doc-list-item"><strong>Panel Derecho (Right / Their branch):</strong> La versión remota o de tu compañero de equipo.</li>
+            <li class="doc-list-item"><strong>Panel Inferior (Output / Merged Result):</strong> El archivo final resultante donde se consolidan las líneas automáticamente resueltas y los bloques seleccionados manualmente.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">⚡ Adopción con un Solo Clic</h2>
+          <p class="doc-p">
+            Junto a cada sección en conflicto, DiffCore sitúa botones de acción rápida:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Tomar de Izquierda (Take Left):</strong> Inyecta el contenido de tu rama local directamente en la posición correspondiente del archivo de salida.</li>
+            <li class="doc-list-item"><strong>Tomar de Derecha (Take Right):</strong> Inyecta el bloque de la rama remota.</li>
+            <li class="doc-list-item"><strong>Conservar Base (Keep Center):</strong> Descarta ambos cambios concurrentes y preserva la versión base original.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">📝 Editor Rápido de Texto (Text Edit)</h2>
+          <p class="doc-p">
+            Si solo necesitas examinar, modificar o depurar un archivo individual sin abrir un comparador de dos paneles, DiffCore incluye el modo <strong>Text Edit</strong> con numeración de líneas, detección de sintaxis, estadísticas en vivo y atajos de guardado estándar.
+          </p>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('text-compare')">‹ Anterior: Comparador de Texto</span>
+            <span class="doc-nav-next" onclick="navigateTo('java-support')">Siguiente: Soporte Java al Vuelo ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 6: JAVA SUPPORT                      -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-java-support" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Soporte Java al Vuelo</span>
+          </div>
+
+          <h1 class="doc-title">
+            <span>Soporte Java al Vuelo: Descompilador y Empaquetados</span>
+            <div class="platform-badges">
+              <span class="plat-badge" style="background: rgba(234, 88, 12, 0.2); color: #fb923c; border: 1px solid rgba(234, 88, 12, 0.4);">☕ Java class to source</span>
+              <span class="plat-badge" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">Sin JRE/JDK</span>
+            </div>
+          </h1>
+
+          <p class="doc-p">
+            DiffCore incorpora soporte nativo para ingeniería inversa y comparación de ejecutables Java bytecode (<code>.class</code>) y contenedores de empaquetados (<code>.jar</code>, <code>.war</code>, <code>.ear</code>, <code>.zip</code>), replicando la función <strong>"Java class to source"</strong> de Beyond Compare 5.
+          </p>
+
+          <!-- SVG DIAGRAM: JAVA DECOMPILER FLOW -->
+          <div class="diagram-card">
+            <div class="diagram-header">
+              <span>Flujo de Trabajo del Motor de Descompilación y Empaquetados</span>
+              <span style="color: var(--accent-color); font-size: 11px;">Vineflower Wasm Engine</span>
+            </div>
+            <div class="diagram-body">
+              <svg viewBox="0 0 760 180" width="100%" height="180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Step 1: Input -->
+                <rect x="15" y="45" width="140" height="90" rx="8" fill="#1e2229" stroke="#38bdf8" stroke-width="1.5"/>
+                <text x="35" y="80" font-size="22">☕ 📦</text>
+                <text x="35" y="105" fill="#fff" font-size="12" font-weight="bold">Archivos de Entrada</text>
+                <text x="35" y="122" fill="#94a3b8" font-size="10">.class / .jar / .war / .ear</text>
+
+                <!-- Arrow 1 -->
+                <path d="M165 90 H205" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 4"/>
+                <polygon points="205,86 215,90 205,94" fill="#38bdf8"/>
+
+                <!-- Step 2: Detection & Unpack -->
+                <rect x="225" y="30" width="180" height="120" rx="8" fill="#1e2229" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="240" y="58" fill="#f59e0b" font-size="11" font-weight="bold">DETECCIÓN DE CABECERA</text>
+                <text x="240" y="80" fill="#e2e8f0" font-size="11">• 0xCAFEBABE ➔ .class</text>
+                <text x="240" y="100" fill="#e2e8f0" font-size="11">• PK\x03\x04 ➔ Contenedor ZIP</text>
+                <text x="240" y="125" fill="#4ade80" font-size="10" font-weight="bold">Virtualización en caché temporal</text>
+
+                <!-- Arrow 2 -->
+                <path d="M415 90 H455" stroke="#38bdf8" stroke-width="2"/>
+                <polygon points="455,86 465,90 455,94" fill="#38bdf8"/>
+
+                <!-- Step 3: Action -->
+                <rect x="475" y="25" width="265" height="130" rx="8" fill="#1e2229" stroke="#22c55e" stroke-width="1.5"/>
+                <text x="490" y="52" fill="#4ade80" font-size="12" font-weight="bold">RESULTADO EN DIFFCORE</text>
+                
+                <rect x="490" y="65" width="235" height="36" rx="4" fill="#121417" stroke="#2e3440"/>
+                <text x="500" y="88" fill="#38bdf8" font-size="11">📦 .jar/.war ➔ Abre en Folder Compare</text>
+
+                <rect x="490" y="108" width="235" height="36" rx="4" fill="#121417" stroke="#2e3440"/>
+                <text x="500" y="131" fill="#fb923c" font-size="11">☕ .class ➔ Código Java descompilado</text>
+              </svg>
+            </div>
+          </div>
+
+          <h2 class="doc-subtitle">1. Descompilación al Vuelo de Clases (<code>.class</code>)</h2>
+          <p class="doc-p">
+            Al abrir cualquier archivo <code>.class</code> en el Comparador de Texto:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item">El motor <strong>Vineflower Wasm</strong> decompila el bytecode en memoria en menos de 100ms.</li>
+            <li class="doc-list-item">Se presenta como código fuente Java estándar con numeración de líneas y resaltado de sintaxis completo.</li>
+            <li class="doc-list-item">En la barra de estado inferior se indica claramente el formato: <code>Java class to source ▾</code>.</li>
+            <li class="doc-list-item"><strong>Seguridad:</strong> El archivo descompilado queda marcado en modo <em>Solo Lectura</em> para evitar corromper el binario compilado original.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">2. Apertura de Contenedores (<code>.jar</code>, <code>.war</code>, <code>.ear</code>)</h2>
+          <p class="doc-p">
+            DiffCore trata los empaquetados Java como carpetas de primer nivel:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item">Puedes seleccionar un archivo <code>.jar</code> tanto en el lado izquierdo como en el derecho del <strong>Comparador de Carpetas</strong>.</li>
+            <li class="doc-list-item">La estructura interna (paquetes <code>com/empresa/...</code>, <code>META-INF/</code>, archivos <code>.properties</code>, <code>.xml</code>) se expande y compara árbol contra árbol.</li>
+            <li class="doc-list-item">Al hacer doble clic sobre cualquier clase interna, se abre y descompila inmediatamente en el Comparador de Texto.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">3. Redirección Inteligente Drag & Drop</h2>
+          <p class="doc-p">
+            Si arrastras un archivo <code>.jar</code>, <code>.war</code> o <code>.ear</code> sobre el Comparador de Archivos de Texto:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item">DiffCore detecta que es un contenedor comprimido.</li>
+            <li class="doc-list-item">Cierra automáticamente la pestaña de texto para no dejar pestañas vacías abiertas.</li>
+            <li class="doc-list-item">Abre de inmediato el <strong>Comparador de Carpetas</strong> con el empaquetado desplegado y listo para comparar.</li>
+          </ul>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('text-compare')">‹ Anterior: Comparador de Texto</span>
+            <span class="doc-nav-next" onclick="navigateTo('hex-compare')">Siguiente: Comparador Hexadecimal ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 7: HEX COMPARE                       -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-hex-compare" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Comparador Hexadecimal</span>
+          </div>
+
+          <h1 class="doc-title">Comparador Hexadecimal (Hex Compare)</h1>
+
+          <p class="doc-p">
+            El Comparador Hexadecimal permite inspeccionar y comparar archivos binarios arbitrarios (ejecutables <code>.exe</code>, <code>.dylib</code>, <code>.so</code>, imágenes de disco <code>.iso</code> o archivos corruptos) a nivel de bytes.
+          </p>
+
+          <h2 class="doc-subtitle">Diseño del Panel Hexadecimal</h2>
+          <p class="doc-p">
+            La vista organiza cada archivo en tres columnas tradicionales:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Offset (Dirección):</strong> Posición del byte en formato hexadecimal (ej. <code>00000000</code>, <code>00000010</code>).</li>
+            <li class="doc-list-item"><strong>Datos Hexadecimales:</strong> 16 bytes por fila representados en base 16 (ej. <code>7F 45 4C 46 ...</code>). Los bytes modificados se resaltan en color rojo.</li>
+            <li class="doc-list-item"><strong>Representación ASCII:</strong> Visualización de caracteres alfanuméricos legibles en el lateral derecho, reemplazando caracteres de control por puntos (<code>.</code>).</li>
+          </ul>
+
+          <h2 class="doc-subtitle">Alerta de Archivos Binarios No Soportados</h2>
+          <p class="doc-p">
+            Si intentas abrir un archivo binario directamente en el comparador de texto plano, DiffCore detiene la carga para evitar congelamientos o caracteres basura y despliega un diálogo emergente:
+          </p>
+          <div class="callout callout-warning">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-body">
+              <strong>Archivo Binario No Soportado como Texto</strong>
+              <em>"El archivo seleccionado contiene datos binarios que no corresponden a texto plano ni a clases Java compiladas. ¿Deseas abrirlo en el Comparador Hexadecimal?"</em>
+              <br><br>
+              Al presionar <strong>"Abrir en Comparador Hexadecimal"</strong>, DiffCore redirige automáticamente el archivo al visor binario y cierra de forma limpia la sesión de texto.
+            </div>
+          </div>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('java-support')">‹ Anterior: Soporte Java al Vuelo</span>
+            <span class="doc-nav-next" onclick="navigateTo('table-compare')">Siguiente: Comparador de Tablas ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 8: TABLE COMPARE                     -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-table-compare" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Comparador de Tablas</span>
+          </div>
+
+          <h1 class="doc-title">Comparador de Tablas (Table Compare)</h1>
+
+          <p class="doc-p">
+            Diseñado para analizar diferencias en hojas de cálculo y bases de datos tabulares sin necesidad de abrir suites ofimáticas pesadas como Excel o LibreOffice.
+          </p>
+
+          <h2 class="doc-subtitle">Formatos Soportados</h2>
+          <ul class="doc-list">
+            <li class="doc-list-item">Microsoft Excel: <code>.xlsx</code>, <code>.xls</code></li>
+            <li class="doc-list-item">Valores separados por comas: <code>.csv</code></li>
+            <li class="doc-list-item">Valores separados por tabuladores: <code>.tsv</code></li>
+          </ul>
+
+          <h2 class="doc-subtitle">Funciones de Comparación</h2>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Alineación por Fila Clave:</strong> Alinea filas según la clave primaria o columna identificadora para evitar desfases si se agregaron o eliminaron registros intercalados.</li>
+            <li class="doc-list-item"><strong>Resaltado Celda por Celda:</strong> Resalta en rojo las celdas con valores discrepantes y en verde las celdas agregadas.</li>
+            <li class="doc-list-item"><strong>Detección de Tipos de Datos:</strong> Discrimina automáticamente entre números, fechas, texto y fórmulas.</li>
+          </ul>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('hex-compare')">‹ Anterior: Comparador Hexadecimal</span>
+            <span class="doc-nav-next" onclick="navigateTo('picture-compare')">Siguiente: Comparador de Imágenes ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 9: PICTURE COMPARE                   -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-picture-compare" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Comparador de Imágenes</span>
+          </div>
+
+          <h1 class="doc-title">Comparador de Imágenes (Picture Compare)</h1>
+
+          <p class="doc-p">
+            Permite inspeccionar diferencias visuales sutiles entre capturas de pantalla, iconos, banners y diseños web.
+          </p>
+
+          <h2 class="doc-subtitle">Formatos Compatibles</h2>
+          <p class="doc-p">
+            <code>PNG</code>, <code>JPEG / JPG</code>, <code>GIF</code>, <code>WebP</code>, <code>SVG</code>, <code>BMP</code>, <code>ICO</code>.
+          </p>
+
+          <h2 class="doc-subtitle">Modos de Visualización</h2>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Lado a Lado (Side-by-Side):</strong> Muestra ambas imágenes sincronizando el nivel de zoom y el desplazamiento del lienzo.</li>
+            <li class="doc-list-item"><strong>Superposición (Overlap / Blend):</strong> Superpone ambas imágenes con un control deslizante de opacidad para alternar rápidamente entre una y otra.</li>
+            <li class="doc-list-item"><strong>Máscara de Diferencias (Difference Mask):</strong> Realiza una resta de píxeles en tiempo real: los píxeles idénticos se muestran oscuros, mientras que los píxeles modificados brillan en color magenta brillante.</li>
+            <li class="doc-list-item"><strong>Umbral de Tolerancia:</strong> Permite ignorar pequeñas variaciones de compresión JPEG o anti-aliasing.</li>
+          </ul>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('table-compare')">‹ Anterior: Comparador de Tablas</span>
+            <span class="doc-nav-next" onclick="navigateTo('media-compare')">Siguiente: Comparador Multimedia ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 10: MEDIA COMPARE                    -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-media-compare" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Comparador Multimedia</span>
+          </div>
+
+          <h1 class="doc-title">Comparador Multimedia (Media Compare)</h1>
+
+          <p class="doc-p">
+            Especializado en la comparación técnica de metadatos de archivos de audio y video: <code>MP3</code>, <code>FLAC</code>, <code>WAV</code>, <code>M4A</code>, <code>OGG</code>, <code>MP4</code>.
+          </p>
+
+          <h2 class="doc-subtitle">Campos Comparados</h2>
+          <ul class="doc-list">
+            <li class="doc-list-item">Etiquetas ID3: Título, Artista, Álbum, Año, Género, Pista.</li>
+            <li class="doc-list-item">Metadatos de Audio: Bitrate (kbps), Tasa de muestreo (Hz), Canales (Mono/Stereo), Duración en segundos y milisegundos.</li>
+            <li class="doc-list-item">Metadatos de Video: Resolución (ancho x alto), Framerate (FPS), Códec de video y perfil.</li>
+          </ul>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('picture-compare')">‹ Anterior: Comparador de Imágenes</span>
+            <span class="doc-nav-next" onclick="navigateTo('rules-settings')">Siguiente: Reglas y Configuración ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 10b: RULES & SETTINGS                -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-rules-settings" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Reglas y Configuración</span>
+          </div>
+
+          <h1 class="doc-title">Reglas de Comparación y Configuración (Options)</h1>
+
+          <p class="doc-p">
+            DiffCore te permite personalizar minuciosamente qué diferencias se consideran relevantes y cómo se comportan los motores de análisis mediante el diálogo de Opciones (<kbd class="key-pill">Cmd + ,</kbd> en macOS / <kbd class="key-pill">Ctrl + ,</kbd> en Windows/Linux).
+          </p>
+
+          <h2 class="doc-subtitle">⚙️ Criterios de Comparación de Carpetas</h2>
+          <p class="doc-p">
+            En la configuración de sesiones de carpetas puedes configurar los métodos de validación:
+          </p>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Tamaño de archivo:</strong> Considera diferentes dos archivos con distinto número de bytes (rápido).</li>
+            <li class="doc-list-item"><strong>Fecha y hora (Timestamp):</strong> Compara la fecha de última modificación, con tolerancia opcional de 2 segundos para sistemas de archivos FAT/FAT32.</li>
+            <li class="doc-list-item"><strong>Contenido por Hash (CRC32 / MD5 / SHA256):</strong> Calcula el hash en segundo plano para garantizar que dos archivos son idénticos bit a bit.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">🔤 Reglas de Comparación de Texto</h2>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Ignorar espacios en blanco:</strong> Omite diferencias provocadas exclusivamente por indentaciones, espacios finales o espacios consecutivos.</li>
+            <li class="doc-list-item"><strong>Ignorar finales de línea (CRLF vs LF):</strong> Crucial al trabajar en proyectos multiplataforma entre Windows y Unix/macOS para evitar que todas las líneas aparezcan marcadas como modificadas.</li>
+            <li class="doc-list-item"><strong>Ignorar mayúsculas y minúsculas (Case Insensitive):</strong> Trata palabras con diferencias de capitalización como equivalentes cuando no afecten el significado semántico.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">🎨 Apariencia e Idioma</h2>
+          <p class="doc-p">
+            Puedes alternar entre el <strong>Tema Oscuro de Alto Contraste</strong> (diseñado para largas jornadas de trabajo con acentos Beyond Compare 5) y el <strong>Tema Claro</strong>, así como alternar instantáneamente entre 6 idiomas (Español, Inglés, Portugués, Francés, Italiano y Ruso) sin reiniciar la aplicación.
+          </p>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('media-compare')">‹ Anterior: Comparador Multimedia</span>
+            <span class="doc-nav-next" onclick="navigateTo('shortcuts')">Siguiente: Atajos de Teclado ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 11: SHORTCUTS                        -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-shortcuts" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Atajos de Teclado</span>
+          </div>
+
+          <h1 class="doc-title">Referencia de Atajos de Teclado</h1>
+
+          <p class="doc-p">
+            DiffCore adapta sus atajos al sistema operativo en el que se ejecuta: en macOS utiliza <kbd class="key-pill">Cmd ⌘</kbd> y en Windows y Linux utiliza <kbd class="key-pill">Ctrl</kbd>.
+          </p>
+
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th style="width: 40%;">Acción</th>
+                <th style="width: 30%;">macOS</th>
+                <th style="width: 30%;">Windows / Linux</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Abrir Manual de Ayuda</strong></td>
+                <td><kbd class="key-pill">F1</kbd> o <kbd class="key-pill">Cmd + ?</kbd></td>
+                <td><kbd class="key-pill">F1</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Nueva pestaña / comparación</strong></td>
+                <td><kbd class="key-pill">Cmd + T</kbd> / <kbd class="key-pill">Cmd + N</kbd></td>
+                <td><kbd class="key-pill">Ctrl + T</kbd> / <kbd class="key-pill">Ctrl + N</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Cerrar pestaña activa</strong></td>
+                <td><kbd class="key-pill">Cmd + W</kbd></td>
+                <td><kbd class="key-pill">Ctrl + W</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Guardar archivo izquierdo</strong></td>
+                <td><kbd class="key-pill">Cmd + S</kbd></td>
+                <td><kbd class="key-pill">Ctrl + S</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Guardar archivo derecho</strong></td>
+                <td><kbd class="key-pill">Cmd + Shift + S</kbd></td>
+                <td><kbd class="key-pill">Ctrl + Shift + S</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Siguiente Diferencia</strong></td>
+                <td><kbd class="key-pill">Cmd + ↓</kbd> o <kbd class="key-pill">F7</kbd></td>
+                <td><kbd class="key-pill">Ctrl + ↓</kbd> o <kbd class="key-pill">F7</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Diferencia Anterior</strong></td>
+                <td><kbd class="key-pill">Cmd + ↑</kbd> o <kbd class="key-pill">Shift + F7</kbd></td>
+                <td><kbd class="key-pill">Ctrl + ↑</kbd> o <kbd class="key-pill">Shift + F7</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Buscar texto</strong></td>
+                <td><kbd class="key-pill">Cmd + F</kbd></td>
+                <td><kbd class="key-pill">Ctrl + F</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Reemplazar texto</strong></td>
+                <td><kbd class="key-pill">Cmd + H</kbd></td>
+                <td><kbd class="key-pill">Ctrl + H</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Recargar comparación</strong></td>
+                <td><kbd class="key-pill">Cmd + R</kbd></td>
+                <td><kbd class="key-pill">Ctrl + R</kbd> o <kbd class="key-pill">F5</kbd></td>
+              </tr>
+              <tr>
+                <td><strong>Intercambiar lados (Swap)</strong></td>
+                <td><kbd class="key-pill">Cmd + Shift + X</kbd></td>
+                <td><kbd class="key-pill">Ctrl + Shift + X</kbd></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('media-compare')">‹ Anterior: Comparador Multimedia</span>
+            <span class="doc-nav-next" onclick="navigateTo('cli-git')">Siguiente: Línea de Comandos y Git ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 12: CLI & GIT                        -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-cli-git" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Línea de Comandos y Git</span>
+          </div>
+
+          <h1 class="doc-title">Línea de Comandos (CLI) e Integración con Git</h1>
+
+          <p class="doc-p">
+            DiffCore puede lanzarse directamente desde cualquier terminal de macOS, Linux o PowerShell/CMD de Windows, y puede configurarse como la herramienta gráfica oficial de diferencias y resolución de conflictos de Git.
+          </p>
+
+          <h2 class="doc-subtitle">1. Uso desde la Terminal</h2>
+          <pre class="doc-code"># Comparar dos archivos de texto o clases Java:
+diffcore archivo1.java archivo2.java
+
+# Comparar dos carpetas o empaquetados .jar:
+diffcore /ruta/servidor/app.jar /ruta/local/app.jar
+
+# Fusión de 3 vías (Left, Right, Base, Output):
+diffcore mi_codigo.js codigo_remoto.js ancestro.js salida_resuelta.js</pre>
+
+          <h2 class="doc-subtitle">2. Configurar DiffCore como Git DiffTool y MergeTool</h2>
+          <p class="doc-p">
+            Ejecuta los siguientes comandos en tu terminal para registrar DiffCore en tu configuración global de Git (<code>~/.gitconfig</code>):
+          </p>
+          <pre class="doc-code"># 1. Configurar herramienta de comparación (git diff)
+git config --global diff.tool diffcore
+git config --global difftool.diffcore.cmd "diffcore \"\$LOCAL\" \"\$REMOTE\""
+git config --global difftool.prompt false
+
+# 2. Configurar herramienta de fusión (git merge)
+git config --global merge.tool diffcore
+git config --global mergetool.diffcore.cmd "diffcore \"\$LOCAL\" \"\$REMOTE\" \"\$BASE\" \"\$MERGED\""
+git config --global mergetool.diffcore.trustExitCode true</pre>
+
+          <p class="doc-p">
+            A partir de ese momento, ejecutar <code class="inline-code">git difftool</code> o <code class="inline-code">git mergetool</code> abrirá automáticamente DiffCore en una pestaña independiente para resolver los cambios.
+          </p>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('shortcuts')">‹ Anterior: Atajos de Teclado</span>
+            <span class="doc-nav-next" onclick="navigateTo('glossary')">Siguiente: Glosario y Solución de Problemas ›</span>
+          </div>
+        </article>
+
+        <!-- ========================================== -->
+        <!-- TOPIC 13: GLOSSARY                         -->
+        <!-- ========================================== -->
+        <article class="doc-section-content" id="doc-glossary" style="display: none;">
+          <div class="help-breadcrumbs">
+            <span class="breadcrumb-link" onclick="navigateTo('welcome')">Inicio</span> › <span>Glosario</span>
+          </div>
+
+          <h1 class="doc-title">Glosario y Solución de Problemas (Troubleshooting)</h1>
+
+          <h2 class="doc-subtitle">📚 Glosario de Conceptos</h2>
+          <ul class="doc-list">
+            <li class="doc-list-item"><strong>Myers Diff:</strong> Algoritmo de optimización que encuentra la secuencia de edición más corta posible entre dos secuencias de texto. Garantiza la menor cantidad de líneas añadidas y borradas.</li>
+            <li class="doc-list-item"><strong>Línea Fantasma (Ghost Line):</strong> Fila vacía sintética generada por DiffCore para alinear horizontalmente bloques de código donde un lado carece de las líneas presentes en el otro.</li>
+            <li class="doc-list-item"><strong>Bytecode Java:</strong> Código binario compilado (archivo <code>.class</code>) interpretado por la máquina virtual Java. DiffCore lo descompila a código fuente Java legible.</li>
+            <li class="doc-list-item"><strong>CRC32 / SHA-256:</strong> Algoritmos criptográficos y de suma de comprobación que validan si el contenido exacto de dos archivos es idéntico byte por byte sin necesidad de abrirlos visualmente.</li>
+            <li class="doc-list-item"><strong>Archivo Huérfano:</strong> Archivo o carpeta que existe en uno de los lados de la comparación pero no tiene contraparte en el otro.</li>
+          </ul>
+
+          <h2 class="doc-subtitle">❓ Preguntas Frecuentes y Solución de Problemas</h2>
+          
+          <h3 class="doc-section">¿Por qué al arrastrar un .jar a Texto me envía a Carpetas?</h3>
+          <p class="doc-p">
+            Un archivo <code>.jar</code> es en realidad un archivo comprimido que contiene paquetes y múltiples clases compiladas. DiffCore detecta automáticamente esta estructura y lo abre en el Comparador de Carpetas, cerrando la pestaña de texto para permitirte navegar todos sus paquetes.
+          </p>
+
+          <h3 class="doc-section">¿Puedo modificar una clase .class descompilada y guardarla?</h3>
+          <p class="doc-p">
+            No directamente sobre el binario compilado. Los archivos <code>.class</code> se cargan en modo solo lectura para proteger el archivo de corrupción. Para modificar el código, puedes copiar el texto descompilado y guardarlo en un archivo con extensión <code>.java</code>.
+          </p>
+
+          <h3 class="doc-section">¿Cómo mantener abierta esta ventana de ayuda mientras uso DiffCore?</h3>
+          <p class="doc-p">
+            Esta ventana de ayuda es un proceso independiente. Puedes posicionarla al lado de tu ventana principal de DiffCore, moverla a un segundo monitor o presionar el botón <strong>"Abrir en Navegador"</strong> en la esquina superior derecha para leerla en una pestaña de Google Chrome, Safari, Firefox o Edge.
+          </p>
+
+          <div class="help-doc-footer">
+            <span class="doc-nav-prev" onclick="navigateTo('cli-git')">‹ Anterior: Línea de Comandos y Git</span>
+            <span class="doc-nav-next" onclick="navigateTo('welcome')">Volver al Inicio ›</span>
+          </div>
+        </article>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script src="js/help.js"></script>
+</body>
+</html>
