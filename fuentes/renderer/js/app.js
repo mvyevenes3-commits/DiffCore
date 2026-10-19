@@ -111,6 +111,7 @@ let appState = {
   structureMode: true,
   selectedIndex: -1,
   selectedIndices: new Set(),
+  selectedPaths: new Set(),
   lastClickedIndex: -1,
   currentFilter: localStorage.getItem('diffcore_filter') || 'diffs', // 'all', 'diffs', 'same', 'orphans' (default diffs)
   exclusions: loadExclusionsConfig(),
@@ -1054,6 +1055,7 @@ function openFolderCompare(left = '', right = '', sessionName = 'Folder Compare'
   // Always reset folderOpenState for newly opened sessions so subfolders start collapsed
   appState.folderOpenState.clear();
   appState.selectedIndices.clear();
+  appState.selectedPaths.clear();
   appState.selectedIndex = -1;
   appState.lastClickedIndex = -1;
   appState.lastComparedLeft = '';
@@ -1118,6 +1120,10 @@ function renderEmptyFolderCompare(sessionName = 'New Folder Compare') {
   appState.comparisonItems = [];
   appState.treeRoot = null;
   appState.treeFlattened = [];
+  appState.selectedIndices.clear();
+  appState.selectedPaths.clear();
+  appState.selectedIndex = -1;
+  appState.lastClickedIndex = -1;
 
   const inL = document.getElementById('leftPathInput');
   const inR = document.getElementById('rightPathInput');
@@ -1854,6 +1860,7 @@ function closeAllComparisonTabsAndGoHome() {
   appState.selectedSession = null;
   appState.folderOpenState.clear();
   appState.selectedIndices.clear();
+  appState.selectedPaths.clear();
   appState.selectedIndex = -1;
   appState.lastClickedIndex = -1;
   appState.lastComparedLeft = '';
@@ -1957,6 +1964,7 @@ function closeFolderTab(event) {
   appState.activeFolderSession = null;
   appState.folderOpenState.clear();
   appState.selectedIndices.clear();
+  appState.selectedPaths.clear();
   appState.selectedIndex = -1;
   appState.lastClickedIndex = -1;
   appState.lastComparedLeft = '';
@@ -2317,6 +2325,7 @@ async function runFolderComparison(preserveOpenState = false) {
   if (!preserveOpenState) {
     appState.folderOpenState.clear();
     appState.selectedIndices.clear();
+    appState.selectedPaths.clear();
     appState.selectedIndex = -1;
     appState.lastClickedIndex = -1;
   }
@@ -2714,8 +2723,13 @@ function scrollToRow(index) {
 
 function selectAllRows() {
   appState.selectedIndices.clear();
+  appState.selectedPaths.clear();
   for (let i = 0; i < appState.filteredItems.length; i++) {
     appState.selectedIndices.add(i);
+    const item = appState.filteredItems[i];
+    if (item && item.relativePath) {
+      appState.selectedPaths.add(item.relativePath);
+    }
   }
   if (appState.filteredItems.length > 0) {
     appState.selectedIndex = 0;
@@ -2731,11 +2745,15 @@ function selectAllRows() {
 
 function selectFilesOnly() {
   appState.selectedIndices.clear();
+  appState.selectedPaths.clear();
   let firstSelected = -1;
   for (let i = 0; i < appState.filteredItems.length; i++) {
     const item = appState.filteredItems[i];
     if (item && !item.isDirectory) {
       appState.selectedIndices.add(i);
+      if (item.relativePath) {
+        appState.selectedPaths.add(item.relativePath);
+      }
       if (firstSelected === -1) firstSelected = i;
     }
   }
@@ -2786,6 +2804,44 @@ function applyFilterAndRender() {
   const filter = appState.currentFilter;
 
   appState.filteredItems = flattenVisibleTree(appState.treeRoot, filter, query);
+
+  // Synchronize selectedIndices and selectedPaths with current visible items in filteredItems.
+  // This guarantees that expanding/collapsing folders or applying filters never leaves "ghost"
+  // selections on newly revealed children or shifted rows.
+  if (!appState.selectedPaths) {
+    appState.selectedPaths = new Set();
+  }
+  const newSelectedIndices = new Set();
+  const visiblePaths = new Set();
+
+  for (let i = 0; i < appState.filteredItems.length; i++) {
+    const item = appState.filteredItems[i];
+    if (item && item.relativePath) {
+      visiblePaths.add(item.relativePath);
+      if (appState.selectedPaths.has(item.relativePath)) {
+        newSelectedIndices.add(i);
+      }
+    }
+  }
+
+  // Prune paths that are no longer in visible tree to avoid stale selections
+  for (const p of appState.selectedPaths) {
+    if (!visiblePaths.has(p)) {
+      appState.selectedPaths.delete(p);
+    }
+  }
+
+  appState.selectedIndices = newSelectedIndices;
+
+  if (appState.selectedIndices.size > 0) {
+    if (!appState.selectedIndices.has(appState.selectedIndex)) {
+      appState.selectedIndex = appState.selectedIndices.values().next().value;
+      appState.lastClickedIndex = appState.selectedIndex;
+    }
+  } else {
+    appState.selectedIndex = -1;
+    appState.lastClickedIndex = -1;
+  }
 
   // Keep both panes strictly synchronized
   const leftPane = document.getElementById('leftPaneScroll');
@@ -2971,6 +3027,9 @@ function renderVisibleWindow(force = false) {
 
 // O(1) Instant Selection with Multi-Select Support
 function selectTableRow(index, event) {
+  if (index < 0 || index >= appState.filteredItems.length) return;
+  if (!appState.selectedPaths) appState.selectedPaths = new Set();
+
   const isMeta = event && (event.metaKey || event.ctrlKey);
   const isShift = event && event.shiftKey;
 
@@ -2980,22 +3039,31 @@ function selectTableRow(index, event) {
     const end = Math.max(appState.lastClickedIndex, index);
     if (!isMeta) {
       appState.selectedIndices.clear();
+      appState.selectedPaths.clear();
     }
     for (let i = start; i <= end; i++) {
       appState.selectedIndices.add(i);
+      const it = appState.filteredItems[i];
+      if (it && it.relativePath) appState.selectedPaths.add(it.relativePath);
     }
   } else if (isMeta) {
     // Toggle individual selection
+    const it = appState.filteredItems[index];
     if (appState.selectedIndices.has(index)) {
       appState.selectedIndices.delete(index);
+      if (it && it.relativePath) appState.selectedPaths.delete(it.relativePath);
     } else {
       appState.selectedIndices.add(index);
+      if (it && it.relativePath) appState.selectedPaths.add(it.relativePath);
     }
     appState.lastClickedIndex = index;
   } else {
     // Normal click: select only this row
     appState.selectedIndices.clear();
+    appState.selectedPaths.clear();
     appState.selectedIndices.add(index);
+    const it = appState.filteredItems[index];
+    if (it && it.relativePath) appState.selectedPaths.add(it.relativePath);
     appState.lastClickedIndex = index;
   }
 
@@ -3059,6 +3127,7 @@ function setupFolderKeyboardNavigation() {
 
     if (event.key === 'Escape') {
       appState.selectedIndices.clear();
+      appState.selectedPaths.clear();
       appState.selectedIndex = -1;
       appState.lastClickedIndex = -1;
       updateSelectionDOM();
