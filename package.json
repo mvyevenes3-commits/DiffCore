@@ -1,0 +1,96 @@
+{
+  "name": "diffcore",
+  "productName": "DiffCore",
+  "desktopName": "diffcore.desktop",
+  "version": "1.0.0",
+  "description": "DiffCore - High-Performance Cross-Platform Diff Suite",
+  "author": {
+    "name": "Miguel Vergara",
+    "email": "miguelvergara@diffcore.local"
+  },
+  "homepage": "https://github.com/miguelvergara/diffcore",
+  "main": "fuentes/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "electron-builder --mac dmg --x64 --arm64",
+    "build:dir": "electron-builder --dir",
+    "build:linux": "electron-builder --linux deb AppImage tar.gz && node scripts/build-rpm.js",
+    "build:rpm": "node scripts/build-rpm.js",
+    "build:win": "electron-builder --win nsis",
+    "build:all": "npm run build:mac && npm run build:win && npm run build:linux",
+    "release": "node scripts/release.js"
+  },
+  "build": {
+    "appId": "com.miguelvergara.diffcore",
+    "productName": "DiffCore",
+    "directories": {
+      "output": "empaquetado/dist"
+    },
+    "files": [
+      "fuentes/**/*",
+      "iconos/**/*",
+      "package.json"
+    ],
+    "afterPack": "scripts/after-pack.js",
+    "mac": {
+      "icon": "iconos/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "pkg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "pkg": {
+      "scripts": "scripts/pkg"
+    },
+    "linux": {
+      "icon": "iconos/icons",
+      "target": [
+        "deb",
+        "AppImage",
+        "tar.gz"
+      ],
+      "maintainer": "Miguel Vergara <miguelvergara@diffcore.local>",
+      "category": "Development",
+      "synopsis": "DiffCore - High-Performance Cross-Platform Diff Suite",
+      "syncDesktopName": true,
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "diffcore"
+        }
+      }
+    },
+    "win": {
+      "icon": "iconos/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^40.8.0",
+    "electron-builder": "^26.7.0"
+  },
+  "dependencies": {
+    "@run-slicer/vf": "^0.6.4-1.12.0",
+    "adm-zip": "^0.6.1",
+    "diff": "^9.0.0",
+    "xlsx": "^0.18.5"
+  }
+}

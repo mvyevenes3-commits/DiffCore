@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DiffCore Pro</title>
+  <link rel="stylesheet" href="css/theme-diffcore.css">
+  <link rel="stylesheet" href="css/icons.css">
+</head>
+<body>
+
+  <!-- Top Titlebar / Tabs Bar -->
+  <!-- Top Titlebar / Tabs Bar -->
+  <div class="app-tabs" id="appTabBar">
+    <div class="app-tabs-center-title" id="appTitleCenter">Home</div>
+    <div class="app-tabs-list" id="appTabsList">
+      <button class="tab-btn" id="tabFolderBtn" style="display: none;" onclick="switchView('folder')">
+        <span class="tab-icon">📁</span> <span class="tab-text" id="currentSessionTabTitle" data-i18n="tab.folder_compare">Folder Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeFolderTab(event)">✕</span>
+      </button>
+      <button class="tab-btn" id="tabFolderSyncBtn" style="display: none;" onclick="switchView('foldersync')">
+        <span class="tab-icon">🔄</span> <span class="tab-text" id="currentFolderSyncTabTitle" data-i18n="tab.folder_sync">Folder Sync</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeFolderSyncTab(event)">✕</span>
+      </button>
+      <button class="tab-btn" id="tabFolderMergeBtn" style="display: none;" onclick="switchView('foldermerge')">
+        <span class="tab-icon">🗂️</span> <span class="tab-text" id="currentFolderMergeTabTitle" data-i18n="tab.folder_merge">Folder Merge</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeFolderMergeTab(event)">✕</span>
+      </button>
+      <button class="tab-btn" id="tabTextBtn" style="display: none;" onclick="switchView('text')">
+        <span class="tab-icon">📄</span> <span class="tab-text" id="currentTextTabTitle" data-i18n="tab.text_compare">Text Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTextTab(event)">✕</span>
+      </button>
+      <div id="dynamicTextTabs" style="display: contents;"></div>
+      <button class="tab-btn" id="tabTextMergeBtn" style="display: none;" onclick="switchView('textmerge')">
+        <span class="tab-icon">📑</span> <span class="tab-text" id="currentTextMergeTabTitle" data-i18n="tab.text_merge">Text Merge</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTextMergeTab(event)">✕</span>
+      </button>
+      <button class="tab-btn" id="tabTextEditBtn" style="display: none;" onclick="switchView('textedit')">
+        <span class="tab-icon">📝</span> <span class="tab-text" id="currentTextEditTabTitle" data-i18n="tab.text_edit">Text Edit</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTextEditTab(event)">✕</span>
+      </button>
+      <button class="tab-btn" id="tabHexBtn" style="display: none;" onclick="switchView('hex')">
+        <span class="tab-icon">🔢</span> <span class="tab-text" id="currentHexTabTitle" data-i18n="tab.hex_compare">Hex Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeHexTab(event)">✕</span>
+      </button>
+      <button class="tab-btn" id="tabPictureBtn" style="display: none;" onclick="switchView('picture')">
+        <span class="tab-icon">🖼️</span> <span class="tab-text" id="currentPictureTabTitle" data-i18n="tab.picture_compare">Picture Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closePictureTab(event)">✕</span>
+      </button>
+      <button class="tab-btn" id="tabTableBtn" style="display: none;" onclick="switchView('table')">
+        <span class="tab-icon">📊</span> <span class="tab-text" id="currentTableTabTitle" data-i18n="tab.table_compare">Table Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeTableTab(event)">✕</span>
+      </button>
+      <button class="tab-btn" id="tabMediaBtn" style="display: none;" onclick="switchView('media')">
+        <span class="tab-icon">🎵</span> <span class="tab-text" id="currentMediaTabTitle" data-i18n="tab.media_compare">Media Compare</span>
+        <span class="tab-close" title="Close Tab" data-i18n-title="tab.close_tab" onclick="closeMediaTab(event)">✕</span>
+      </button>
+    </div>
+    <div class="app-tabs-actions">
+      <button class="tab-nav-btn" id="tabNavLeftBtn" title="Scroll Tabs Left (Shift+Click: Previous Tab)" onclick="handleTabNavClick('left', event)">◀</button>
+      <button class="tab-nav-btn" id="tabNavRightBtn" title="Scroll Tabs Right (Shift+Click: Next Tab)" onclick="handleTabNavClick('right', event)">▶</button>
+      <button class="tab-add-btn" title="New Compare Tab" data-i18n-title="tab.new_tab" onclick="openNewCompareTab()">+</button>
+      <div class="lang-selector-wrapper" style="position: relative;">
+        <button class="theme-toggle-btn lang-toggle-btn" id="btnLangToggle" title="Select Language / Seleccionar Idioma" onclick="toggleLanguageDropdown(event)">
+          <span id="currentLangLabel">🌐 Idioma</span> <span style="font-size: 8px; opacity: 0.7; margin-left: 2px;">▼</span>
+        </button>
+        <div class="lang-dropdown-menu" id="langDropdownMenu" style="display: none;">
+          <div class="lang-opt" onclick="selectLanguage('en')"><span>🇺🇸</span> English</div>
+          <div class="lang-opt" onclick="selectLanguage('es')"><span>🇪🇸</span> Español</div>
+          <div class="lang-opt" onclick="selectLanguage('pt-BR')"><span>🇧🇷</span> Português (Brasil)</div>
+          <div class="lang-opt" onclick="selectLanguage('fr')"><span>🇫🇷</span> Français</div>
+          <div class="lang-opt" onclick="selectLanguage('it')"><span>🇮🇹</span> Italiano</div>
+          <div class="lang-opt" onclick="selectLanguage('ru')"><span>🇷🇺</span> Русский</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 1: HOME (Image 3) -->
+  <div id="homeView" class="view-container active">
+    <div class="home-layout">
+      
+      <!-- Left Sidebar: Sessions Tree -->
+      <aside class="home-sidebar">
+        <div class="sidebar-title" data-i18n="home.sessions">Sessions</div>
+        <div class="sessions-tree" id="sessionsTreeList">
+          <!-- Static top shortcuts -->
+          <div class="bc-tree-row bc-new-session-row" onclick="promptNewSession()">
+            <span class="bc-new-plus">➕</span>
+            <span class="bc-tree-label" style="font-weight: 500;" data-i18n="home.new">New</span>
+          </div>
+          <!-- Dynamic Groups Container (Populated via JS: Auto-saved with relative dates & Saved sessions) -->
+          <div id="dynamicSessionsTree"></div>
+        </div>
+
+        <div style="display: flex; gap: 4px; padding: 6px 10px; border-top: 1px solid var(--border-color); background: #1c1c1c;">
+          <button class="btn-small" title="Add Session" data-i18n-title="home.add_session" onclick="promptNewSession()">➕</button>
+          <button class="btn-small" title="Delete Session" data-i18n-title="home.delete_session" onclick="deleteSelectedSession()">➖</button>
+          <input type="text" class="tb-filter-input" id="sessionSearchInput" placeholder="🔍 Search" data-i18n-placeholder="common.search" style="flex: 1;" oninput="filterSessionsList()">
+        </div>
+      </aside>
+
+      <!-- Main Home Launcher -->
+      <main class="home-main">
+        <!-- Selected Session Top Details (Hidden by default, shown only when a session is active or selected) -->
+        <div class="home-session-header" id="sessionHeaderDetails" style="display: none;">
+          <div class="session-name">
+            <span id="sessionDetailIcon">📁</span> <span id="sessionDetailTitle"></span>
+            <span style="font-size: 11px; color: #888; font-weight: normal; margin-left: 10px;" id="sessionDetailSource"></span>
+          </div>
+          <div class="session-paths">
+            <div><span data-i18n="sessions.left_label">Left:</span> <span id="sessionDetailLeft" style="font-family: var(--font-mono); color: #fff;"></span></div>
+            <div><span data-i18n="sessions.right_label">Right:</span> <span id="sessionDetailRight" style="font-family: var(--font-mono); color: #fff;"></span></div>
+          </div>
+          <div class="session-actions">
+            <button class="btn-primary" data-i18n="common.open" onclick="launchSelectedSession()">Open</button>
+            <button class="btn-secondary" data-i18n="common.edit" onclick="editSelectedSession()">Edit</button>
+            <button class="btn-secondary" data-i18n="common.delete" onclick="deleteSelectedSession()">Delete</button>
+          </div>
+        </div>
+
+        <!-- Center Prompt -->
+        <div class="home-center-prompt" data-i18n="home.prompt">
+          Drag folders or files onto session icon or click a session icon to begin:
+        </div>
+
+        <!-- Categorized Session Tool Containers -->
+        <div class="home-categories-wrapper">
+          <!-- Row 1: Gestión de Carpetas & Gestión de Archivos -->
+          <div class="home-categories-row-top">
+
+            <!-- Category 1: GESTIÓN DE CARPETAS -->
+            <section class="home-category-container cat-carpetas">
+              <div class="category-header">
+                <span class="category-title" data-i18n="home.category_folders">GESTIÓN DE CARPETAS</span>
+              </div>
+              <div class="category-icons-row">
+                <!-- 1. Comparar Carpetas -->
+                <div class="tool-card" onclick="openTool('folder_compare')" title="Folder Compare">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <path d="M5 14C5 12.8954 5.89543 12 7 12H15L18 15H24C25.1046 15 26 15.8954 26 17V33C26 34.1046 25.1046 35 24 35H7C5.89543 35 5 34.1046 5 33V14Z" fill="#D99824"/>
+                        <path d="M5 17C5 16.4477 5.44772 16 6 16H25C25.5523 16 26 16.4477 26 17V33C26 34.1046 25.1046 35 24 35H7C5.89543 35 5 34.1046 5 33V17Z" fill="#F4C242"/>
+                        <path d="M22 18C22 16.8954 22.8954 16 24 16H32L35 19H41C42.1046 19 43 19.8954 43 21V37C43 38.1046 42.1046 39 41 39H24C22.8954 39 22 38.1046 22 37V18Z" fill="#C58518"/>
+                        <path d="M22 21C22 20.4477 22.4477 20 23 20H42C42.5523 20 43 20.4477 43 21V37C43 38.1046 42.1046 39 41 39H24C22.8954 39 22 38.1046 22 37V21Z" fill="#FFCE48"/>
+                        <rect x="18" y="22" width="12" height="12" rx="3" fill="#1E2229" stroke="#475569" stroke-width="1.2"/>
+                        <path d="M21 26H27M21 30H27M22 32L26 24" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_folder_compare">Folder Compare</div>
+                </div>
+
+                <!-- 2. Combinar Carpetas -->
+                <div class="tool-card" onclick="openTool('folder_merge')" title="Folder Merge">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <path d="M6 14C6 12.8954 6.89543 12 8 12H17L20 15H40C41.1046 15 42 15.8954 42 17V35C42 36.1046 41.1046 37 40 37H8C6.89543 37 6 36.1046 6 35V14Z" fill="#C58518"/>
+                        <path d="M6 17C6 16.4477 6.44772 16 7 16H41C41.5523 16 42 16.4477 42 17V35C42 36.1046 41.1046 37 40 37H8C6.89543 37 6 36.1046 6 35V17Z" fill="#F5C443"/>
+                        <rect x="10" y="9" width="7" height="6" rx="1.5" fill="#3B82F6"/>
+                        <rect x="20" y="9" width="7" height="6" rx="1.5" fill="#10B981"/>
+                        <rect x="30" y="9" width="7" height="6" rx="1.5" fill="#EF4444"/>
+                        <circle cx="24" cy="27" r="8" fill="#1E293B" stroke="#475569" stroke-width="1.2"/>
+                        <path d="M19 24L24 29L29 24M24 29V32" stroke="#F8FAFC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_folder_merge">Folder Merge</div>
+                </div>
+
+                <!-- 3. Sincronizar Carpetas -->
+                <div class="tool-card" onclick="openTool('folder_sync')" title="Folder Sync">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <path d="M8 12C8 10.8954 8.89543 10 10 10H18L21 13H38C39.1046 13 40 13.8954 40 15V33C40 34.1046 39.1046 35 38 35H10C8.89543 35 8 34.1046 8 33V12Z" fill="#D99824"/>
+                        <path d="M8 15C8 14.4477 8.44772 14 9 14H39C39.5523 14 40 14.4477 40 15V33C40 34.1046 39.1046 35 38 35H10C8.89543 35 8 34.1046 8 33V15Z" fill="#F4C242"/>
+                        <circle cx="31" cy="28" r="10" fill="#0284C7" stroke="#38BDF8" stroke-width="1.5"/>
+                        <path d="M35 25A4.5 4.5 0 0 0 28 24.5L27 23M27 26.5V23H30.5" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M27 31A4.5 4.5 0 0 0 34 31.5L35 33M35 29.5V33H31.5" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_folder_sync">Folder Sync</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Category 2: GESTIÓN DE ARCHIVOS -->
+            <section class="home-category-container cat-archivos">
+              <div class="category-header">
+                <span class="category-title" data-i18n="home.category_files">GESTIÓN DE ARCHIVOS</span>
+              </div>
+              <div class="category-icons-row">
+                <!-- 1. Comparar Texto -->
+                <div class="tool-card" onclick="openTool('text_compare')" title="Text Compare">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <rect x="5" y="8" width="18" height="26" rx="2" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.2"/>
+                        <line x1="8" y1="13" x2="19" y2="13" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="8" y1="17" x2="17" y2="17" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="8" y1="21" x2="19" y2="21" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="8" y1="25" x2="15" y2="25" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="8" y1="29" x2="18" y2="29" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+
+                        <rect x="25" y="14" width="18" height="26" rx="2" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.2"/>
+                        <line x1="28" y1="19" x2="39" y2="19" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="28" y1="23" x2="37" y2="23" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="28" y1="27" x2="39" y2="27" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="28" y1="31" x2="35" y2="31" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+                        <line x1="28" y1="35" x2="38" y2="35" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+
+                        <rect x="19" y="21" width="10" height="10" rx="2.5" fill="#1E293B" stroke="#475569" stroke-width="1.2"/>
+                        <path d="M22 24.5H26M22 27.5H26" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_text_compare">Text Compare</div>
+                </div>
+
+                <!-- 2. Combinar Texto -->
+                <div class="tool-card" onclick="openTool('text_merge')" title="Text Merge">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <rect x="6" y="8" width="14" height="18" rx="2" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.2"/>
+                        <rect x="28" y="8" width="14" height="18" rx="2" fill="#FEF2F2" stroke="#EF4444" stroke-width="1.2"/>
+                        <rect x="15" y="20" width="18" height="22" rx="2" fill="#FFFFFF" stroke="#10B981" stroke-width="1.5"/>
+                        <line x1="19" y1="26" x2="29" y2="26" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="19" y1="31" x2="27" y2="31" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="19" y1="36" x2="29" y2="36" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_text_merge">Text Merge</div>
+                </div>
+
+                <!-- 3. Editar Texto -->
+                <div class="tool-card" onclick="openTool('text_edit')" title="Text Edit">
+                  <div class="tool-icon-wrapper">
+                    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                        <rect x="8" y="8" width="24" height="32" rx="2" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+                        <line x1="13" y1="15" x2="25" y2="15" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="13" y1="21" x2="23" y2="21" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="13" y1="27" x2="21" y2="27" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="13" y1="33" x2="24" y2="33" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+                        <g transform="translate(24, 18) rotate(45)">
+                          <path d="M0 0H6V18L3 22L0 18V0Z" fill="#F59E0B" stroke="#B45309" stroke-width="1"/>
+                          <path d="M0 0H6V5H0V0Z" fill="#EF4444"/>
+                          <path d="M1.5 19L3 22L4.5 19H1.5Z" fill="#1E293B"/>
+                        </g>
+                      </g>
+                    </svg>
+                  </div>
+                  <div class="title" data-i18n="home.card_text_edit">Text Edit</div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Row 2: MULTIMEDIA Y AVANZADO (Debajo, de forma horizontal) -->
+          <section class="home-category-container cat-multimedia">
+            <div class="category-header">
+              <span class="category-title" data-i18n="home.category_multimedia">MULTIMEDIA Y AVANZADO</span>
+            </div>
+            <div class="category-icons-row multimedia-row">
+              <!-- 1. Comparar Hex -->
+              <div class="tool-card" onclick="openTool('hex_compare')" title="Hex Compare">
+                <div class="tool-icon-wrapper">
+                  <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                      <rect x="7" y="7" width="34" height="34" rx="6" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
+                      <rect x="11" y="11" width="11" height="11" rx="2" fill="#1E293B"/>
+                      <text x="16.5" y="19.5" font-family="monospace" font-size="8" font-weight="bold" fill="#38BDF8" text-anchor="middle">12</text>
+                      <rect x="26" y="11" width="11" height="11" rx="2" fill="#1E293B"/>
+                      <text x="31.5" y="19.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F8FAFC" text-anchor="middle">34</text>
+                      <rect x="11" y="26" width="11" height="11" rx="2" fill="#1E293B"/>
+                      <text x="16.5" y="34.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F8FAFC" text-anchor="middle">AB</text>
+                      <rect x="26" y="26" width="11" height="11" rx="2" fill="#1E293B"/>
+                      <text x="31.5" y="34.5" font-family="monospace" font-size="8" font-weight="bold" fill="#F43F5E" text-anchor="middle">FF</text>
+                    </g>
+                  </svg>
+                </div>
+                <div class="title" data-i18n="home.card_hex_compare">Hex Compare</div>
+              </div>
+
+              <!-- 2. Comparar Multimedia -->
+              <div class="tool-card" onclick="openTool('media_compare')" title="Media Compare">
+                <div class="tool-icon-wrapper">
+                  <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                      <rect x="7" y="7" width="34" height="34" rx="6" fill="#18181B" stroke="#3F3F46" stroke-width="1.5"/>
+                      <rect x="12" y="22" width="3" height="12" rx="1.5" fill="#A1A1AA"/>
+                      <rect x="17" y="16" width="3" height="18" rx="1.5" fill="#38BDF8"/>
+                      <rect x="22" y="12" width="3" height="22" rx="1.5" fill="#38BDF8"/>
+                      <rect x="27" y="18" width="3" height="16" rx="1.5" fill="#818CF8"/>
+                      <path d="M33 14V26C32.2 25.4 31.1 25 30 25C28.3 25 27 26.1 27 27.5C27 28.9 28.3 30 30 30C31.7 30 33 28.9 33 27.5V18L38 16V22C37.2 21.4 36.1 21 35 21C33.3 21 32 22.1 32 23.5C32 24.9 33.3 26 35 26C36.7 26 38 24.9 38 23.5V13L33 14Z" fill="#F43F5E"/>
+                    </g>
+                  </svg>
+                </div>
+                <div class="title" data-i18n="home.card_media_compare">Media Compare</div>
+              </div>
+
+              <!-- 3. Comparar Imágenes -->
+              <div class="tool-card" onclick="openTool('picture_compare')" title="Picture Compare">
+                <div class="tool-icon-wrapper">
+                  <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                      <rect x="7" y="9" width="34" height="30" rx="4" fill="#0284C7" stroke="#38BDF8" stroke-width="1.5"/>
+                      <line x1="24" y1="9" x2="24" y2="39" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2"/>
+                      <circle cx="16" cy="17" r="4" fill="#FBBF24"/>
+                      <path d="M7 35L15 24L24 35H7Z" fill="#047857"/>
+                      <path d="M24 35L31 22L41 35H24Z" fill="#B91C1C"/>
+                      <circle cx="24" cy="24" r="3.5" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.2"/>
+                    </g>
+                  </svg>
+                </div>
+                <div class="title" data-i18n="home.card_picture_compare">Picture Compare</div>
+              </div>
+
+              <!-- 4. Comparar Tablas -->
+              <div class="tool-card" onclick="openTool('table_compare')" title="Table Compare">
+                <div class="tool-icon-wrapper">
+                  <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
+                      <rect x="7" y="8" width="34" height="32" rx="3" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+                      <rect x="7" y="8" width="34" height="9" rx="3" fill="#0284C7"/>
+                      <line x1="18" y1="8" x2="18" y2="40" stroke="#CBD5E1" stroke-width="1"/>
+                      <line x1="30" y1="8" x2="30" y2="40" stroke="#CBD5E1" stroke-width="1"/>
+                      <line x1="7" y1="24" x2="41" y2="24" stroke="#CBD5E1" stroke-width="1"/>
+                      <line x1="7" y1="32" x2="41" y2="32" stroke="#CBD5E1" stroke-width="1"/>
+                      <rect x="19" y="18" width="10" height="5" fill="#FEE2E2"/>
+                      <rect x="31" y="25" width="9" height="6" fill="#DBEAFE"/>
+                    </g>
+                  </svg>
+                </div>
+                <div class="title" data-i18n="home.card_table_compare">Table Compare</div>
+              </div>
+            </div>
+          </section>
+        </div>
+        </main>
+    </div>
+
+    <!-- Home Bottom Banner - Telemetry & Status Dashboard (media_1792294890839) -->
+    <footer class="home-footer-banner">
+      <!-- 1. RAM Usage -->
+      <div class="footer-telemetry-col col-ram">
+        <div class="telemetry-gauge">
+          <svg class="speedometer-icon" viewBox="0 0 36 36" width="34" height="34" aria-hidden="true">
+            <defs>
+              <linearGradient id="gaugeGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#38bdf8"/>
+                <stop offset="45%" stop-color="#22c55e"/>
+                <stop offset="75%" stop-color="#eab308"/>
+                <stop offset="100%" stop-color="#ef4444"/>
+              </linearGradient>
+            </defs>
+            <path d="M 6 26 A 14 14 0 1 1 30 26" fill="none" stroke="#252a36" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 6 26 A 14 14 0 1 1 30 26" fill="none" stroke="url(#gaugeGrad)" stroke-width="3" stroke-linecap="round" stroke-dasharray="66 100"/>
+            <circle cx="18" cy="20" r="2.5" fill="#e6edf3"/>
+            <line x1="18" y1="20" x2="24" y2="10" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="telemetry-info">
+          <div class="telemetry-label" data-i18n="footer.ram_usage">USO DE MEMORIA RAM</div>
+          <div class="telemetry-bar-track">
+            <div id="footerRamBar" class="telemetry-bar-fill" style="width: 22%;"></div>
+          </div>
+          <div class="telemetry-subtext">
+            <span id="footerRamValue">182 MB</span>
+            <span id="footerRamMax">8 GB</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Engine Latency -->
+      <div class="footer-telemetry-col col-latency">
+        <div class="telemetry-label" data-i18n="footer.engine_latency">LATENCIA DEL MOTOR</div>
+        <div class="telemetry-digital-box">
+          <span id="footerLatencyVal" class="digital-value">0.04s</span>
+        </div>
+      </div>
+
+      <!-- 3. Engine Status -->
+      <div class="footer-telemetry-col col-status">
+        <div class="telemetry-label" data-i18n="footer.engine_status">ESTADO DEL MOTOR</div>
+        <div class="telemetry-status-row">
+          <span id="footerStatusDot" class="status-indicator-dot ready"></span>
+          <span id="footerStatusText" class="status-indicator-text" data-i18n="footer.status_ready">LISTO</span>
+        </div>
+      </div>
+
+      <!-- 4. Network Connection -->
+      <div class="footer-telemetry-col col-network">
+        <div class="telemetry-label" data-i18n="footer.network_connection">CONEXIÓN DE RED</div>
+        <div class="telemetry-icon-row">
+          <svg id="footerNetworkIcon" class="network-wifi-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 5. Version -->
+      <div class="footer-telemetry-col col-version">
+        <div class="telemetry-label" data-i18n="footer.version">VERSIÓN</div>
+        <div class="telemetry-version-text">DiffCore v1.0.0 (BETA)</div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- VIEW 2: FOLDER COMPARE (Image 2) -->
+  <div id="folderView" class="view-container">
+    
+    <!-- Top Action Toolbar (DiffCore Toolbar Matching Image 3) -->
+    <header class="folder-toolbar">
+      <!-- Group 1: Navigation & Sessions -->
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon"><span class="dc-icon dc-icon-home"></span></span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+        <button class="tb-btn" title="Sessions" data-i18n-title="toolbar.sessions_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon"><span class="dc-icon dc-icon-sessions"></span></span>
+          <span class="label" data-i18n="home.sessions">Sessions ▾</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Group 2: Display Filters (All, Diffs, Same) -->
+      <div class="toolbar-group">
+        <button class="tb-btn" id="filterAllBtn" title="Show All" data-i18n-title="toolbar.show_all_tip" onclick="setFilter('all')">
+          <span class="icon">✳</span>
+          <span class="label" data-i18n="toolbar.all">All</span>
+        </button>
+        <button class="tb-btn active" id="filterDiffsBtn" title="Show Differences" data-i18n-title="toolbar.show_diffs_tip" onclick="setFilter('diffs')">
+          <span class="icon" style="color: #ff6b6b; font-size: 18px; font-weight: 800;">≠</span>
+          <span class="label" style="color: #ff8080;" data-i18n="toolbar.diffs">Diffs ▾</span>
+        </button>
+        <button class="tb-btn" id="filterSameBtn" title="Show Same" data-i18n-title="toolbar.show_same_tip" onclick="setFilter('same')">
+          <span class="icon" style="color: #e2c08d; font-size: 16px; font-weight: 800;">═</span>
+          <span class="label" data-i18n="toolbar.same">Same</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Group 3: Comparison & Actions -->
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Structure Mode" data-i18n-title="toolbar.structure_tip" onclick="toggleStructureMode()">
+          <span class="icon">📁</span>
+          <span class="label" data-i18n="toolbar.structure">Structure ▾</span>
+        </button>
+        <button class="tb-btn" title="Minor Differences" data-i18n-title="toolbar.minor_tip" onclick="toggleMinorDiffs()">
+          <span class="icon" style="font-size: 16px;">≈</span>
+          <span class="label" data-i18n="toolbar.minor">Minor</span>
+        </button>
+        <button class="tb-btn" id="btnFolderRules" title="Rules" data-i18n-title="toolbar.rules_tip" onclick="openFolderRulesModal()">
+          <span class="icon"><span class="dc-icon dc-icon-referee"></span></span>
+          <span class="label" data-i18n="toolbar.rules">Rules</span>
+        </button>
+        <button class="tb-btn" id="btnDeepCompare" title="Compare Contents [=?]" data-i18n-title="toolbar.specs_tip" onclick="openDeepCompareModal()">
+          <span class="icon" style="font-weight: 700; font-family: var(--font-mono); font-size: 13px;">=?</span>
+          <span class="label" data-i18n="toolbar.specs">Compare</span>
+        </button>
+        <button class="tb-btn" id="btnFolderOptions" title="Options" data-i18n-title="modal.options_title" onclick="openNextDiffOptionsModal()">
+          <span class="icon">⚙️</span>
+          <span class="label" data-i18n="toolbar.options">Options</span>
+        </button>
+        <button class="tb-btn" title="Copy to other side" data-i18n-title="toolbar.copy_other_tip" onclick="copySelectedToRight()">
+          <span class="icon"><span class="dc-icon dc-icon-copy-right"></span></span>
+          <span class="label" data-i18n="toolbar.copy">Copy</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Group 4: Expand / Collapse / Selection -->
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Expand All Folders" data-i18n-title="toolbar.expand_all_tip" onclick="expandAllFolders()">
+          <span class="icon" style="font-size: 16px;">⇥</span>
+          <span class="label" data-i18n="toolbar.expand">Expand</span>
+        </button>
+        <button class="tb-btn" title="Collapse All Folders" data-i18n-title="toolbar.collapse_all_tip" onclick="collapseAllFolders()">
+          <span class="icon" style="font-size: 16px;">⇤</span>
+          <span class="label" data-i18n="toolbar.collapse">Collapse</span>
+        </button>
+        <button class="tb-btn" id="btnSelectAll" title="Select All" data-i18n-title="toolbar.select_all_tip" onclick="selectAllRows()">
+          <span class="icon"><span class="dc-icon dc-icon-select-all"></span></span>
+          <span class="label" data-i18n="toolbar.select_all">Select</span>
+        </button>
+        <button class="tb-btn" id="btnSelectFiles" title="Select All Files" data-i18n-title="toolbar.files_tip" onclick="selectFilesOnly()">
+          <span class="icon"><span class="dc-icon dc-icon-files"></span></span>
+          <span class="label" data-i18n="toolbar.files">Files</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Group 5: Operations (Refresh, Swap, Stop) -->
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Refresh (Cmd+R)" data-i18n-title="toolbar.refresh_tip" onclick="runFolderComparison(true)">
+          <span class="icon"><span class="dc-icon dc-icon-refresh"></span></span>
+          <span class="label" data-i18n="toolbar.refresh">Refresh</span>
+        </button>
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapSides()">
+          <span class="icon">⇄</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
+        </button>
+        <button class="tb-btn" title="Stop" data-i18n-title="toolbar.stop_tip" onclick="stopComparison()">
+          <span class="icon"><span class="dc-icon dc-icon-stop"></span></span>
+          <span class="label" data-i18n="common.cancel">Stop</span>
+        </button>
+      </div>
+
+      <!-- Far Right: Search & Filters Box (Image 1 & Image 3) -->
+      <div class="toolbar-group" style="margin-left: auto;">
+        <span style="font-size: 11px; color: #888;" data-i18n="toolbar.filters">Filters:</span>
+        <input type="text" class="tb-filter-input" id="tableFilterInput" placeholder="*.*" oninput="filterTableItems()">
+        <button class="tb-icon-only-btn" title="Clear Filter" data-i18n-title="toolbar.clear_filter_tip" onclick="clearTableFilter()">✕</button>
+        <button class="tb-btn" id="btnNameFilters" style="min-width: 36px; height: 46px; position: relative;" title="File & Folder Filters (Exclusions)" data-i18n-title="modal.filters_title" onclick="openNameFiltersModal()">
+          <span class="icon"><span class="dc-icon dc-icon-filter"></span></span>
+          <span class="label" data-i18n="toolbar.filters">Filters</span>
+          <span id="filterActiveDot" class="filter-active-dot" style="display: none;"></span>
+        </button>
+        <button class="tb-btn" style="min-width: 36px; height: 46px;" title="Peek Next Difference" data-i18n-title="toolbar.peek_tip" onclick="peekNextDiff()">
+          <span class="icon"><span class="dc-icon dc-icon-search"></span></span>
+          <span class="label" data-i18n="toolbar.peek">Peek</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Path Selector Bar (Dual Side-by-Side Matching Image 3) -->
+    <div class="path-selectors-bar">
+      <!-- Left Path -->
+      <div class="path-box" id="leftPathBox" onclick="focusPathInput('left', event)">
+        <input type="text" id="leftPathInput" class="path-input" placeholder="Enter path here" onpaste="handleFolderPathPaste(event, 'left')" onkeydown="handleFolderPathKeydown(event, 'left')" onblur="handleFolderPathBlur('left')" spellcheck="false">
+        <button class="path-tool-btn blue-combo" title="Recent Folders" onclick="togglePathHistoryDropdown('left', event)">▾</button>
+        <button class="path-tool-btn" title="Go Up Folder" onclick="goUpFolder('left')">↩</button>
+        <button class="path-tool-btn" title="Browse Left Folder" onclick="browseFolder('left')">📁▾</button>
+        <button class="path-tool-btn" title="Go to Parent Folder" onclick="goUpFolder('left')">📁↑</button>
+        <button class="path-tool-btn" title="Swap Sides" onclick="swapSides()">📁⇄</button>
+        <div class="path-history-dropdown" id="leftPathHistoryDropdown" style="display: none;"></div>
+      </div>
+
+      <!-- Center Divider -->
+      <div class="path-center-divider"></div>
+
+      <!-- Right Path -->
+      <div class="path-box" id="rightPathBox" onclick="focusPathInput('right', event)">
+        <input type="text" id="rightPathInput" class="path-input" placeholder="Enter path here" onpaste="handleFolderPathPaste(event, 'right')" onkeydown="handleFolderPathKeydown(event, 'right')" onblur="handleFolderPathBlur('right')" spellcheck="false">
+        <button class="path-tool-btn blue-combo" title="Recent Folders" onclick="togglePathHistoryDropdown('right', event)">▾</button>
+        <button class="path-tool-btn" title="Go Up Folder" onclick="goUpFolder('right')">↩</button>
+        <button class="path-tool-btn" title="Browse Right Folder" onclick="browseFolder('right')">📁▾</button>
+        <button class="path-tool-btn" title="Go to Parent Folder" onclick="goUpFolder('right')">📁↑</button>
+        <button class="path-tool-btn" title="Swap Sides" onclick="swapSides()">📁⇄</button>
+        <div class="path-history-dropdown" id="rightPathHistoryDropdown" style="display: none;"></div>
+      </div>
+    </div>
+
+    <!-- Dual Symmetric Tree Table (Folder Compare Core Matching Image 1) -->
+    <div class="folder-dual-container" id="folderDualContainer" oncontextmenu="handleTableContextMenu(event)">
+      <!-- Left Table View -->
+      <div class="dual-pane-wrapper" id="folderLeftPaneWrapper">
+        <div class="dual-pane" id="leftPaneScroll">
+          <table class="diff-table" id="leftDiffTable">
+            <thead>
+              <tr>
+                <th style="width: 58%;"><span data-i18n="table.name">Name</span> <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
+                <th style="width: 17%; text-align: right;" data-i18n="table.size">Size</th>
+                <th style="width: 22%;" data-i18n="table.modified">Modified</th>
+                <th style="width: 18px; padding: 0;"></th>
+              </tr>
+            </thead>
+            <tbody id="leftTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div class="sync-vscrollbar" id="folderLeftVScroll" title="Scroll left / right folders together">
+          <div class="sync-vscrollbar-thumb" id="folderLeftVThumb"></div>
+        </div>
+      </div>
+
+      <!-- Center Sizing/Divider Bar -->
+      <div class="center-divider"></div>
+
+      <!-- Right Table View -->
+      <div class="dual-pane-wrapper" id="folderRightPaneWrapper">
+        <div class="dual-pane" id="rightPaneScroll">
+          <table class="diff-table" id="rightDiffTable">
+            <thead>
+              <tr>
+                <th style="width: 58%;"><span data-i18n="table.name">Name</span> <span style="font-size: 9px; opacity: 0.6;">▲</span></th>
+                <th style="width: 17%; text-align: right;" data-i18n="table.size">Size</th>
+                <th style="width: 22%;" data-i18n="table.modified">Modified</th>
+                <th style="width: 18px; padding: 0;"></th>
+              </tr>
+            </thead>
+            <tbody id="rightTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div class="sync-vscrollbar" id="folderRightVScroll" title="Scroll left / right folders together">
+          <div class="sync-vscrollbar-thumb" id="folderRightVThumb"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Log Console (Expandable / Collapsible) -->
+    <div class="log-panel" id="logPanel">
+      <div class="log-panel-header" onclick="toggleLogPanel()">
+        <span>▼ Log Console</span>
+        <span style="font-size: 11px; color: #888;">Activity & Diff Engine Output</span>
+      </div>
+      <div class="log-content" id="logConsole">
+        <!-- Log entries -->
+      </div>
+    </div>
+
+    <!-- Dual Status Bar (Image 2) -->
+    <footer class="folder-status-bar">
+      <div class="status-left">
+        <span id="statusLeftCount">0 items</span>
+        <span id="statusLeftSize">0 bytes</span>
+        <span id="statusLeftDisk" style="color: #888;">...</span>
+      </div>
+      <div class="status-right">
+        <span id="statusRightCount">0 items</span>
+        <span id="statusRightSize">0 bytes</span>
+        <span id="statusRightDisk" style="color: #888;">...</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- VIEW 3: TEXT COMPARE (Side-by-Side File Difference Viewer) -->
+  <div id="textView" class="view-container">
+    <header class="text-compare-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Filter buttons matching DiffCore (Image 1) -->
+      <div class="toolbar-group">
+        <button class="tb-btn active" id="textFilterAllBtn" title="Show All" data-i18n-title="toolbar.show_all_tip" onclick="setTextFilter('all')">
+          <span class="icon" style="font-size: 15px;">✳️</span>
+          <span class="label" data-i18n="toolbar.all">All</span>
+        </button>
+        <button class="tb-btn" id="textFilterDiffsBtn" title="Show Differences" data-i18n-title="toolbar.show_diffs_tip" onclick="setTextFilter('diffs')">
+          <span class="icon" style="color: #ff6b6b; font-size: 18px; font-weight: 800;">≠</span>
+          <span class="label" style="color: #ff8080;" data-i18n="toolbar.diffs">Diffs</span>
+        </button>
+        <button class="tb-btn" id="textFilterSameBtn" title="Show Same" data-i18n-title="toolbar.show_same_tip" onclick="setTextFilter('same')">
+          <span class="icon" style="color: #e2c08d; font-size: 16px; font-weight: 800;">═</span>
+          <span class="label" data-i18n="toolbar.same">Same</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Navigation & Operations matching DiffCore (Image 1) -->
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Previous Difference Section (Ctrl+Up)" data-i18n-title="toolbar.prev_diff_tip" onclick="navDiff(-1)">
+          <span class="icon">⬆</span>
+          <span class="label" data-i18n="toolbar.prev">Prev</span>
+        </button>
+        <button class="tb-btn" title="Next Difference Section (Ctrl+Down)" data-i18n-title="toolbar.next_diff_tip" onclick="navDiff(1)">
+          <span class="icon">⬇</span>
+          <span class="label" data-i18n="toolbar.next">Next</span>
+        </button>
+        <button class="tb-btn" id="btnNextDiffOptions" title="Next Difference Options " data-i18n-title="modal.options_title" onclick="openNextDiffOptionsModal()">
+          <span class="icon">⚙️</span>
+          <span class="label" data-i18n="toolbar.options">Options</span>
+        </button>
+        <button class="tb-btn" id="btnTextUndo" title="Undo change (Ctrl+Z / ⌘Z)" data-i18n-title="toolbar.undo_tip" onclick="undoTextChange()" disabled>
+          <span class="icon"><span class="dc-icon dc-icon-undo"></span></span>
+          <span class="label" data-i18n="toolbar.undo">Undo</span>
+        </button>
+        <button class="tb-btn" id="btnTextRedo" title="Redo change (Ctrl+Y / ⌘⇧Z)" data-i18n-title="toolbar.redo_tip" onclick="redoTextChange()" disabled>
+          <span class="icon"><span class="dc-icon dc-icon-redo"></span></span>
+          <span class="label" data-i18n="toolbar.redo">Redo</span>
+        </button>
+        <button class="tb-btn" title="Swap Sides (⇄)" data-i18n-title="toolbar.swap_tip" onclick="swapSidesText()">
+          <span class="icon">⇄</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
+        </button>
+        <button class="tb-btn" title="Reload Files (🔄)" data-i18n-title="toolbar.reload_tip" onclick="reloadTextCompare()">
+          <span class="icon">🔄</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
+        </button>
+        <button class="tb-btn" id="btnTextWordWrap" title="Toggle Word Wrap " data-i18n-title="toolbar.wrap_tip" onclick="toggleTextWordWrap()">
+          <span class="icon">↵</span>
+          <span class="label" data-i18n="toolbar.wrap">Wrap</span>
+        </button>
+        <button class="tb-btn" id="btnTextLayout" title="Toggle Side-by-Side / Over-Under Layout" data-i18n-title="toolbar.layout_tip" onclick="toggleTextLayout()">
+          <span class="icon">◫</span>
+          <span class="label" data-i18n="toolbar.layout">Layout</span>
+        </button>
+        <button class="tb-btn" title="Generate File Compare Report" data-i18n-title="toolbar.report_tip" onclick="openTextCompareReport()">
+          <span class="icon">📋</span>
+          <span class="label" data-i18n="toolbar.report">Report</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Difference status badge & Save buttons -->
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span id="textDiffBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+          Drag files into panels or click 📁 to browse
+        </span>
+        <button class="btn-primary" id="btnSaveLeft" data-i18n="toolbar.save_left" onclick="saveTextFile('left')">💾 Save Left</button>
+        <button class="btn-primary" id="btnSaveRight" data-i18n="toolbar.save_right" onclick="saveTextFile('right')">💾 Save Right</button>
+      </div>
+    </header>
+
+    <div class="text-compare-panes">
+      <!-- Left Text Pane -->
+      <div class="text-pane-wrapper" id="textLeftPaneWrapper">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="textLeftPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'left')" onblur="handlePathInputBlur('left')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Left File" onclick="browseTextFile('left')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row" id="textLeftSubRow">
+            <span class="text-sub-item text-sub-date" id="textLeftDate"></span>
+            <span class="text-sub-item text-sub-size" id="textLeftSize"></span>
+            <span class="text-format-badge" id="textLeftFormatBadge">Everything Else ▾</span>
+            <span class="text-encoding-badge" id="textLeftMeta">Unicode (UTF-8) ▾</span>
+            <span class="text-sub-item text-sub-eol" id="textLeftEol"></span>
+          </div>
+        </div>
+        <div class="text-pane-body">
+          <!-- Differences Overview Rail beside line numbers  -->
+          <div class="text-overview-rail" id="textOverviewRail" title="Click to jump directly to differences" onclick="handleOverviewRailClick(event)">
+            <div class="overview-viewport-thumb" id="overviewViewportThumb"></div>
+            <div id="overviewMarkersContainer"></div>
+          </div>
+          <!-- Left Action Gutter (DiffCore Yellow Arrows) -->
+          <div class="text-left-gutter-scroll" id="textLeftGutterScroll">
+            <div id="textLeftGutter"></div>
+          </div>
+          <div class="text-pane-scroll" id="textLeftScroll" onscroll="syncTextScroll('left')">
+            <div id="textLeftLines"></div>
+          </div>
+          <div class="sync-vscrollbar" id="textLeftVScroll" title="Scroll left / right files together">
+            <div class="sync-vscrollbar-thumb" id="textLeftVThumb"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Action Gutter (DiffCore Yellow Arrows) -->
+      <div class="text-center-gutter-wrapper">
+        <div class="text-center-gutter-header"></div>
+        <div class="text-center-gutter-scroll" id="textGutterScroll">
+          <div id="textCenterGutter"></div>
+        </div>
+      </div>
+
+      <!-- Right Text Pane -->
+      <div class="text-pane-wrapper" id="textRightPaneWrapper">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="textRightPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'right')" onblur="handlePathInputBlur('right')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Right File" onclick="browseTextFile('right')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row" id="textRightSubRow">
+            <span class="text-sub-item text-sub-date" id="textRightDate"></span>
+            <span class="text-sub-item text-sub-size" id="textRightSize"></span>
+            <span class="text-format-badge" id="textRightFormatBadge">Everything Else ▾</span>
+            <span class="text-encoding-badge" id="textRightMeta">Unicode (UTF-8) ▾</span>
+            <span class="text-sub-item text-sub-eol" id="textRightEol"></span>
+          </div>
+        </div>
+        <div class="text-pane-body">
+          <div class="text-pane-scroll" id="textRightScroll" onscroll="syncTextScroll('right')">
+            <div id="textRightLines"></div>
+          </div>
+          <div class="sync-vscrollbar" id="textRightVScroll" title="Scroll left / right files together">
+            <div class="sync-vscrollbar-thumb" id="textRightVThumb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 4: HEX COMPARE -->
+  <div id="hexView" class="view-container">
+    <header class="text-compare-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapHexSides()">
+          <span class="icon">⇄</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
+        </button>
+        <button class="tb-btn" title="Reload Files" data-i18n-title="toolbar.reload_tip" onclick="reloadHexCompare()">
+          <span class="icon">🔄</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
+        </button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span id="hexDiffBadge" data-i18n="hex.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+          Drag files into panels or click 📁 to browse
+        </span>
+      </div>
+    </header>
+
+    <div class="text-compare-panes">
+      <div class="text-pane-wrapper" id="hexLeftPaneWrapper">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="hexLeftPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handleHexPathKeydown(event, 'left')" onblur="handleHexPathBlur('left')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Left File" data-i18n-title="hex.browse_left" onclick="browseHexFile('left')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row">
+            <span class="text-format-badge" data-i18n="text.format_everything">Everything Else ▾</span>
+            <span class="text-encoding-badge" id="hexLeftMeta" data-i18n="hex.meta_binary">Binary / Hex ▾</span>
+          </div>
+        </div>
+        <div class="hex-pane-scroll" id="hexLeftScroll">
+          <div id="hexLeftContent"></div>
+        </div>
+      </div>
+
+      <div class="text-center-gutter-wrapper" style="width: 24px;"></div>
+
+      <div class="text-pane-wrapper" id="hexRightPaneWrapper">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="hexRightPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handleHexPathKeydown(event, 'right')" onblur="handleHexPathBlur('right')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Right File" data-i18n-title="hex.browse_right" onclick="browseHexFile('right')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row">
+            <span class="text-format-badge" data-i18n="text.format_everything">Everything Else ▾</span>
+            <span class="text-encoding-badge" id="hexRightMeta" data-i18n="hex.meta_binary">Binary / Hex ▾</span>
+          </div>
+        </div>
+        <div class="hex-pane-scroll" id="hexRightScroll">
+          <div id="hexRightContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 5: PICTURE COMPARE  -->
+  <div id="pictureView" class="view-container">
+    <header class="text-compare-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapPicSides()">
+          <span class="icon">⇄</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
+        </button>
+        <button class="tb-btn" title="Reload Images" data-i18n-title="toolbar.reload_tip" onclick="reloadPictureCompare()">
+          <span class="icon">🔄</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- DiffCore Picture Compare Display Modes -->
+      <div class="toolbar-group pic-mode-bar">
+        <button class="pic-mode-btn active" id="btnPicModeSide" data-i18n="pic.mode_side" onclick="setPictureMode('side')">Side-by-Side</button>
+        <button class="pic-mode-btn" id="btnPicModeBlend" data-i18n="pic.mode_blend" onclick="setPictureMode('blend')">Blend</button>
+        <button class="pic-mode-btn" id="btnPicModeSplit" data-i18n="pic.mode_split" onclick="setPictureMode('split')">Split</button>
+        <button class="pic-mode-btn" id="btnPicModeDiff" data-i18n="pic.mode_diff" onclick="setPictureMode('diff')">Difference</button>
+        <div id="picBlendControls" style="display: none; align-items: center; gap: 4px; margin-left: 6px;">
+          <span style="font-size: 11px; color: #888;" data-i18n="pic.opacity">Opacity:</span>
+          <input type="range" id="picBlendSlider" min="0" max="100" value="50" style="width: 80px;" oninput="handlePicBlendSlide(this.value)">
+          <span id="picBlendVal" style="font-size: 10px; color: #aaa; width: 30px;">50%</span>
+        </div>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Zoom & Transform Controls -->
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Zoom In (+)" data-i18n-title="pic.zoom_in" onclick="zoomPicture(1.25)"><span class="icon">🔍+</span><span class="label" data-i18n="pic.zoom_in">Zoom In</span></button>
+        <button class="tb-btn" title="Zoom Out (-)" data-i18n-title="pic.zoom_out" onclick="zoomPicture(0.8)"><span class="icon">🔍-</span><span class="label" data-i18n="pic.zoom_out">Zoom Out</span></button>
+        <button class="tb-btn" title="Actual Size (100%)" data-i18n-title="pic.actual_size" onclick="resetPictureZoom()"><span class="icon">1:1</span><span class="label" data-i18n="pic.actual_size">100%</span></button>
+        <button class="tb-btn" title="Rotate Clockwise" data-i18n-title="pic.rotate" onclick="rotatePicture(90)"><span class="icon">↷</span><span class="label" data-i18n="pic.rotate">Rotate</span></button>
+        <button class="tb-btn" title="Flip Horizontal" data-i18n-title="pic.flip" onclick="flipPicture('h')"><span class="icon">⇆</span><span class="label" data-i18n="pic.flip">Flip</span></button>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span id="pictureDiffBadge" data-i18n="pic.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+          Drag images into panels or click 📁 to browse
+        </span>
+      </div>
+    </header>
+
+    <div class="text-compare-panes" id="pictureContainerPanes">
+      <div class="text-pane-wrapper" id="picLeftPaneWrapper">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="picLeftPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handlePicPathKeydown(event, 'left')" onblur="handlePicPathBlur('left')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Left Image" data-i18n-title="pic.browse_left" onclick="browsePicFile('left')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row">
+            <span class="text-format-badge" data-i18n="tab.picture_compare">Picture Compare ▾</span>
+            <span class="text-encoding-badge" id="picLeftMeta">Image: -</span>
+          </div>
+        </div>
+        <div class="picture-pane-scroll" id="picLeftScroll">
+          <div id="picLeftContent"></div>
+        </div>
+      </div>
+
+      <div class="text-center-gutter-wrapper" id="picCenterGutter" style="width: 24px;"></div>
+
+      <div class="text-pane-wrapper" id="picRightPaneWrapper">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="picRightPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handlePicPathKeydown(event, 'right')" onblur="handlePicPathBlur('right')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Right Image" data-i18n-title="pic.browse_right" onclick="browsePicFile('right')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row">
+            <span class="text-format-badge" data-i18n="tab.picture_compare">Picture Compare ▾</span>
+            <span class="text-encoding-badge" id="picRightMeta">Image: -</span>
+          </div>
+        </div>
+        <div class="picture-pane-scroll" id="picRightScroll">
+          <div id="picRightContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 6: MEDIA COMPARE  -->
+  <div id="mediaView" class="view-container">
+    <header class="text-compare-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapMediaSides()">
+          <span class="icon">⇄</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
+        </button>
+        <button class="tb-btn" title="Reload Media" data-i18n-title="toolbar.reload_tip" onclick="reloadMediaCompare()">
+          <span class="icon">🔄</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
+        </button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span id="mediaDiffBadge" data-i18n="media.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+          Drag media files into panels or click 📁 to browse
+        </span>
+      </div>
+    </header>
+
+    <div class="path-selectors-bar">
+      <div class="path-box">
+        <input type="text" id="mediaLeftPathInput" class="path-input" placeholder="Enter left media filename" data-i18n-placeholder="media.left_placeholder" onkeydown="handleMediaPathKeydown(event, 'left')" onblur="handleMediaPathBlur('left')">
+        <button class="path-tool-btn" title="Browse for Left Media" data-i18n-title="media.browse_left" onclick="browseMediaFile('left')">📁▾</button>
+      </div>
+      <div class="path-center-divider"></div>
+      <div class="path-box">
+        <input type="text" id="mediaRightPathInput" class="path-input" placeholder="Enter right media filename" data-i18n-placeholder="media.right_placeholder" onkeydown="handleMediaPathKeydown(event, 'right')" onblur="handleMediaPathBlur('right')">
+        <button class="path-tool-btn" title="Browse for Right Media" data-i18n-title="media.browse_right" onclick="browseMediaFile('right')">📁▾</button>
+      </div>
+    </div>
+
+    <!-- Media Tags Comparison Table  -->
+    <div class="media-tags-container">
+      <table class="media-tags-table" id="mediaTagsTable">
+        <thead>
+          <tr>
+            <th style="width: 25%;" data-i18n="media.col_field">Tag Field</th>
+            <th style="width: 37.5%;" data-i18n="media.col_left">Left File Value</th>
+            <th style="width: 37.5%;" data-i18n="media.col_right">Right File Value</th>
+          </tr>
+        </thead>
+        <tbody id="mediaTagsTableBody">
+          <tr><td colspan="3" data-i18n="media.empty_prompt" style="text-align: center; color: #888; padding: 30px;">Select or drop audio/video files (MP3, FLAC, M4A/AAC, WAV) to compare metadata</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Media Preview Players -->
+    <div class="media-player-box">
+      <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 11px; font-weight: 600; color: #888;" data-i18n="media.left_player">Left:</span>
+        <audio id="mediaPlayerLeft" controls style="height: 30px; flex: 1;"></audio>
+      </div>
+      <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 11px; font-weight: 600; color: #888;" data-i18n="media.right_player">Right:</span>
+        <audio id="mediaPlayerRight" controls style="height: 30px; flex: 1;"></audio>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 7: TABLE COMPARE (DiffCore Overhauled Multi-Sheet View) -->
+  <div id="tableCompareView" class="view-container">
+    <header class="text-compare-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapTableSides()">
+          <span class="icon">⇄</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
+        </button>
+        <button class="tb-btn" title="Reload Table" data-i18n-title="toolbar.reload_tip" onclick="reloadTableCompare()">
+          <span class="icon">🔄</span>
+          <span class="label" data-i18n="toolbar.reload">Reload</span>
+        </button>
+        <button class="tb-btn" title="Previous Difference Row" data-i18n-title="toolbar.prev_diff_tip" onclick="navTableDiff(-1)">
+          <span class="icon">⬆</span>
+          <span class="label" data-i18n="tableview.prev_diff">Prev Diff</span>
+        </button>
+        <button class="tb-btn" title="Next Difference Row" data-i18n-title="toolbar.next_diff_tip" onclick="navTableDiff(1)">
+          <span class="icon">⬇</span>
+          <span class="label" data-i18n="tableview.next_diff">Next Diff</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Delimiter selector -->
+      <div class="toolbar-group">
+        <span style="font-size: 11px; color: #888;" data-i18n="tableview.delimiter">Delimiter:</span>
+        <select id="tableDelimiterSelect" style="background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-color); font-size: 11px; padding: 2px 6px; border-radius: 3px;" onchange="handleTableDelimiterChange(this.value)">
+          <option value="auto" data-i18n="tableview.delim_auto">Auto-detect</option>
+          <option value="," data-i18n="tableview.delim_comma">Comma (,)</option>
+          <option value="\t" data-i18n="tableview.delim_tab">Tab (\t)</option>
+          <option value=";" data-i18n="tableview.delim_semicolon">Semicolon (;)</option>
+          <option value="|" data-i18n="tableview.delim_pipe">Pipe (|)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span id="tableDiffBadge" data-i18n="tableview.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+          Drag Excel (.xlsx/.xls) or CSV/TSV table into panels or click 📁 to browse
+        </span>
+      </div>
+    </header>
+
+    <div class="text-compare-panes">
+      <div class="text-pane-wrapper" id="tblLeftPaneWrapper">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="tblLeftPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handleTablePathKeydown(event, 'left')" onblur="handleTablePathBlur('left')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Left Table" data-i18n-title="tableview.browse_left" onclick="browseTableFile('left')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row">
+            <span class="text-format-badge" id="tblLeftFormat" data-i18n="tab.table_compare">Table / Excel ▾</span>
+            <span class="text-encoding-badge" id="tblLeftMeta">-</span>
+          </div>
+        </div>
+        <div class="text-pane-scroll" id="tblLeftScroll" onscroll="syncTableScroll('left')">
+          <div id="tblLeftContent"></div>
+        </div>
+      </div>
+
+      <div class="text-center-gutter-wrapper" style="width: 24px;"></div>
+
+      <div class="text-pane-wrapper" id="tblRightPaneWrapper">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="tblRightPathInput" class="text-path-input" placeholder="Enter filename here" data-i18n-placeholder="text.enter_filename" onkeydown="handleTablePathKeydown(event, 'right')" onblur="handleTablePathBlur('right')" spellcheck="false">
+            <button class="text-address-btn" title="Browse for Right Table" data-i18n-title="tableview.browse_right" onclick="browseTableFile('right')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row">
+            <span class="text-format-badge" id="tblRightFormat" data-i18n="tab.table_compare">Table / Excel ▾</span>
+            <span class="text-encoding-badge" id="tblRightMeta">-</span>
+          </div>
+        </div>
+        <div class="text-pane-scroll" id="tblRightScroll" onscroll="syncTableScroll('right')">
+          <div id="tblRightContent"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DiffCore Multiple Excel Sheets & HTML Tables Bottom Bar -->
+    <div class="table-sheets-bar" id="tableSheetsBar">
+      <div style="font-size: 11px; color: #888; padding-left: 8px;" data-i18n="tableview.sheets">Sheets:</div>
+      <div id="tableSheetsList" style="display: flex; gap: 4px;">
+        <button class="table-sheet-tab active">Sheet 1</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 8: FOLDER SYNC  -->
+  <div id="folderSyncView" class="view-container">
+    <header class="folder-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+
+      <!-- Sync Presets Bar  -->
+      <div class="toolbar-group sync-presets-bar" style="background: transparent; border: none; padding: 0;">
+        <button class="sync-preset-btn active" id="btnSyncUpdateLR" onclick="setSyncPreset('update_lr')">
+          <span>➡️</span> <span data-i18n="fsync.update_lr">Update > Left to Right</span>
+        </button>
+        <button class="sync-preset-btn" id="btnSyncUpdateRL" onclick="setSyncPreset('update_rl')">
+          <span>⬅️</span> <span data-i18n="fsync.update_rl">Update > Right to Left</span>
+        </button>
+        <button class="sync-preset-btn" id="btnSyncUpdateBoth" onclick="setSyncPreset('update_both')">
+          <span>⇄</span> <span data-i18n="fsync.update_both">Update Both</span>
+        </button>
+        <button class="sync-preset-btn" id="btnSyncMirrorR" onclick="setSyncPreset('mirror_r')">
+          <span>▶️</span> <span data-i18n="fsync.mirror_r">Mirror to Right</span>
+        </button>
+        <button class="sync-preset-btn" id="btnSyncMirrorL" onclick="setSyncPreset('mirror_l')">
+          <span>◀️</span> <span data-i18n="fsync.mirror_l">Mirror to Left</span>
+        </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Swap Sides" data-i18n-title="toolbar.swap_tip" onclick="swapSyncSides()">
+          <span class="icon">⇄</span>
+          <span class="label" data-i18n="toolbar.swap">Swap</span>
+        </button>
+        <button class="tb-btn" title="Refresh Sync Preview" data-i18n-title="toolbar.refresh_tip" onclick="computeFolderSyncPlan()">
+          <span class="icon">🔄</span>
+          <span class="label" data-i18n="toolbar.refresh">Refresh</span>
+        </button>
+      </div>
+
+      <button class="btn-sync-now" id="btnExecuteSyncNow" title="Execute Folder Sync" data-i18n-title="fsync.sync_now" onclick="executeSyncPlan()">
+        <span>⚡</span> <span data-i18n="fsync.sync_now">Sync Now</span>
+      </button>
+    </header>
+
+    <!-- Path Selector Bar -->
+    <div class="path-selectors-bar">
+      <div class="path-box" id="syncLeftPathBox">
+        <input type="text" id="syncLeftPathInput" class="path-input" placeholder="Enter source folder here" data-i18n-placeholder="fsync.src_placeholder" onkeydown="handleSyncPathKeydown(event, 'left')" onblur="handleSyncPathBlur('left')" spellcheck="false">
+        <button class="path-tool-btn" title="Browse Left Folder" data-i18n-title="fsync.browse_left" onclick="browseSyncFolder('left')">📁▾</button>
+      </div>
+      <div class="path-center-divider"></div>
+      <div class="path-box" id="syncRightPathBox">
+        <input type="text" id="syncRightPathInput" class="path-input" placeholder="Enter target folder here" data-i18n-placeholder="fsync.tgt_placeholder" onkeydown="handleSyncPathKeydown(event, 'right')" onblur="handleSyncPathBlur('right')" spellcheck="false">
+        <button class="path-tool-btn" title="Browse Right Folder" data-i18n-title="fsync.browse_right" onclick="browseSyncFolder('right')">📁▾</button>
+      </div>
+    </div>
+
+    <!-- Sync Preview Items Grid -->
+    <div class="folder-dual-container" style="overflow-y: auto;">
+      <table class="diff-table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th style="width: 36%;" data-i18n="fsync.col_left_source">Left Item (Source)</th>
+            <th style="width: 10%;" data-i18n="fsync.col_left_size">Left Size</th>
+            <th style="width: 14%; text-align: center;" data-i18n="fsync.col_action">Sync Action</th>
+            <th style="width: 10%;" data-i18n="fsync.col_right_size">Right Size</th>
+            <th style="width: 30%;" data-i18n="fsync.col_right_target">Right Item (Target)</th>
+          </tr>
+        </thead>
+        <tbody id="folderSyncTableBody">
+          <tr><td colspan="5" data-i18n="fsync.empty_prompt" style="text-align: center; color: #888; padding: 40px;">Select Left and Right folders to preview sync actions</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sync Status Bar -->
+    <footer class="folder-status-bar">
+      <div class="status-left">
+        <span id="syncStatusSummary">0 actions planned</span>
+      </div>
+      <div class="status-right">
+        <span id="syncStatusDetails">-</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- VIEW 9: FOLDER MERGE (DiffCore 3-Way Folder Merge) -->
+  <div id="folderMergeView" class="view-container">
+    <header class="folder-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn active" id="fMergeFilterAll" onclick="setFolderMergeFilter('all')"><span class="icon">✳️</span><span class="label" data-i18n="toolbar.all">All</span></button>
+        <button class="tb-btn" id="fMergeFilterConflicts" onclick="setFolderMergeFilter('conflicts')"><span class="icon" style="color: #ff5555;">⚠️</span><span class="label" data-i18n="fmerge.conflicts">Conflicts</span></button>
+        <button class="tb-btn" id="fMergeFilterChanges" onclick="setFolderMergeFilter('changes')"><span class="icon" style="color: #55ff55;">Δ</span><span class="label" data-i18n="fmerge.changes">Changes</span></button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Refresh" data-i18n-title="toolbar.refresh_tip" onclick="runFolderMergeComparison()"><span class="icon">🔄</span><span class="label" data-i18n="toolbar.refresh">Refresh</span></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span id="folderMergeBadge" data-i18n="fmerge.badge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px;">
+          Select Left (Theirs), Center (Base), and Right (Mine) folders
+        </span>
+      </div>
+    </header>
+
+    <!-- 3-Way Path Selector Bar -->
+    <div class="path-selectors-bar" style="display: flex; gap: 4px;">
+      <div class="path-box" style="flex: 1;" id="fMergeLeftBox">
+        <input type="text" id="fMergeLeftPathInput" class="path-input" placeholder="Left folder (Theirs)" data-i18n-placeholder="fmerge.left_placeholder" onkeydown="handleFMergePathKeydown(event, 'left')">
+        <button class="path-tool-btn" title="Browse Left Folder" data-i18n-title="fmerge.browse_left" onclick="browseFMergeFolder('left')">📁▾</button>
+      </div>
+      <div class="path-box" style="flex: 1;" id="fMergeBaseBox">
+        <input type="text" id="fMergeBasePathInput" class="path-input" placeholder="Center folder (Base)" data-i18n-placeholder="fmerge.base_placeholder" onkeydown="handleFMergePathKeydown(event, 'base')">
+        <button class="path-tool-btn" title="Browse Center Folder" data-i18n-title="fmerge.browse_base" onclick="browseFMergeFolder('base')">📁▾</button>
+      </div>
+      <div class="path-box" style="flex: 1;" id="fMergeRightBox">
+        <input type="text" id="fMergeRightPathInput" class="path-input" placeholder="Right folder (Mine)" data-i18n-placeholder="fmerge.right_placeholder" onkeydown="handleFMergePathKeydown(event, 'right')">
+        <button class="path-tool-btn" title="Browse Right Folder" data-i18n-title="fmerge.browse_right" onclick="browseFMergeFolder('right')">📁▾</button>
+      </div>
+    </div>
+
+    <!-- 3-Way Folder Merge Tree Table -->
+    <div class="folder-dual-container" id="fMergeTableContainer" style="overflow-y: auto;">
+      <table class="diff-table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th style="width: 30%;" data-i18n="fmerge.col_left">Left Item (Theirs)</th>
+            <th style="width: 25%;" data-i18n="fmerge.col_base">Center Item (Base)</th>
+            <th style="width: 30%;" data-i18n="fmerge.col_right">Right Item (Mine)</th>
+            <th style="width: 15%; text-align: center;" data-i18n="fmerge.col_status">Merge Status</th>
+          </tr>
+        </thead>
+        <tbody id="folderMergeTableBody">
+          <tr><td colspan="4" data-i18n="fmerge.empty_prompt" style="text-align: center; color: #888; padding: 40px;">Select 3 folders to run 3-way folder merge</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VIEW 10: TEXT MERGE (DiffCore 3-Way Text Merge) -->
+  <div id="textMergeView" class="view-container">
+    <header class="text-compare-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Previous Conflict (Ctrl+Up)" data-i18n-title="tmerge.prev_conflict" onclick="navMergeConflict(-1)">
+          <span class="icon">⬆</span>
+          <span class="label" data-i18n="tmerge.prev_conflict">Prev Conflict</span>
+        </button>
+        <button class="tb-btn" title="Next Conflict (Ctrl+Down)" data-i18n-title="tmerge.next_conflict" onclick="navMergeConflict(1)">
+          <span class="icon">⬇</span>
+          <span class="label" data-i18n="tmerge.next_conflict">Next Conflict</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Take Left (Theirs)" data-i18n-title="tmerge.take_left" onclick="takeMergeSelection('left')">
+          <span class="icon">⬅️</span>
+          <span class="label" data-i18n="tmerge.take_left">Take Left</span>
+        </button>
+        <button class="tb-btn" title="Take Center (Base)" data-i18n-title="tmerge.take_base" onclick="takeMergeSelection('base')">
+          <span class="icon">⬇</span>
+          <span class="label" data-i18n="tmerge.take_base">Take Base</span>
+        </button>
+        <button class="tb-btn" title="Take Right (Mine)" data-i18n-title="tmerge.take_right" onclick="takeMergeSelection('right')">
+          <span class="icon">➡️</span>
+          <span class="label" data-i18n="tmerge.take_right">Take Right</span>
+        </button>
+        <button class="tb-btn" title="Take Both" data-i18n-title="tmerge.take_both" onclick="takeMergeSelection('both')">
+          <span class="icon">⇄</span>
+          <span class="label" data-i18n="tmerge.take_both">Take Both</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" id="btnToggleMergeCenter" title="Toggle Base Center Pane" data-i18n-title="tmerge.center" onclick="toggleMergeCenterPane()">
+          <span class="icon">👁️</span>
+          <span class="label" data-i18n="tmerge.center">Center</span>
+        </button>
+        <button class="tb-btn" title="Toggle Word Wrap" data-i18n-title="toolbar.wrap_tip" onclick="toggleMergeWordWrap()">
+          <span class="icon">↵</span>
+          <span class="label" data-i18n="toolbar.wrap">Wrap</span>
+        </button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span class="conflict-badge" id="mergeConflictBadge" style="display: none;">0 Conflicts</span>
+        <button class="btn-primary" data-i18n="tmerge.save_output" onclick="saveMergedOutputFile()">💾 Save Output</button>
+      </div>
+    </header>
+
+    <!-- Upper 3 Panes (Theirs, Base, Mine) -->
+    <div class="text-merge-upper-panes" id="textMergeUpperPanes">
+      <!-- Left (Theirs) -->
+      <div class="text-merge-source-pane" id="tMergeLeftPane">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="tMergeLeftPathInput" class="text-path-input" placeholder="Left file (Theirs)" data-i18n-placeholder="tmerge.left_placeholder" onkeydown="handleTMergePathKeydown(event, 'left')">
+            <button class="text-address-btn" title="Browse Left File" data-i18n-title="tmerge.badge_left" onclick="browseTMergeFile('left')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row"><span class="text-format-badge" data-i18n="tmerge.badge_left">Left (Theirs)</span></div>
+        </div>
+        <div class="text-pane-scroll" id="tMergeLeftScroll" onscroll="syncThreeWayScroll('left')">
+          <div id="tMergeLeftLines"></div>
+        </div>
+      </div>
+
+      <!-- Center (Base) -->
+      <div class="text-merge-source-pane" id="tMergeCenterPane">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="tMergeBasePathInput" class="text-path-input" placeholder="Center file (Base Ancestor)" data-i18n-placeholder="tmerge.base_placeholder" onkeydown="handleTMergePathKeydown(event, 'base')">
+            <button class="text-address-btn" title="Browse Center Base File" data-i18n-title="tmerge.badge_base" onclick="browseTMergeFile('base')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row"><span class="text-format-badge" data-i18n="tmerge.badge_base">Center (Base)</span></div>
+        </div>
+        <div class="text-pane-scroll" id="tMergeCenterScroll" onscroll="syncThreeWayScroll('base')">
+          <div id="tMergeBaseLines"></div>
+        </div>
+      </div>
+
+      <!-- Right (Mine) -->
+      <div class="text-merge-source-pane" id="tMergeRightPane">
+        <div class="text-address-bar">
+          <div class="text-address-input-row">
+            <input type="text" id="tMergeRightPathInput" class="text-path-input" placeholder="Right file (Mine)" data-i18n-placeholder="tmerge.right_placeholder" onkeydown="handleTMergePathKeydown(event, 'right')">
+            <button class="text-address-btn" title="Browse Right File" data-i18n-title="tmerge.badge_right" onclick="browseTMergeFile('right')">📁▾</button>
+          </div>
+          <div class="text-address-sub-row"><span class="text-format-badge" data-i18n="tmerge.badge_right">Right (Mine)</span></div>
+        </div>
+        <div class="text-pane-scroll" id="tMergeRightScroll" onscroll="syncThreeWayScroll('right')">
+          <div id="tMergeRightLines"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lower Merged Output Pane  -->
+    <div class="text-merge-output-container">
+      <div class="text-merge-output-header">
+        <div style="font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 10px;">
+          <span data-i18n="tmerge.merged_output">Merged Output</span>
+          <span style="font-weight: normal; color: #888; font-size: 11px;" data-i18n="tmerge.merged_desc">(Editable result to be saved)</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="tMergeOutputPathInput" class="path-input" placeholder="Output destination file" data-i18n-placeholder="tmerge.output_placeholder" style="width: 320px;">
+          <button class="btn-secondary" data-i18n="common.browse" onclick="browseTMergeOutputFile()">📂 Browse</button>
+        </div>
+      </div>
+      <div class="text-edit-body">
+        <textarea id="tMergeOutputEditor" class="text-edit-editor" placeholder="Merged content appears here. You can directly edit or use Take buttons above." data-i18n-placeholder="tmerge.output_editor_placeholder" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 11: TEXT EDIT  -->
+  <div id="textEditView" class="view-container">
+    <header class="text-compare-toolbar">
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Home (Back to Sessions)" data-i18n-title="toolbar.home_tip" onclick="handleToolbarHomeClick()">
+          <span class="icon">🏠</span>
+          <span class="label" data-i18n="toolbar.home">Home</span>
+        </button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Open File" data-i18n-title="toolbar.open_tip" onclick="openTextEditFile()"><span class="icon">📂</span><span class="label" data-i18n="toolbar.open_file">Open</span></button>
+        <button class="tb-btn" title="Save File (Cmd+S)" data-i18n-title="toolbar.save_tip" onclick="saveTextEditContent()"><span class="icon">💾</span><span class="label" data-i18n="toolbar.save_file">Save</span></button>
+        <button class="tb-btn" title="Reload File" data-i18n-title="toolbar.reload_tip" onclick="reloadTextEditFile()"><span class="icon">🔄</span><span class="label" data-i18n="toolbar.reload">Reload</span></button>
+        <button class="tb-btn" id="btnTextEditWrap" title="Toggle Word Wrap" data-i18n-title="toolbar.wrap_tip" onclick="toggleTextEditWrap()"><span class="icon">↵</span><span class="label" data-i18n="toolbar.wrap">Wrap</span></button>
+      </div>
+      <div class="toolbar-separator"></div>
+      <div class="toolbar-group">
+        <input type="text" id="textEditSearchInput" class="tb-filter-input" placeholder="🔍 Find..." data-i18n-placeholder="textedit.find_placeholder" style="width: 140px;" onkeydown="handleTextEditSearchKeydown(event)">
+        <button class="tb-btn" title="Find Next" data-i18n-title="textedit.next_tip" onclick="navTextEditFind(1)"><span class="icon">⬇</span><span class="label" data-i18n="common.search">Next</span></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+        <span id="textEditMetaBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px;">
+          UTF-8
+        </span>
+      </div>
+    </header>
+
+    <div class="text-address-bar">
+      <div class="text-address-input-row">
+        <input type="text" id="textEditPathInput" class="text-path-input" placeholder="Enter file path to edit" data-i18n-placeholder="textedit.path_placeholder" onkeydown="handleTextEditPathKeydown(event)" onblur="handleTextEditPathBlur()" spellcheck="false">
+        <button class="text-address-btn" title="Browse for File" data-i18n-title="textedit.browse_file" onclick="openTextEditFile()">📁▾</button>
+      </div>
+    </div>
+
+    <div class="text-edit-container">
+      <div class="text-edit-body">
+        <textarea id="textEditMainTextarea" class="text-edit-editor" placeholder="Type or drop file to edit..." data-i18n-placeholder="textedit.editor_placeholder" spellcheck="false" oninput="handleTextEditChange()"></textarea>
+      </div>
+      <footer class="folder-status-bar" style="height: 24px; padding: 2px 10px;">
+        <span id="textEditLineCount">0 lines</span>
+        <span id="textEditCharCount" style="margin-left: 20px;">0 characters</span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- CONTEXT MENU FOR ROWS (Image 1 Folder / Image 2 File) -->
+  <div class="context-menu" id="folderContextMenu"></div>
+
+  <!-- MODAL: FOLDER RULES (DiffCore Rules Modal) -->
+  <div class="modal-backdrop" id="folderRulesModal" onclick="if(event.target === this) closeFolderRulesModal()">
+    <div class="modal-window bc-rules-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="icon"><span class="dc-icon dc-icon-referee"></span></span>
+          <span data-i18n="rules.title">Folder Compare - Rules</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeFolderRulesModal()">✕</button>
+      </div>
+
+      <div class="modal-body bc-rules-body">
+        <!-- Section 1: Quick tests -->
+        <div class="rules-section-title" data-i18n="rules.quick_tests">Quick tests:</div>
+        <div class="rules-quick-grid">
+          <!-- Left Column -->
+          <div class="rules-col">
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleFileSize" checked>
+              <span data-i18n="rules.compare_file_size">Compare file size</span>
+            </label>
+
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleTimestamps" checked onchange="toggleTimestampRules()">
+              <span data-i18n="rules.compare_timestamps">Compare timestamps</span>
+            </label>
+
+            <!-- Indented timestamp options -->
+            <div class="rules-sub-group" id="groupTimestampOptions">
+              <div class="rules-tolerance-row">
+                <input type="number" id="ruleTimestampTolerance" value="2" min="0" max="86400" step="1" class="rules-num-input">
+                <span data-i18n="rules.second_tolerance">second tolerance</span>
+              </div>
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRuleIgnoreDST">
+                <span data-i18n="rules.ignore_dst">Ignore daylight saving difference (1 hour)</span>
+              </label>
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRuleIgnoreTimezone">
+                <span data-i18n="rules.ignore_timezone">Ignore timezone differences</span>
+              </label>
+            </div>
+
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleFilenameCase">
+              <span data-i18n="rules.compare_filename_case">Compare filename case</span>
+            </label>
+
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleAlignExt">
+              <span data-i18n="rules.align_different_extensions">Align filenames with different extensions</span>
+            </label>
+
+            <label class="rules-checkbox-label">
+              <input type="checkbox" id="chkRuleUnicodeNorm" checked>
+              <span data-i18n="rules.align_unicode">Align filenames with different Unicode normalization forms</span>
+            </label>
+          </div>
+
+          <!-- Right Column: Unix metadata -->
+          <div class="rules-col">
+            <div class="rules-sub-title" data-i18n="rules.compare_unix_metadata">Compare Unix metadata:</div>
+            <div class="rules-metadata-group">
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRulePermissions">
+                <span data-i18n="rules.compare_permissions">Compare permissions</span>
+              </label>
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRuleOwner">
+                <span data-i18n="rules.compare_owner">Compare owner</span>
+              </label>
+              <label class="rules-checkbox-label">
+                <input type="checkbox" id="chkRuleGroup">
+                <span data-i18n="rules.compare_group">Compare group</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="rules-divider"></div>
+
+        <!-- Section 2: Requires opening files -->
+        <div class="rules-section-title" data-i18n="rules.requires_opening_files">Requires opening files:</div>
+        <div class="rules-opening-group">
+          <label class="rules-checkbox-label">
+            <input type="checkbox" id="chkRuleCompareContents" onchange="toggleContentRules()">
+            <span data-i18n="rules.compare_contents">Compare contents:</span>
+          </label>
+
+          <!-- Indented content options -->
+          <div class="rules-sub-group" id="groupContentOptions">
+            <div class="rules-radio-list">
+              <label class="rules-radio-label">
+                <input type="radio" name="ruleContentMethod" value="crc">
+                <span data-i18n="rules.crc_comparison">CRC comparison</span>
+              </label>
+              <label class="rules-radio-label">
+                <input type="radio" name="ruleContentMethod" value="binary">
+                <span data-i18n="rules.binary_comparison">Binary comparison</span>
+              </label>
+              <label class="rules-radio-label">
+                <input type="radio" name="ruleContentMethod" value="rules" checked>
+                <span data-i18n="rules.rules_based_comparison">Rules-based comparison</span>
+              </label>
+            </div>
+
+            <label class="rules-checkbox-label" style="margin-top: 6px;">
+              <input type="checkbox" id="chkRuleSkipIfQuickSame">
+              <span data-i18n="rules.skip_if_quick_same">Skip if quick tests indicate files are the same</span>
+            </label>
+          </div>
+
+          <label class="rules-checkbox-label" style="margin-top: 8px;">
+            <input type="checkbox" id="chkRuleOverrideQuickTests" checked>
+            <span data-i18n="rules.override_quick_results">Override quick test results</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Footer: scope dropdown on the left, buttons on the right -->
+      <div class="modal-footer rules-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <select id="ruleScopeSelect" class="rules-scope-select">
+          <option value="view" data-i18n="rules.use_for_this_view_only">Use for this view only</option>
+          <option value="session" data-i18n="rules.update_session_defaults">Also update session defaults</option>
+        </select>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-secondary" onclick="closeFolderRulesModal()" data-i18n="common.cancel">Cancel</button>
+          <button class="btn-primary" onclick="applyFolderRules()" data-i18n="common.ok">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DEEP COMPARE [=? Compare] (Image 1) -->
+  <div class="modal-backdrop" id="deepCompareModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>[=?] Compare</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeDeepCompareModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <fieldset class="modal-group">
+          <legend data-i18n="modal.selection">Selection</legend>
+          <div class="stats-grid">
+            <div class="stats-column">
+              <div class="stats-side-label" data-i18n="modal.left_side">Left Side</div>
+              <div class="stat-line">Files: <span id="modalLeftFiles">0</span></div>
+              <div class="stat-line">Folders: <span id="modalLeftFolders">0</span></div>
+              <div class="stat-line">Size: <span id="modalLeftBytes">0 bytes</span></div>
+            </div>
+            <div class="stats-column">
+              <div class="stats-side-label" data-i18n="modal.right_side">Right Side</div>
+              <div class="stat-line">Files: <span id="modalRightFiles">0</span></div>
+              <div class="stat-line">Folders: <span id="modalRightFolders">0</span></div>
+              <div class="stat-line">Size: <span id="modalRightBytes">0 bytes</span></div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="modal-group">
+          <legend data-i18n="modal.method">Comparison method</legend>
+          <div class="radio-options">
+            <label class="radio-label">
+              <input type="radio" name="compareMethod" value="crc">
+              <span data-i18n="modal.crc">CRC comparison</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="compareMethod" value="binary">
+              <span data-i18n="modal.binary">Binary comparison</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="compareMethod" value="rules" checked>
+              <span data-i18n="modal.rules">Rules-based comparison</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="checkbox-group">
+          <label class="radio-label">
+            <input type="checkbox" id="chkSkipBinary" checked>
+            <span data-i18n="modal.skip_binary">Skip binary files</span>
+          </label>
+          <label class="radio-label">
+            <input type="checkbox" id="chkAutoClose" checked>
+            <span data-i18n="modal.auto_close">Automatically close this dialog when comparison completes</span>
+          </label>
+        </div>
+
+        <div id="deepCompareProgress" style="display: none; margin-top: 10px;">
+          <div style="font-size: 11px; color: #aaa; margin-bottom: 4px;" id="deepCompareStatusText">Comparing...</div>
+          <div style="height: 6px; background: #333; border-radius: 3px; overflow: hidden;">
+            <div id="deepProgressBar" style="width: 0%; height: 100%; background: var(--color-blue-btn); transition: width 0.2s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" data-i18n="common.cancel" onclick="closeDeepCompareModal()">Cancel</button>
+        <button class="btn-primary" id="btnExecuteCompare" data-i18n="modal.compare_btn" onclick="executeDeepCompare()">Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT / CREATE SESSION -->
+  <div class="modal-backdrop" id="sessionEditModal">
+    <div class="modal-window" style="width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span id="sessionModalHeaderTitle" data-i18n="modal.edit_session">Edit Session</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeSessionModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label data-i18n="modal.session_name">Session Name</label>
+          <input type="text" class="form-input" id="editSessionName" placeholder="My Project Compare">
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="modal.left_folder">Left Folder</label>
+          <div class="form-row">
+            <input type="text" class="form-input" id="editSessionLeft" placeholder="/path/to/left/folder">
+            <button class="btn-secondary" onclick="browseModalFolder('left')">📂 Browse</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="modal.right_folder">Right Folder</label>
+          <div class="form-row">
+            <input type="text" class="form-input" id="editSessionRight" placeholder="/path/to/right/folder">
+            <button class="btn-secondary" onclick="browseModalFolder('right')">📂 Browse</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" data-i18n="common.cancel" onclick="closeSessionModal()">Cancel</button>
+        <button class="btn-primary" data-i18n="modal.save_session" onclick="saveSessionFromModal()">Save Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ATTRIBUTES DIALOG  -->
+  <div class="modal-backdrop" id="attributesModal" style="display: none;">
+    <div class="modal-window" style="width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span id="attrModalTitle">Attributes</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeAttributesModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="attr-grid">
+          <div class="attr-row">
+            <span class="attr-label">Name:</span>
+            <span class="attr-val" id="attrName">-</span>
+          </div>
+          <div class="attr-row">
+            <span class="attr-label">Type:</span>
+            <span class="attr-val" id="attrType">-</span>
+          </div>
+          <div class="attr-row">
+            <span class="attr-label">Location:</span>
+            <span class="attr-val attr-path" id="attrPath">-</span>
+          </div>
+          <div class="attr-row">
+            <span class="attr-label">Size:</span>
+            <span class="attr-val" id="attrSize">-</span>
+          </div>
+          <div class="attr-row">
+            <span class="attr-label">Modified:</span>
+            <span class="attr-val" id="attrModified">-</span>
+          </div>
+          <div class="attr-row">
+            <span class="attr-label">Created:</span>
+            <span class="attr-val" id="attrCreated">-</span>
+          </div>
+          <div class="attr-row">
+            <span class="attr-label">Permissions:</span>
+            <span class="attr-val" id="attrPermissions">-</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="closeAttributesModal()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FILE COMPARE REPORT -->
+  <div class="modal-backdrop" id="reportModal" style="display: none;">
+    <div class="modal-window" style="width: 620px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>File Compare Report</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeReportModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="report-container">
+          <div class="report-header-info" id="reportHeaderInfo"></div>
+          <pre class="report-diff-content" id="reportContent"></pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="copyReportToClipboard()">📋 Copy to Clipboard</button>
+        <button class="btn-primary" onclick="closeReportModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FILE & FOLDER FILTERS (EXCLUSIONS) -->
+  <div class="modal-backdrop" id="nameFiltersModal">
+    <div class="modal-window" style="width: 560px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span data-i18n="modal.filters_title">📁 File & Folder Filters (Exclusions)</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeNameFiltersModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="filter-enable-section" style="margin-bottom: 15px; padding: 12px 14px; background: rgba(255, 255, 255, 0.04); border-radius: 4px; border: 1px solid var(--border-color);">
+          <label class="radio-label" style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="chkEnableExclusions" onchange="toggleExclusionControls()">
+            <span>Enable exclusion filters (Hide excluded items)</span>
+          </label>
+          <div style="font-size: 11px; color: #888; margin-top: 4px; margin-left: 24px;">
+            When enabled, matching files and folders will be hidden from the view and omitted from comparisons.
+          </div>
+        </div>
+
+        <fieldset class="modal-group" id="fsExcludeFolders">
+          <legend data-i18n="modal.exclude_folders">Exclude Folders</legend>
+          <textarea id="txtExcludeFolders" class="tb-filter-input" style="width: 100%; height: 55px; font-family: var(--font-mono); font-size: 12px; resize: vertical; line-height: 1.5;" placeholder=".settings; target; .git; node_modules; .idea; dist; build"></textarea>
+          <div style="font-size: 11px; color: #777; margin-top: 4px;">Separate folder names with semicolons (;) or commas (,).</div>
+        </fieldset>
+
+        <fieldset class="modal-group" id="fsExcludeFiles" style="margin-top: 12px;">
+          <legend data-i18n="modal.exclude_files">Exclude Files</legend>
+          <textarea id="txtExcludeFiles" class="tb-filter-input" style="width: 100%; height: 55px; font-family: var(--font-mono); font-size: 12px; resize: vertical; line-height: 1.5;" placeholder=".classpath; .gitignore; .project; *.log; *.tmp; .DS_Store; Thumbs.db"></textarea>
+          <div style="font-size: 11px; color: #777; margin-top: 4px;">Separate file names or wildcards (e.g. *.log) with semicolons (;) or commas (,).</div>
+        </fieldset>
+
+        <!-- Quick Presets -->
+        <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
+          <div style="font-size: 11px; color: #999; margin-bottom: 8px; font-weight: 500;">Quick Presets (Click to add):</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <button type="button" class="btn-small preset-btn" onclick="addFilterPreset('maven')">+ Maven (target)</button>
+            <button type="button" class="btn-small preset-btn" onclick="addFilterPreset('eclipse')">+ Eclipse (.settings, .classpath, .project)</button>
+            <button type="button" class="btn-small preset-btn" onclick="addFilterPreset('git')">+ Git (.git, .gitignore)</button>
+            <button type="button" class="btn-small preset-btn" onclick="addFilterPreset('node')">+ Node.js (node_modules)</button>
+            <button type="button" class="btn-small preset-btn" onclick="addFilterPreset('system')">+ System (.DS_Store, Thumbs.db, *.log)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn-secondary" data-i18n="common.reset_defaults" onclick="resetNameFiltersToDefaults()">Reset Defaults</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" data-i18n="common.cancel" onclick="closeNameFiltersModal()">Cancel</button>
+          <button class="btn-primary" data-i18n="common.save" onclick="saveNameFiltersFromModal()">Save & Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DIFFCORE OPTIONS (NEXT DIFFERENCE) -->
+  <div class="modal-backdrop" id="nextDiffOptionsModal">
+    <div class="modal-window bc-options-window" style="width: 700px; max-width: 92vw;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span data-i18n="modal.options_title">Options</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeNextDiffOptionsModal()">✕</button>
+      </div>
+
+      <div class="bc-options-layout">
+        <!-- Left Categories Sidebar matching DiffCore (Image 1) -->
+        <aside class="bc-options-sidebar">
+          <div class="bc-options-search">
+            <input type="text" placeholder="🔍 Search" data-i18n-placeholder="common.search" class="tb-filter-input" style="width: 100%; font-size: 11px;">
+          </div>
+          <div class="bc-options-cat-list">
+            <div class="bc-opt-cat"><span class="cat-icon">⏻</span> <span data-i18n="modal.opt_cat_startup">Startup</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">📁</span> <span data-i18n="modal.opt_cat_tabs">Tabs</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">🎨</span> <span data-i18n="modal.opt_cat_appearance">Appearance</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">📝</span> <span data-i18n="modal.opt_cat_text_editing">Text Editing</span></div>
+            <div class="bc-opt-cat active"><span class="cat-icon">⬇</span> <span data-i18n="modal.opt_cat_next_diff">Next Difference</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">💾</span> <span data-i18n="modal.opt_cat_backup">Backups</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">⚠️</span> <span data-i18n="modal.opt_cat_file_ops">File Operations</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">📦</span> <span data-i18n="modal.opt_cat_archive">Archive Types</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">⌨️</span> <span data-i18n="modal.opt_cat_commands">Commands</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">🗂️</span> <span data-i18n="modal.opt_cat_open_with">Open With</span></div>
+            <div class="bc-opt-cat"><span class="cat-icon">⚙️</span> <span data-i18n="modal.opt_cat_tweaks">Tweaks</span></div>
+          </div>
+        </aside>
+
+        <!-- Right Settings Panel (Next Difference) -->
+        <main class="bc-options-content">
+          <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;" data-i18n="modal.opt_cat_next_diff">Next Difference</h3>
+
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;">
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkGoToFirstDiffOnLoad">
+              <span data-i18n="modal.chk_first_diff">When <u>l</u>oading new files, go to first difference</span>
+            </label>
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkNextDiffAfterCopy">
+              <span data-i18n="modal.chk_next_diff_copy"><u>G</u>o to next difference in files after <u>c</u>opying to other side</span>
+            </label>
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkLimitNextDiffToFolder">
+              <span data-i18n="modal.chk_limit_folder">Limit "Next Difference Files" to current fol<u>d</u>er</span>
+            </label>
+          </div>
+
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 12px; color: #ddd;" data-i18n="modal.when_no_more">When no more differences:</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 12px;">
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkWrapAroundDiffs">
+              <span data-i18n="modal.chk_wrap_around"><u>W</u>rap around to first difference</span>
+            </label>
+            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="chkShowMessagePanel">
+              <span data-i18n="modal.chk_show_panel">Show <u>m</u>essage panel</span>
+            </label>
+          </div>
+        </main>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn-secondary" data-i18n="common.reset_defaults" onclick="resetNextDiffOptionsToDefaults()">Reset Defaults</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" data-i18n="common.cancel" onclick="closeNextDiffOptionsModal()">Cancel</button>
+          <button class="btn-primary" data-i18n="common.ok" onclick="saveNextDiffOptionsFromModal()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SAVE CHANGES CONFIRMATION (DiffCore prompt) -->
+  <div class="modal-backdrop" id="saveConfirmModal">
+    <div class="modal-window save-confirm-window">
+      <div class="save-confirm-body">
+        <div class="save-confirm-icon">⚠️</div>
+        <div class="save-confirm-message" id="saveConfirmMessage" data-i18n="modal.save_confirm_msg">Save changes to file?</div>
+      </div>
+      <div class="save-confirm-footer">
+        <button class="btn-secondary save-confirm-btn" data-i18n="common.no" onclick="handleSaveConfirmResponse('no')">No</button>
+        <button class="btn-secondary save-confirm-btn" data-i18n="common.cancel" onclick="handleSaveConfirmResponse('cancel')">Cancel</button>
+        <button class="btn-primary save-confirm-btn" data-i18n="common.yes" onclick="handleSaveConfirmResponse('yes')">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: UNSUPPORTED BINARY FILE ALERT -->
+  <div class="modal-backdrop" id="binaryAlertModal" style="display: none;" onclick="if(event.target === this) closeBinaryAlertModal()">
+    <div class="modal-window save-confirm-window" style="width: 500px;">
+      <div class="save-confirm-body">
+        <div class="save-confirm-icon" style="font-size: 38px;">⚠️</div>
+        <div style="flex: 1;">
+          <div style="font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 6px;" id="binaryAlertTitle">Archivo Binario No Soportado como Texto</div>
+          <div class="save-confirm-message" id="binaryAlertMessage" style="font-size: 13px; color: #bbb; line-height: 1.4;">
+            El archivo seleccionado contiene datos binarios que no corresponden a texto plano ni a clases Java compiladas.
+          </div>
+        </div>
+      </div>
+      <div class="save-confirm-footer">
+        <button class="btn-secondary save-confirm-btn" onclick="closeBinaryAlertModal()">Cancelar</button>
+        <button class="btn-primary save-confirm-btn" id="btnOpenInHexCompare" onclick="handleOpenInHexCompare()">Abrir en Comparador Hexadecimal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ABOUT DIFFCORE (DiffCore style) -->
+  <div class="modal-backdrop" id="aboutModal" onclick="if(event.target === this) closeAboutModal()">
+    <div class="modal-window about-modal-window">
+      <!-- Titlebar with macOS style dots and OS adaptive controls -->
+      <div class="about-titlebar">
+        <div class="modal-controls-mac">
+          <button class="mac-dot mac-dot-close" title="Cerrar" aria-label="Cerrar" onclick="closeAboutModal()"></button>
+          <span class="mac-dot mac-dot-min"></span>
+          <span class="mac-dot mac-dot-zoom"></span>
+        </div>
+        <div class="about-window-title" data-i18n="about.title">About DiffCore</div>
+        <button class="modal-close-btn about-window-close-x" onclick="closeAboutModal()" title="Cerrar">✕</button>
+        <div class="modal-mac-spacer" aria-hidden="true"></div>
+      </div>
+
+      <!-- Main Upper Body -->
+      <div class="about-body">
+        <div class="about-hero">
+          <div class="about-logo-wrapper">
+            <img src="assets/icon.png" alt="DiffCore Logo" class="about-logo-img">
+          </div>
+          <div class="about-details">
+            <h1 class="about-app-name">DiffCore</h1>
+            <div class="about-edition" data-i18n="about.edition">64-bit Edition</div>
+            <div class="about-version" data-i18n="about.version">Version 1.0.0 (build 20261017)</div>
+            <div class="about-copyright" data-i18n="about.copyright">Copyright © 2026 Miguel Vergara &amp; Contributors.</div>
+            <div class="about-rights" data-i18n="about.all_rights">All rights reserved.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Darker Bar -->
+      <div class="about-footer">
+        <div class="about-tire-tracks"></div>
+        <div class="about-footer-left">
+          <div class="about-status-title" data-i18n="about.license_status">COMMUNITY EDITION</div>
+          <div class="about-status-desc" data-i18n="about.license_desc">Free and open-source software for unlimited use</div>
+        </div>
+        <div class="about-footer-right">
+          <a href="#" class="about-license-link" data-i18n="about.license_agreement" onclick="toggleAboutLicense(event)">License Agreement</a>
+          <button class="about-close-btn" data-i18n="common.close" onclick="closeAboutModal()">Close</button>
+        </div>
+      </div>
+
+      <!-- Inner License Agreement Drawer / Overlay -->
+      <div class="about-license-overlay" id="aboutLicenseOverlay" style="display: none;">
+        <div class="about-license-header">
+          <div class="modal-controls-mac">
+            <button class="mac-dot mac-dot-close" title="Cerrar" aria-label="Cerrar" onclick="toggleAboutLicense(event)"></button>
+            <span class="mac-dot mac-dot-min"></span>
+            <span class="mac-dot mac-dot-zoom"></span>
+          </div>
+          <span class="modal-title" data-i18n="about.license_title">DiffCore - End User License Agreement</span>
+          <button class="modal-close-btn" onclick="toggleAboutLicense(event)" title="Cerrar">✕</button>
+          <div class="modal-mac-spacer" aria-hidden="true"></div>
+        </div>
+        <div class="about-license-body">
+          <pre class="about-license-text">DiffCore End User License Agreement (EULA)
+
+Copyright (c) 2026 Miguel Vergara &amp; Contributors.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
+        </div>
+        <div class="about-license-footer">
+          <button class="about-close-btn" onclick="toggleAboutLicense(event)" data-i18n="common.close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: QUICK PICKER (ULTRA-FAST IN-APP EXPLORER) -->
+  <div class="modal-backdrop" id="quickPickerModal" style="display: none;" onclick="if(event.target === this) closeQuickPickerModal()">
+    <div class="modal-window quick-picker-window">
+      <div class="modal-header quick-picker-header">
+        <div class="modal-controls-mac">
+          <button class="mac-dot mac-dot-close" title="Cerrar" aria-label="Cerrar" onclick="closeQuickPickerModal()"></button>
+          <span class="mac-dot mac-dot-min"></span>
+          <span class="mac-dot mac-dot-zoom"></span>
+        </div>
+        <div class="modal-title" id="quickPickerTitle">
+          <span class="quick-picker-icon" id="quickPickerTitleIcon">📁</span>
+          <span id="quickPickerTitleText">Examinar</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeQuickPickerModal()" title="Cerrar">✕</button>
+        <div class="modal-mac-spacer" aria-hidden="true"></div>
+      </div>
+      
+      <div class="quick-picker-nav-bar">
+        <button class="quick-nav-btn" id="btnQuickPickerUp" title="Subir un nivel (Alt+Up)" onclick="quickPickerGoUp()">⬆</button>
+        <input type="text" class="quick-picker-path-input" id="quickPickerPathInput" onkeydown="handleQuickPickerPathKey(event)" placeholder="/ruta/de/carpeta" />
+        <button class="quick-nav-btn" title="Ir a ruta" onclick="quickPickerNavigateToInput()">➔</button>
+        <button class="quick-nav-btn" title="Recargar (F5)" onclick="quickPickerReload()">🔄</button>
+      </div>
+
+      <div class="quick-picker-filter-bar">
+        <span class="quick-picker-filter-icon">🔍</span>
+        <input type="text" class="quick-picker-filter-input" id="quickPickerFilterInput" oninput="handleQuickPickerFilter(event)" onkeydown="handleQuickPickerListNavKey(event)" placeholder="Escribe para filtrar archivos y carpetas..." />
+        <span class="quick-picker-count-badge" id="quickPickerCountBadge">0 elementos</span>
+      </div>
+
+      <div class="quick-picker-main-layout">
+        <!-- Shortcuts Sidebar -->
+        <div class="quick-picker-sidebar">
+          <div class="quick-picker-sidebar-title">Accesos Rápidos</div>
+          <div class="quick-picker-shortcut-list" id="quickPickerShortcutList">
+            <!-- Dynamic shortcuts injected here -->
+          </div>
+        </div>
+
+        <!-- Files and Folders View -->
+        <div class="quick-picker-list-container">
+          <div class="quick-picker-list-header">
+            <span class="col-name">Nombre</span>
+            <span class="col-size">Tamaño</span>
+            <span class="col-date">Modificado</span>
+          </div>
+          <div class="quick-picker-list" id="quickPickerList" tabindex="0" onkeydown="handleQuickPickerListNavKey(event)">
+            <!-- Dynamic rows injected here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer quick-picker-footer">
+        <div class="quick-picker-footer-left">
+          <button class="btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="fallbackToSystemDialog()" title="Abrir la ventana de selección estándar del sistema operativo">
+            🖥️ Abrir selector del sistema...
+          </button>
+        </div>
+        <div class="quick-picker-footer-right" style="display: flex; gap: 8px; align-items: center;">
+          <span class="quick-picker-selected-hint" id="quickPickerSelectedHint" style="font-size: 11px; color: #888; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+          <button class="btn-secondary" onclick="closeQuickPickerModal()">Cancelar</button>
+          <button class="btn-primary" id="btnQuickPickerConfirm" onclick="confirmQuickPickerSelection()">Seleccionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST NOTIFICATION -->
+  <div id="toastNotification" class="toast-notification"></div>
+
+  <!-- Internationalization Engine -->
+  <script src="js/i18n.js"></script>
+  <!-- Main Renderer Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>
