@@ -1,4 +1,4 @@
-# DiffCore — Beyond Compare 5 Clone
+# DiffCore
 
 <p align="center">
   <img src="iconos/icon.png" width="128" height="128" alt="DiffCore App Icon" />
