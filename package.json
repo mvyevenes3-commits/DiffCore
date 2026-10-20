@@ -31,6 +31,7 @@
       "iconos/**/*",
       "package.json"
     ],
+    "afterPack": "scripts/after-pack.js",
     "mac": {
       "icon": "iconos/icon.icns",
       "category": "public.app-category.developer-tools",
