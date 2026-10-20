@@ -30,7 +30,7 @@ function getGitRemoteTokenAndRepo() {
   }
 
   let token = process.env.GITHUB_TOKEN || '';
-  let repo = 'mvyevenes7/DiffCore';
+  let repo = 'mvyevenes2-png/DiffCore';
 
   // Parse https://TOKEN@github.com/OWNER/REPO.git
   const tokenMatch = url.match(/https:\/\/([^@]+)@github\.com\/([^\/]+)\/([^\.]+)(?:\.git)?/);
