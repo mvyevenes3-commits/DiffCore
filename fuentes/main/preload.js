@@ -28,11 +28,11 @@ contextBridge.exposeInMainWorld('api', {
   compareSelectionDeep: (leftPath, rightPath, items, method, skipBinary) => 
     ipcRenderer.invoke('diff:compareSelectionDeep', { leftPath, rightPath, items, method, skipBinary }),
 
-  // Beyond Compare 5 Myers Diff Alignment
+  // DiffCore Myers Diff Alignment
   computeAlignedDiff: (leftText, rightText) => 
     ipcRenderer.invoke('diff:computeAlignedDiff', { leftText, rightText }),
   
-  // Sessions Management (Dynamic BC5 + DiffCore)
+  // Sessions Management (Dynamic DiffCore + DiffCore)
   loadSessions: () => ipcRenderer.invoke('sessions:load'),
   saveSession: (sessionData) => ipcRenderer.invoke('sessions:save', sessionData),
   recordAutoSavedSession: (sessionData) => ipcRenderer.invoke('sessions:autoSave', sessionData),

@@ -194,7 +194,7 @@ function areFilesEqual(f1, f2, size) {
 }
 
 /**
- * High-performance Beyond Compare 5 Folder Compare Engine
+ * High-performance DiffCore Folder Compare Engine
  */
 function compareFolderTrees(leftDir, rightDir) {
   const leftItems = leftDir ? scanDirectory(leftDir, '', []) : [];
@@ -234,7 +234,7 @@ function compareFolderTrees(leftDir, rightDir) {
         if (left.size !== right.size) {
           status = 'different';
         } else {
-          // Beyond Compare 5 Quick Compare:
+          // DiffCore Quick Compare:
           // If sizes and timestamps match within 2s, identical (zero disk read)
           const timeDiff = Math.abs((left.mtime ? left.mtime.getTime() : 0) - (right.mtime ? right.mtime.getTime() : 0));
           if (timeDiff <= 2000) {
@@ -271,8 +271,8 @@ function compareFolderTrees(leftDir, rightDir) {
 }
 
 /**
- * High-performance non-blocking asynchronous Beyond Compare 5 Folder Compare Engine
- * Powered by Beyond Compare Rules (Quick tests & File opening comparisons)
+ * High-performance non-blocking asynchronous DiffCore Folder Compare Engine
+ * Powered by DiffCore Rules (Quick tests & File opening comparisons)
  */
 async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
   const [leftItems, rightItems] = await Promise.all([
@@ -447,7 +447,7 @@ async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
     }
   }
 
-  // Parallel multi-worker content check (64 concurrent workers matching Beyond Compare 5)
+  // Parallel multi-worker content check (64 concurrent workers matching DiffCore)
   if (contentChecks.length > 0) {
     const CONCURRENCY = 64;
     let currIdx = 0;
@@ -494,7 +494,7 @@ async function compareFolderTreesAsync(leftDir, rightDir, rules = {}) {
 }
 
 /**
- * Ultra-fast Beyond Compare 5 Streaming Binary Comparison (64KB chunks)
+ * Ultra-fast DiffCore Streaming Binary Comparison (64KB chunks)
  * Short-circuits immediately on the very first byte mismatch.
  */
 async function areFilesEqualBinaryStreamAsync(f1, f2, size) {
@@ -686,7 +686,7 @@ function compareFilesDeep(leftFullPath, rightFullPath, method = 'rules', skipBin
 }
 
 /**
- * Beyond Compare 5 Deep File Comparison Engine (Async & Non-blocking)
+ * DiffCore Deep File Comparison Engine (Async & Non-blocking)
  */
 async function compareFilesDeepAsync(leftFullPath, rightFullPath, method = 'rules', skipBinary = true, knownLeftSize, knownRightSize) {
   try {
@@ -905,11 +905,11 @@ function alignLinesWithinBlock(remLines, addLines) {
 }
 
 /**
- * Beyond Compare 5 High-Precision Myers Diff Line Alignment Engine
+ * DiffCore High-Precision Myers Diff Line Alignment Engine
  * Features:
  * - Smart token & whitespace-normalized anchor detection (Myers / diffLines)
  * - Fine-grained Needleman-Wunsch alignment inside modified blocks
- * - Distinct whitespace diff classification (Blue context matching Beyond Compare)
+ * - Distinct whitespace diff classification (Blue context matching DiffCore)
  * - Character-level word/token diff highlighting
  */
 function computeAlignedDiff(textLeft, textRight) {
@@ -1096,7 +1096,7 @@ function computeAlignedDiff(textLeft, textRight) {
   }
 
 
-  // Build unified, contiguous Beyond Compare style difference sections:
+  // Build unified, contiguous DiffCore style difference sections:
   // Groups contiguous diff rows together into one section.
   // Internal blank lines between diff rows do not break the section.
   const sections = [];
@@ -1286,7 +1286,7 @@ function compareFolderMergeTrees(leftDir, baseDir, rightDir) {
 }
 
 /**
- * Beyond Compare 5 3-Way Text Merge Alignment Engine (Left/Theirs, Base, Right/Mine)
+ * DiffCore 3-Way Text Merge Alignment Engine (Left/Theirs, Base, Right/Mine)
  */
 function computeThreeWayTextMerge(textLeft, textBase, textRight) {
   const Diff = require('diff');

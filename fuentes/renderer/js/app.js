@@ -1,4 +1,4 @@
-// DiffCore - Beyond Compare 5 Engine Frontend
+// DiffCore - High-Performance Engine Frontend
 
 // Global Application State
 const DEFAULT_EXCLUSIONS = {
@@ -372,7 +372,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Load dynamic sessions from Beyond Compare & DiffCore
+  // Load dynamic sessions from DiffCore & DiffCore
   await reloadSessions();
 
   // Load system disk info
@@ -2739,7 +2739,7 @@ function goUpFolder(side) {
   runFolderComparison();
 }
 
-// --- BEYOND COMPARE 5 RECENT FOLDER COMPARISONS COMBOBOX ENGINE ---
+// --- DIFFCORE RECENT FOLDER COMPARISONS COMBOBOX ENGINE ---
 function getRecentFolderPaths() {
   const result = [];
   const seen = new Set();
@@ -2972,7 +2972,7 @@ async function runFolderComparison(preserveOpenState = false) {
   }
 }
 
-// --- HIERARCHICAL TREE ENGINE (Beyond Compare 5 Core) ---
+// --- HIERARCHICAL TREE ENGINE (DiffCore Core) ---
 
 // --- HIGH-PERFORMANCE VIRTUAL SCROLLING & HIERARCHICAL TREE ENGINE ---
 const ROW_HEIGHT = 22;
@@ -3129,7 +3129,7 @@ function buildComparisonTree(rawItems) {
     node.leftMtime = maxLeftMtime;
     node.rightMtime = maxRightMtime;
 
-    // Default to collapsed for lightning-fast loading and BC5 structure match
+    // Default to collapsed for lightning-fast loading and DiffCore structure match
     if (appState.folderOpenState.has(node.relativePath)) {
       node.isOpen = appState.folderOpenState.get(node.relativePath);
     } else {
@@ -3462,7 +3462,7 @@ function applyFilterAndRender() {
   if (typeof folderSyncScrollbar !== 'undefined' && folderSyncScrollbar) folderSyncScrollbar.update();
 }
 
-// Beyond Compare 5 High-Performance Virtual Table Windowing
+// DiffCore High-Performance Virtual Table Windowing
 function renderVisibleWindow(force = false) {
   const leftPane = document.getElementById('leftPaneScroll');
   const rightPane = document.getElementById('rightPaneScroll');
@@ -3791,7 +3791,7 @@ function handleRowDoubleClick(item) {
   }
 }
 
-// --- BEYOND COMPARE 5 AUTHENTIC CONTEXT MENUS (Image 1 Folder / Image 2 File) ---
+// --- DIFFCORE AUTHENTIC CONTEXT MENUS (Image 1 Folder / Image 2 File) ---
 let toastTimeout = null;
 function showToast(message, type = 'info') {
   const toast = document.getElementById('toastNotification');
@@ -4772,7 +4772,7 @@ async function openHexCompareView(leftPath, rightPath, filename) {
   if (modal) modal.style.display = 'flex';
 }
 
-// --- HEX COMPARE ENGINE (Beyond Compare 5 View) ---
+// --- HEX COMPARE ENGINE (DiffCore View) ---
 let hexCompareState = {
   leftPath: '',
   rightPath: '',
@@ -4962,7 +4962,7 @@ function toggleTheme() {
   applyTheme('dark');
 }
 
-// --- LANGUAGE SWITCHER (Beyond Compare 5 i18n) ---
+// --- LANGUAGE SWITCHER (DiffCore i18n) ---
 function toggleLanguageDropdown(e) {
   if (e) e.stopPropagation();
   const menu = document.getElementById('langDropdownMenu');
@@ -5008,7 +5008,7 @@ window.toggleLanguageDropdown = toggleLanguageDropdown;
 window.selectLanguage = selectLanguage;
 window.updateTextDiffBadge = updateTextDiffBadge;
 
-// --- TEXT COMPARE WORD WRAP & OVER-UNDER LAYOUT (Beyond Compare 5) ---
+// --- TEXT COMPARE WORD WRAP & OVER-UNDER LAYOUT (DiffCore) ---
 function toggleTextWordWrap() {
   const left = document.getElementById('textLeftScroll');
   const right = document.getElementById('textRightScroll');
@@ -5051,7 +5051,7 @@ async function openTextCompareReport() {
 
   if (content) {
     const lines = [];
-    lines.push(`DIFFCORE FILE COMPARE REPORT (BEYOND COMPARE 5 EDITION)`);
+    lines.push(`DIFFCORE FILE COMPARE REPORT`);
     lines.push(`=======================================================`);
     lines.push(`Left File:  ${leftName}`);
     lines.push(`Right File: ${rightName}`);
@@ -5075,7 +5075,7 @@ async function openTextCompareReport() {
   if (modal) modal.style.display = 'flex';
 }
 
-// --- PICTURE COMPARE ENGINE (Beyond Compare 5) ---
+// --- PICTURE COMPARE ENGINE (DiffCore) ---
 let picCompareState = {
   leftPath: '',
   rightPath: ''
@@ -5409,7 +5409,7 @@ function closePictureTab(event) {
   switchToRemainingTabOrHome();
 }
 
-// --- MEDIA COMPARE ENGINE (Beyond Compare 5) ---
+// --- MEDIA COMPARE ENGINE (DiffCore) ---
 let mediaCompareState = {
   leftPath: '',
   rightPath: '',
@@ -5573,7 +5573,7 @@ function closeMediaTab(event) {
   switchToRemainingTabOrHome();
 }
 
-// --- TABLE COMPARE MULTI-SHEET ENGINE (Beyond Compare 5) ---
+// --- TABLE COMPARE MULTI-SHEET ENGINE (DiffCore) ---
 let tableCompareState = {
   leftPath: '',
   rightPath: '',
@@ -5825,7 +5825,7 @@ function closeTableTab(event) {
   switchToRemainingTabOrHome();
 }
 
-// --- FOLDER SYNC ENGINE (Beyond Compare 5) ---
+// --- FOLDER SYNC ENGINE (DiffCore) ---
 let folderSyncState = {
   leftPath: '',
   rightPath: '',
@@ -6105,7 +6105,7 @@ function swapSyncSides() {
   openFolderSync(folderSyncState.leftPath, folderSyncState.rightPath);
 }
 
-// --- 3-WAY FOLDER MERGE ENGINE (Beyond Compare 5) ---
+// --- 3-WAY FOLDER MERGE ENGINE (DiffCore) ---
 let folderMergeState = {
   leftPath: '',
   basePath: '',
@@ -6283,7 +6283,7 @@ function handleFMergePathKeydown(event, side) {
   if (event.key === 'Enter') runFolderMergeComparison();
 }
 
-// --- 3-WAY TEXT MERGE ENGINE (Beyond Compare 5) ---
+// --- 3-WAY TEXT MERGE ENGINE (DiffCore) ---
 let textMergeState = {
   leftPath: '',
   basePath: '',
@@ -6571,7 +6571,7 @@ function toggleMergeWordWrap() {
   });
 }
 
-// --- TEXT EDIT ENGINE (Beyond Compare 5) ---
+// --- TEXT EDIT ENGINE (DiffCore) ---
 let textEditState = {
   filePath: '',
   isDirty: false
@@ -7092,8 +7092,8 @@ function setupTableEventDelegation() {
   });
 }
 
-// --- BEYOND COMPARE 5 TEXT COMPARE ENGINE & SYNTAX HIGHLIGHTER ---
-// --- BEYOND COMPARE 5 TEXT COMPARE ENGINE & VS CODE SYNTAX HIGHLIGHTER ---
+// --- DIFFCORE TEXT COMPARE ENGINE & SYNTAX HIGHLIGHTER ---
+// --- DIFFCORE TEXT COMPARE ENGINE & VS CODE SYNTAX HIGHLIGHTER ---
 const VSCODE_CTRL_KW = new Set([
   'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue', 'default',
   'return', 'try', 'catch', 'finally', 'throw', 'throws', 'yield', 'await', 'async',
@@ -7382,14 +7382,14 @@ function highlightSyntax(line, lang = 'generic', isDiff = false, isComment = fal
 }
 
 /**
- * Beyond Compare 5 High-Visibility Intra-Line Difference Formatter
+ * DiffCore High-Visibility Intra-Line Difference Formatter
  * Renders exact changed words/characters in bright red (.diff-inline-diff)
  * and identical matching segments in crisp contrasting text (.diff-inline-same).
  */
 function renderDiffLineContent(chunks, fullText, lang = 'generic', cls = 'diff-code', isComment = false) {
   if (fullText === null || fullText === undefined) return '';
 
-  // For whitespace lines, Beyond Compare renders syntax highlighting directly
+  // For whitespace lines, DiffCore renders syntax highlighting directly
   // with no inline chunk containers or bubbles over indentation
   if (cls === 'diff-whitespace') {
     return highlightSyntax(fullText, lang, true, false);
@@ -7718,7 +7718,7 @@ async function openTextCompare(leftFullPath = '', rightFullPath = '', label = 'T
   renderDynamicTextTabs();
   switchView('text');
 
-  // Case 1: Both files empty -> display authentic Beyond Compare 5 empty canvas
+  // Case 1: Both files empty -> display authentic DiffCore empty canvas
   if (!leftFullPath && !rightFullPath) {
     renderEmptyTextCompare();
     return;
@@ -8923,7 +8923,7 @@ function setupAllDragAndDrop() {
   });
 }
 
-// --- HIGH-PERFORMANCE VIRTUAL SCROLLING ENGINE FOR TEXT COMPARE (Beyond Compare 5) ---
+// --- HIGH-PERFORMANCE VIRTUAL SCROLLING ENGINE FOR TEXT COMPARE (DiffCore) ---
 const TEXT_ROW_HEIGHT = 16;
 let virtualTextState = {
   lastRenderedStart: -1,
@@ -9577,7 +9577,7 @@ function jumpToSection(sectionIndex) {
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
 }
 
-// --- BEYOND COMPARE OPTIONS (NEXT DIFFERENCE) CONTROLLER ---
+// --- DIFFCORE OPTIONS (NEXT DIFFERENCE) CONTROLLER ---
 const DEFAULT_DIFF_OPTIONS = {
   goToFirstDiffOnLoad: false,
   nextDiffAfterCopy: false,
@@ -9774,7 +9774,7 @@ function updateOverviewViewport() {
   thumb.style.height = `${heightPct}%`;
 }
 
-// Beyond Compare 5 Rock-Solid Synchronized Text Scrolling Controller
+// DiffCore Rock-Solid Synchronized Text Scrolling Controller
 let textScrollDriver = null;
 let textScrollTimer = null;
 let isSyncingText = false;
@@ -9952,7 +9952,7 @@ function syncHorizontalScrollWidths() {
   if (textSyncScrollbar) textSyncScrollbar.update();
 }
 
-// --- BEYOND COMPARE 5 LIVE INLINE TEXT EDITING CONTROLLER ---
+// --- DIFFCORE LIVE INLINE TEXT EDITING CONTROLLER ---
 let textEditCommitTimer = null;
 
 function getCaretCharacterOffsetWithin(element) {
@@ -10667,7 +10667,7 @@ function getSelectedOrAllComparisonItems() {
     baseItems = appState.comparisonItems;
   }
 
-  // Filter-aware scope matching Beyond Compare 5:
+  // Filter-aware scope matching DiffCore:
   // If user explicitly picked individual files only (not folders), respect that explicit file pick.
   // Otherwise (whole folder selected, or no rows selected), respect the active view filter.
   const hasDirectoryInSelection = selectedFilteredItems.some(it => it.isDirectory);
@@ -10708,7 +10708,7 @@ function getSelectedOrAllComparisonItems() {
   return baseItems;
 }
 
-// --- BEYOND COMPARE 5: FOLDER RULES MODAL (Image 1 replica) ---
+// --- DIFFCORE: FOLDER RULES MODAL (Image 1 replica) ---
 const DEFAULT_FOLDER_RULES = {
   compareFileSize: true,
   compareTimestamps: true,
@@ -10948,7 +10948,7 @@ async function executeDeepCompare() {
     return;
   }
 
-  // Close modal immediately like Beyond Compare 5
+  // Close modal immediately like DiffCore
   if (autoClose) {
     closeDeepCompareModal();
   } else {

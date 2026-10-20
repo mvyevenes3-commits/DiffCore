@@ -219,7 +219,7 @@
       'toolbar.undo_tip': 'Undo change (Ctrl+Z / ⌘Z)',
       'toolbar.redo_tip': 'Redo change (Ctrl+Y / ⌘⇧Z)',
       'toolbar.reload_tip': 'Reload Files (🔄)',
-      'toolbar.wrap_tip': 'Toggle Word Wrap (Beyond Compare 5)',
+      'toolbar.wrap_tip': 'Toggle Word Wrap',
       'toolbar.layout_tip': 'Toggle Side-by-Side / Over-Under Layout',
       'toolbar.report_tip': 'Generate File Compare Report',
 
@@ -689,7 +689,7 @@
       'toolbar.undo_tip': 'Deshacer cambio (Ctrl+Z / ⌘Z)',
       'toolbar.redo_tip': 'Rehacer cambio (Ctrl+Y / ⌘⇧Z)',
       'toolbar.reload_tip': 'Recargar Archivos (🔄)',
-      'toolbar.wrap_tip': 'Alternar Ajuste de Línea (Beyond Compare 5)',
+      'toolbar.wrap_tip': 'Alternar Ajuste de Línea',
       'toolbar.layout_tip': 'Alternar Diseño Lado a Lado / Arriba-Abajo',
       'toolbar.report_tip': 'Generar Informe de Comparación',
 
@@ -1160,7 +1160,7 @@
       'toolbar.undo_tip': 'Desfazer alteração (Ctrl+Z / ⌘Z)',
       'toolbar.redo_tip': 'Refazer alteração (Ctrl+Y / ⌘⇧Z)',
       'toolbar.reload_tip': 'Recarregar Arquivos (🔄)',
-      'toolbar.wrap_tip': 'Alternar Quebra de Linha (Beyond Compare 5)',
+      'toolbar.wrap_tip': 'Alternar Quebra de Linha',
       'toolbar.layout_tip': 'Alternar Layout Lado a Lado / Superior-Inferior',
       'toolbar.report_tip': 'Gerar Relatório de Comparação',
 
@@ -1631,7 +1631,7 @@
       'toolbar.undo_tip': 'Annuler modification (Ctrl+Z / ⌘Z)',
       'toolbar.redo_tip': 'Rétablir modification (Ctrl+Y / ⌘⇧Z)',
       'toolbar.reload_tip': 'Recharger les Fichiers (🔄)',
-      'toolbar.wrap_tip': 'Basculer le Retour à la Ligne (Beyond Compare 5)',
+      'toolbar.wrap_tip': 'Basculer le Retour à la Ligne',
       'toolbar.layout_tip': 'Basculer Disposition Côte à Côte / Superposée',
       'toolbar.report_tip': 'Générer un Rapport de Comparaison',
 
@@ -2102,7 +2102,7 @@
       'toolbar.undo_tip': 'Annulla modifica (Ctrl+Z / ⌘Z)',
       'toolbar.redo_tip': 'Ripristina modifica (Ctrl+Y / ⌘⇧Z)',
       'toolbar.reload_tip': 'Ricarica File (🔄)',
-      'toolbar.wrap_tip': 'Alterna A Capo Automatico (Beyond Compare 5)',
+      'toolbar.wrap_tip': 'Alterna A Capo Automatico',
       'toolbar.layout_tip': 'Alterna Layout Affiancato / Sovrapposto',
       'toolbar.report_tip': 'Genera Rapporto Confronto File',
 
@@ -2573,7 +2573,7 @@
       'toolbar.undo_tip': 'Отменить изменение (Ctrl+Z / ⌘Z)',
       'toolbar.redo_tip': 'Повторить изменение (Ctrl+Y / ⌘⇧Z)',
       'toolbar.reload_tip': 'Перезагрузить файлы (🔄)',
-      'toolbar.wrap_tip': 'Перенос по словам (Beyond Compare 5)',
+      'toolbar.wrap_tip': 'Перенос по словам',
       'toolbar.layout_tip': 'Переключить вид: Рядом / Сверху-Снизу',
       'toolbar.report_tip': 'Сформировать отчет о сравнении',
 

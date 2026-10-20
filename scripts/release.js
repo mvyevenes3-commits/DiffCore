@@ -320,7 +320,7 @@ async function main() {
       tag_name: branch,
       target_commitish: branch,
       name: 'Release 1.0.0',
-      body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu .deb, Fedora/RHEL/openSUSE .rpm, Universal AppImage, y Tarball genérico .tar.gz).`,
+      body: `### DiffCore 1.0.0 — DiffCore Professional Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu .deb, Fedora/RHEL/openSUSE .rpm, Universal AppImage, y Tarball genérico .tar.gz).`,
       draft: false,
       prerelease: false
     });
@@ -347,7 +347,7 @@ async function main() {
         }
       }, {
         name: 'Release 1.0.0',
-        body: `### DiffCore 1.0.0 — Beyond Compare 5 Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu .deb, Fedora/RHEL/openSUSE .rpm, Universal AppImage, y Tarball genérico .tar.gz).`
+        body: `### DiffCore 1.0.0 — DiffCore Professional Suite\n\nInstaladores oficiales multiplataforma para macOS (Apple Silicon y Apple Intel), Windows y Linux (Debian/Ubuntu .deb, Fedora/RHEL/openSUSE .rpm, Universal AppImage, y Tarball genérico .tar.gz).`
       });
       if (patchRes.status === 200 && patchRes.data) {
         release = patchRes.data;

@@ -4,19 +4,19 @@ const os = require('os');
 
 /**
  * Session Manager for DiffCore
- * Integrates natively with Beyond Compare 5 configuration files
+ * Integrates natively with DiffCore configuration files
  * and manages native DiffCore custom sessions.
  */
 
 function getBCConfigDir() {
   if (process.platform === 'darwin') {
-    return path.join(os.homedir(), 'Library/Application Support/Beyond Compare 5');
+    return path.join(os.homedir(), 'Library/Application Support/DiffCore');
   } else if (process.platform === 'win32') {
-    return path.join(process.env.APPDATA || os.homedir(), 'Scooter Software/Beyond Compare 5');
+    return path.join(process.env.APPDATA || os.homedir(), 'DiffCore/DiffCore');
   } else {
-    const bc5 = path.join(os.homedir(), '.config/bcompare5');
-    if (fs.existsSync(bc5)) return bc5;
-    return path.join(os.homedir(), '.config/bcompare');
+    const diffConfig = path.join(os.homedir(), '.config/diffcore');
+    if (fs.existsSync(diffConfig)) return diffConfig;
+    return path.join(os.homedir(), '.config/diffcore');
   }
 }
 
@@ -25,7 +25,7 @@ const DIFFCORE_AUTOSAVED_FILE = path.join(os.homedir(), '.diffcore_autosaved.jso
 const DIFFCORE_DELETED_FILE = path.join(os.homedir(), '.diffcore_deleted_sessions.json');
 
 /**
- * Calculate relative group name matching Beyond Compare 5:
+ * Calculate relative group name matching DiffCore:
  * "Today", "Yesterday", "2 days ago", ..., "6 days ago", "More than 6 days ago"
  */
 function getRelativeDateGroup(dateStr) {
@@ -46,7 +46,7 @@ function getRelativeDateGroup(dateStr) {
 }
 
 /**
- * Parse Beyond Compare 5 BCSessions.xml
+ * Parse DiffCore Sessions.xml
  */
 function parseBCSessionsXml(filePath) {
   const result = {
@@ -109,7 +109,7 @@ function parseBCSessionsXml(filePath) {
             rightPath: rightPath,
             lastModified: lastModified || new Date().toISOString().replace('T', ' ').slice(0, 19),
             group: getRelativeDateGroup(lastModified),
-            source: 'Beyond Compare 5',
+            source: 'DiffCore',
             isAutoSaved: isAutoSaved
           });
         }
@@ -127,7 +127,7 @@ function parseBCSessionsXml(filePath) {
       result.autoSaved = parseSessionBlock(xml, true);
     }
   } catch (err) {
-    console.error('Error parsing BCSessions.xml:', err);
+    console.error('Error parsing Sessions.xml:', err);
   }
   return result;
 }
@@ -246,7 +246,7 @@ function recordAutoSavedSession(sessionData) {
     // Also update saved session lastModified if it matches a saved session
     touchSavedSessionTimestamp(sessName, leftPath, rightPath, type, nowStr);
 
-    // Also update Beyond Compare 5 BCSessions.xml if accessible
+    // Also update DiffCore Sessions.xml if accessible
     updateBCSessionsXmlAutoSaved(newSess);
 
     return { success: true, session: newSess };
@@ -257,12 +257,12 @@ function recordAutoSavedSession(sessionData) {
 }
 
 /**
- * Safely prepend/update auto-saved session in Beyond Compare 5 BCSessions.xml
+ * Safely prepend/update auto-saved session in DiffCore Sessions.xml
  */
 function updateBCSessionsXmlAutoSaved(session) {
   try {
     const bcDir = getBCConfigDir();
-    const bcFile = path.join(bcDir, 'BCSessions.xml');
+    const bcFile = path.join(bcDir, 'Sessions.xml');
     if (!fs.existsSync(bcFile)) return;
 
     let xml = fs.readFileSync(bcFile, 'utf8');
@@ -308,7 +308,7 @@ function updateBCSessionsXmlAutoSaved(session) {
     fs.writeFileSync(bcFile, newXml, 'utf8');
   } catch (err) {
     // Non-critical: DiffCore local store is already saved
-    console.warn('Could not sync with BCSessions.xml:', err.message);
+    console.warn('Could not sync with Sessions.xml:', err.message);
   }
 }
 
@@ -369,11 +369,11 @@ function touchSavedSessionTimestamp(name, leftPath, rightPath, type, nowStr) {
 }
 
 /**
- * Load all sessions (Beyond Compare + DiffCore native)
+ * Load all sessions (DiffCore + DiffCore native)
  */
 function getAllSessions() {
   const bcDir = getBCConfigDir();
-  const bcSessionsFile = path.join(bcDir, 'BCSessions.xml');
+  const bcSessionsFile = path.join(bcDir, 'Sessions.xml');
 
   const { autoSaved: bcAutoSaved, savedSessions: bcSaved } = parseBCSessionsXml(bcSessionsFile);
   const diffCoreSaved = loadDiffCoreSessions();
@@ -384,7 +384,7 @@ function getAllSessions() {
 
   // Deduplicate and combine auto-saved:
   // DiffCore autoSaved items come first (newest comparisons),
-  // followed by BC5 autoSaved items if not already present.
+  // followed by DiffCore autoSaved items if not already present.
   const autoMap = new Map();
   const nameMap = new Map();
 
@@ -473,7 +473,7 @@ function saveSession(sessionData) {
 }
 
 /**
- * Delete a session from DiffCore and Beyond Compare 5
+ * Delete a session from DiffCore and DiffCore
  */
 function deleteSession(sessionId) {
   try {
@@ -497,9 +497,9 @@ function deleteSession(sessionId) {
       fs.writeFileSync(DIFFCORE_AUTOSAVED_FILE, JSON.stringify(list, null, 2), 'utf8');
     }
 
-    // 3. Delete from Beyond Compare 5 BCSessions.xml if applicable
+    // 3. Delete from DiffCore Sessions.xml if applicable
     const bcDir = getBCConfigDir();
-    const bcSessionsFile = path.join(bcDir, 'BCSessions.xml');
+    const bcSessionsFile = path.join(bcDir, 'Sessions.xml');
     if (fs.existsSync(bcSessionsFile)) {
       let xml = fs.readFileSync(bcSessionsFile, 'utf8');
       const { autoSaved, savedSessions } = parseBCSessionsXml(bcSessionsFile);

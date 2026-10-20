@@ -3,7 +3,7 @@
   "productName": "DiffCore",
   "desktopName": "diffcore.desktop",
   "version": "1.0.0",
-  "description": "Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite",
+  "description": "DiffCore - High-Performance Cross-Platform Diff Suite",
   "author": {
     "name": "Miguel Vergara",
     "email": "miguelvergara@diffcore.local"
@@ -67,7 +67,7 @@
       ],
       "maintainer": "Miguel Vergara <miguelvergara@diffcore.local>",
       "category": "Development",
-      "synopsis": "Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite",
+      "synopsis": "DiffCore - High-Performance Cross-Platform Diff Suite",
       "syncDesktopName": true,
       "desktop": {
         "entry": {

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DiffCore - Beyond Compare Edition</title>
-  <link rel="stylesheet" href="css/theme-beyond5.css">
+  <title>DiffCore Pro</title>
+  <link rel="stylesheet" href="css/theme-diffcore.css">
   <link rel="stylesheet" href="css/icons.css">
 </head>
 <body>
@@ -419,7 +419,7 @@
   <!-- VIEW 2: FOLDER COMPARE (Image 2) -->
   <div id="folderView" class="view-container">
     
-    <!-- Top Action Toolbar (Beyond Compare 5 Toolbar Matching Image 3) -->
+    <!-- Top Action Toolbar (DiffCore Toolbar Matching Image 3) -->
     <header class="folder-toolbar">
       <!-- Group 1: Navigation & Sessions -->
       <div class="toolbar-group">
@@ -654,7 +654,7 @@
 
       <div class="toolbar-separator"></div>
 
-      <!-- Filter buttons matching Beyond Compare 5 (Image 1) -->
+      <!-- Filter buttons matching DiffCore (Image 1) -->
       <div class="toolbar-group">
         <button class="tb-btn active" id="textFilterAllBtn" title="Show All" data-i18n-title="toolbar.show_all_tip" onclick="setTextFilter('all')">
           <span class="icon" style="font-size: 15px;">✳️</span>
@@ -672,7 +672,7 @@
 
       <div class="toolbar-separator"></div>
 
-      <!-- Navigation & Operations matching Beyond Compare 5 (Image 1) -->
+      <!-- Navigation & Operations matching DiffCore (Image 1) -->
       <div class="toolbar-group">
         <button class="tb-btn" title="Previous Difference Section (Ctrl+Up)" data-i18n-title="toolbar.prev_diff_tip" onclick="navDiff(-1)">
           <span class="icon">⬆</span>
@@ -682,7 +682,7 @@
           <span class="icon">⬇</span>
           <span class="label" data-i18n="toolbar.next">Next</span>
         </button>
-        <button class="tb-btn" id="btnNextDiffOptions" title="Next Difference Options (Beyond Compare)" data-i18n-title="modal.options_title" onclick="openNextDiffOptionsModal()">
+        <button class="tb-btn" id="btnNextDiffOptions" title="Next Difference Options " data-i18n-title="modal.options_title" onclick="openNextDiffOptionsModal()">
           <span class="icon">⚙️</span>
           <span class="label" data-i18n="toolbar.options">Options</span>
         </button>
@@ -702,7 +702,7 @@
           <span class="icon">🔄</span>
           <span class="label" data-i18n="toolbar.reload">Reload</span>
         </button>
-        <button class="tb-btn" id="btnTextWordWrap" title="Toggle Word Wrap (Beyond Compare 5)" data-i18n-title="toolbar.wrap_tip" onclick="toggleTextWordWrap()">
+        <button class="tb-btn" id="btnTextWordWrap" title="Toggle Word Wrap " data-i18n-title="toolbar.wrap_tip" onclick="toggleTextWordWrap()">
           <span class="icon">↵</span>
           <span class="label" data-i18n="toolbar.wrap">Wrap</span>
         </button>
@@ -745,12 +745,12 @@
           </div>
         </div>
         <div class="text-pane-body">
-          <!-- Differences Overview Rail beside line numbers (Beyond Compare 5) -->
+          <!-- Differences Overview Rail beside line numbers  -->
           <div class="text-overview-rail" id="textOverviewRail" title="Click to jump directly to differences" onclick="handleOverviewRailClick(event)">
             <div class="overview-viewport-thumb" id="overviewViewportThumb"></div>
             <div id="overviewMarkersContainer"></div>
           </div>
-          <!-- Left Action Gutter (Beyond Compare 5 Yellow Arrows) -->
+          <!-- Left Action Gutter (DiffCore Yellow Arrows) -->
           <div class="text-left-gutter-scroll" id="textLeftGutterScroll">
             <div id="textLeftGutter"></div>
           </div>
@@ -763,7 +763,7 @@
         </div>
       </div>
 
-      <!-- Center Action Gutter (Beyond Compare 5 Yellow Arrows) -->
+      <!-- Center Action Gutter (DiffCore Yellow Arrows) -->
       <div class="text-center-gutter-wrapper">
         <div class="text-center-gutter-header"></div>
         <div class="text-center-gutter-scroll" id="textGutterScroll">
@@ -862,7 +862,7 @@
     </div>
   </div>
 
-  <!-- VIEW 5: PICTURE COMPARE (Beyond Compare 5) -->
+  <!-- VIEW 5: PICTURE COMPARE  -->
   <div id="pictureView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
@@ -885,7 +885,7 @@
 
       <div class="toolbar-separator"></div>
 
-      <!-- Beyond Compare 5 Picture Compare Display Modes -->
+      <!-- DiffCore Picture Compare Display Modes -->
       <div class="toolbar-group pic-mode-bar">
         <button class="pic-mode-btn active" id="btnPicModeSide" data-i18n="pic.mode_side" onclick="setPictureMode('side')">Side-by-Side</button>
         <button class="pic-mode-btn" id="btnPicModeBlend" data-i18n="pic.mode_blend" onclick="setPictureMode('blend')">Blend</button>
@@ -953,7 +953,7 @@
     </div>
   </div>
 
-  <!-- VIEW 6: MEDIA COMPARE (Beyond Compare 5) -->
+  <!-- VIEW 6: MEDIA COMPARE  -->
   <div id="mediaView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
@@ -992,7 +992,7 @@
       </div>
     </div>
 
-    <!-- Media Tags Comparison Table (Beyond Compare 5) -->
+    <!-- Media Tags Comparison Table  -->
     <div class="media-tags-container">
       <table class="media-tags-table" id="mediaTagsTable">
         <thead>
@@ -1021,7 +1021,7 @@
     </div>
   </div>
 
-  <!-- VIEW 7: TABLE COMPARE (Beyond Compare 5 Overhauled Multi-Sheet View) -->
+  <!-- VIEW 7: TABLE COMPARE (DiffCore Overhauled Multi-Sheet View) -->
   <div id="tableCompareView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
@@ -1107,7 +1107,7 @@
       </div>
     </div>
 
-    <!-- Beyond Compare 5 Multiple Excel Sheets & HTML Tables Bottom Bar -->
+    <!-- DiffCore Multiple Excel Sheets & HTML Tables Bottom Bar -->
     <div class="table-sheets-bar" id="tableSheetsBar">
       <div style="font-size: 11px; color: #888; padding-left: 8px;" data-i18n="tableview.sheets">Sheets:</div>
       <div id="tableSheetsList" style="display: flex; gap: 4px;">
@@ -1116,7 +1116,7 @@
     </div>
   </div>
 
-  <!-- VIEW 8: FOLDER SYNC (Beyond Compare 5) -->
+  <!-- VIEW 8: FOLDER SYNC  -->
   <div id="folderSyncView" class="view-container">
     <header class="folder-toolbar">
       <div class="toolbar-group">
@@ -1127,7 +1127,7 @@
       </div>
       <div class="toolbar-separator"></div>
 
-      <!-- Sync Presets Bar (Beyond Compare 5) -->
+      <!-- Sync Presets Bar  -->
       <div class="toolbar-group sync-presets-bar" style="background: transparent; border: none; padding: 0;">
         <button class="sync-preset-btn active" id="btnSyncUpdateLR" onclick="setSyncPreset('update_lr')">
           <span>➡️</span> <span data-i18n="fsync.update_lr">Update > Left to Right</span>
@@ -1206,7 +1206,7 @@
     </footer>
   </div>
 
-  <!-- VIEW 9: FOLDER MERGE (Beyond Compare 5 3-Way Folder Merge) -->
+  <!-- VIEW 9: FOLDER MERGE (DiffCore 3-Way Folder Merge) -->
   <div id="folderMergeView" class="view-container">
     <header class="folder-toolbar">
       <div class="toolbar-group">
@@ -1266,7 +1266,7 @@
     </div>
   </div>
 
-  <!-- VIEW 10: TEXT MERGE (Beyond Compare 5 3-Way Text Merge) -->
+  <!-- VIEW 10: TEXT MERGE (DiffCore 3-Way Text Merge) -->
   <div id="textMergeView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
@@ -1367,7 +1367,7 @@
       </div>
     </div>
 
-    <!-- Lower Merged Output Pane (Beyond Compare 5) -->
+    <!-- Lower Merged Output Pane  -->
     <div class="text-merge-output-container">
       <div class="text-merge-output-header">
         <div style="font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 10px;">
@@ -1385,7 +1385,7 @@
     </div>
   </div>
 
-  <!-- VIEW 11: TEXT EDIT (Beyond Compare 5) -->
+  <!-- VIEW 11: TEXT EDIT  -->
   <div id="textEditView" class="view-container">
     <header class="text-compare-toolbar">
       <div class="toolbar-group">
@@ -1434,7 +1434,7 @@
   <!-- CONTEXT MENU FOR ROWS (Image 1 Folder / Image 2 File) -->
   <div class="context-menu" id="folderContextMenu"></div>
 
-  <!-- MODAL: FOLDER RULES (Beyond Compare Rules Modal) -->
+  <!-- MODAL: FOLDER RULES (DiffCore Rules Modal) -->
   <div class="modal-backdrop" id="folderRulesModal" onclick="if(event.target === this) closeFolderRulesModal()">
     <div class="modal-window bc-rules-window">
       <div class="modal-header">
@@ -1680,7 +1680,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ATTRIBUTES DIALOG (Beyond Compare 5) -->
+  <!-- MODAL: ATTRIBUTES DIALOG  -->
   <div class="modal-backdrop" id="attributesModal" style="display: none;">
     <div class="modal-window" style="width: 480px;">
       <div class="modal-header">
@@ -1805,7 +1805,7 @@
     </div>
   </div>
 
-  <!-- MODAL: BEYOND COMPARE OPTIONS (NEXT DIFFERENCE) -->
+  <!-- MODAL: DIFFCORE OPTIONS (NEXT DIFFERENCE) -->
   <div class="modal-backdrop" id="nextDiffOptionsModal">
     <div class="modal-window bc-options-window" style="width: 700px; max-width: 92vw;">
       <div class="modal-header">
@@ -1816,7 +1816,7 @@
       </div>
 
       <div class="bc-options-layout">
-        <!-- Left Categories Sidebar matching Beyond Compare 5 (Image 1) -->
+        <!-- Left Categories Sidebar matching DiffCore (Image 1) -->
         <aside class="bc-options-sidebar">
           <div class="bc-options-search">
             <input type="text" placeholder="🔍 Search" data-i18n-placeholder="common.search" class="tb-filter-input" style="width: 100%; font-size: 11px;">
@@ -1879,7 +1879,7 @@
     </div>
   </div>
 
-  <!-- MODAL: SAVE CHANGES CONFIRMATION (Beyond Compare 5 prompt) -->
+  <!-- MODAL: SAVE CHANGES CONFIRMATION (DiffCore prompt) -->
   <div class="modal-backdrop" id="saveConfirmModal">
     <div class="modal-window save-confirm-window">
       <div class="save-confirm-body">
@@ -1913,7 +1913,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ABOUT DIFFCORE (Beyond Compare 5 style) -->
+  <!-- MODAL: ABOUT DIFFCORE (DiffCore style) -->
   <div class="modal-backdrop" id="aboutModal" onclick="if(event.target === this) closeAboutModal()">
     <div class="modal-window about-modal-window">
       <!-- Titlebar with macOS style dots and OS adaptive controls -->

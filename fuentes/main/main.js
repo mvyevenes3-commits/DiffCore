@@ -51,7 +51,7 @@ function createWindow() {
     height: 920,
     minWidth: 960,
     minHeight: 640,
-    title: 'DiffCore - Beyond Compare Edition',
+    title: 'DiffCore',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     backgroundColor: '#1e1e1e',
     icon: appIcon,
@@ -336,7 +336,7 @@ ipcMain.handle('dialog:selectFile', async (_event, defaultPath) => {
   return null;
 });
 
-// Compare Folders (Fast Tree Walk with Beyond Compare Rules, supports .jar, .war, .ear, .zip)
+// Compare Folders (Fast Tree Walk with DiffCore Rules, supports .jar, .war, .ear, .zip)
 ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath, rules }) => {
   sendLog(`Load comparison: ${leftPath || '(none)'} <-> ${rightPath || '(none)'}`);
   try {
@@ -363,7 +363,7 @@ ipcMain.handle('diff:compareFolders', async (_event, { leftPath, rightPath, rule
   }
 });
 
-// Compare Selection Deep (Modal =? Beyond Compare 5 Parallel Engine)
+// Compare Selection Deep (Modal =? DiffCore Parallel Engine)
 ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath, items, method, skipBinary = true }) => {
   const startTime = performance.now();
   const total = items.length;
@@ -377,7 +377,7 @@ ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath,
   const effectiveLeft = leftRes.expandedPath;
   const effectiveRight = rightRes.expandedPath;
 
-  const CONCURRENCY = 64; // Beyond Compare multi-threaded parallel comparison
+  const CONCURRENCY = 64; // DiffCore multi-threaded parallel comparison
   let currentIndex = 0;
   let lastProgressTime = 0;
 
@@ -453,12 +453,12 @@ ipcMain.handle('diff:compareSelectionDeep', async (event, { leftPath, rightPath,
   };
 });
 
-// Beyond Compare 5 Myers Diff Alignment
+// DiffCore Myers Diff Alignment
 ipcMain.handle('diff:computeAlignedDiff', async (_event, { leftText, rightText }) => {
   return computeAlignedDiff(leftText, rightText);
 });
 
-// Session Management (Dynamic BC5 + DiffCore)
+// Session Management (Dynamic DiffCore + DiffCore)
 ipcMain.handle('sessions:load', async () => {
   return sessionManager.getAllSessions();
 });

@@ -45,7 +45,7 @@ Terminal=false
 Type=Application
 Icon=diffcore
 StartupWMClass=diffcore
-Comment=Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite
+Comment=DiffCore - High-Performance Cross-Platform Diff Suite
 Categories=Development;
 `);
   }
@@ -59,7 +59,7 @@ version: "1.0.0"
 release: "1"
 section: "devel"
 maintainer: "Miguel Vergara <miguelvergara@diffcore.local>"
-description: "Beyond Compare 5 Clone - High-Performance Cross-Platform Diff Suite"
+description: "DiffCore - High-Performance Cross-Platform Diff Suite"
 vendor: "DiffCore"
 homepage: "https://github.com/miguelvergara/diffcore"
 license: "MIT"

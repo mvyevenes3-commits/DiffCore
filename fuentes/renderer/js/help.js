@@ -251,7 +251,7 @@ function buildIndexList() {
     { title: 'Archivos Binarios (Comparador Hexadecimal)', topic: 'hex-compare' },
     { title: 'Atajos de Teclado', topic: 'shortcuts' },
     { title: 'Auto-guardado de Sesiones', topic: 'home-screen' },
-    { title: 'Beyond Compare 5 - Compatibilidad', topic: 'welcome' },
+    { title: 'DiffCore Pro - Introducción', topic: 'welcome' },
     { title: 'Comparador de Carpetas', topic: 'folder-compare' },
     { title: 'Comparador de Imágenes', topic: 'picture-compare' },
     { title: 'Comparador de Tablas (Excel/CSV)', topic: 'table-compare' },

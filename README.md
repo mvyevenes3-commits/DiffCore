@@ -32,7 +32,7 @@
 
 ### 2. 📁 Comparador de Carpetas (Folder Compare)
 - **Doble árbol sincronizado:** Visualización paralela de rutas con columnas alineadas de `Name`, `Size` y `Modified`.
-- **Código cromático Beyond Compare 5:**
+- **Código cromático profesional de alto contraste:**
   - 🔴 **Rojo:** Archivos con diferencias o modificaciones.
   - 🔵 **Azul:** Archivos huérfanos (presentes únicamente en el lado izquierdo o derecho).
   - ⚪ **Gris:** Archivos idénticos.
@@ -103,7 +103,7 @@
 ### 🚀 Experiencia Nativa y Multiplataforma
 - **Arrastre y suelta nativo (Drag and Drop):** Arrastra archivos o carpetas desde el explorador del sistema (macOS Finder, Windows Explorer, Linux Nautilus/Dolphin) directamente a los paneles, cajas de ruta o tarjetas de inicio.
 - **Barra de título arrastrable:** Soporte fluido para mover la ventana desde la barra superior en macOS (`hiddenInset`), Windows y Linux.
-- **Temas Claro y Oscuro:** Selector de tema en la barra superior con paleta exacta de Beyond Compare 5.
+- **Temas Claro y Oscuro:** Selector de tema en la barra superior con paleta optimizada de alta legibilidad para largas jornadas.
 - **Atajos de teclado estándar:** Selección múltiple con `Shift` y `Cmd/Ctrl`, atajos de navegación y atajos de comparación.
 
 ---
@@ -122,7 +122,7 @@ DiffCore/
 │   └── renderer/                            # Interfaz de Usuario (Electron Renderer)
 │       ├── index.html                       # Vistas HTML5 de las 10 herramientas
 │       ├── css/
-│       │   ├── theme-beyond5.css            # Estilos y tema Beyond Compare 5
+│       │   ├── theme-diffcore.css           # Estilos y tema visual DiffCore
 │       │   └── icons.css                    # Definición de iconos
 │       └── js/
 │           └── app.js                       # Lógica de renderizado, scroll y eventos
@@ -194,6 +194,5 @@ Los ejecutables compilados se generan automáticamente en la carpeta `empaquetad
 
 ## 📄 Licencia y Créditos
 
-Desarrollado por **Miguel Vergara**.
-Inspirado en los principios de diseño y ergonomía de **Beyond Compare 5** por Scooter Software.
+Desarrollado por **Miguel Vergara**. Todos los derechos reservados.
 Uso exclusivo y desarrollo para DiffCore.

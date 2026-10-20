@@ -96,7 +96,7 @@ empaquetado/dist/
 - **Proceso Principal (`fuentes/main/`):**
   - `main.js`: Inicialización de `BrowserWindow`, menú nativo, configuración de `titleBarStyle` adaptativa.
   - `preload.js`: Bridge seguro de Electron (`contextBridge.exposeInMainWorld('api', ...)`). Expone `platform: process.platform` para detección de SO.
-  - `diffEngine.js`: Algoritmo de comparación Myers Diff alineado idéntico a Beyond Compare 5.
+  - `diffEngine.js`: Algoritmo de comparación Myers Diff alineado idéntico a DiffCore.
   - `fileOps.js`: Operaciones asíncronas de sistema de archivos, lectura hexadecimal y metadatos. Detección automática de binarios y archivos no soportados.
   - `javaDecompiler.js`: Motor de descompilación Java Bytecode (`Java class to source`) impulsado por `@run-slicer/vf` (Vineflower/Fernflower compilado en WebAssembly/JS nativo). **Zero dependencias de Java**: no requiere tener JRE/JDK instalado en el sistema operativo del usuario.
   - `archiveHandler.js`: Manejador de contenedores de empaquetados Java (`.jar`, `.war`, `.ear`, `.zip`) usando `adm-zip`. Descomprime y virtualiza transparentemente la estructura de directorios en caché temporal (`os.tmpdir()/diffcore-archives/`) para compararla de forma idéntica a carpetas normales en Folder Compare.
@@ -104,7 +104,7 @@ empaquetado/dist/
 - **Proceso Renderer (`fuentes/renderer/`):**
   - `index.html`: Estructura HTML de todas las vistas (Home, Text Compare, Folder Compare, etc.), modales (`#binaryAlertModal` para archivos binarios no soportados).
   - `js/app.js`: Lógica de interfaz, sincronización de scroll, edición inline, apertura de archivos vacíos preservando la Línea 1, `initModalControls()`, redirección inteligente de drag & drop para `.jar`/`.war`/`.ear`, y detección de clases `.class` para mostrar el badge `Java class to source ▾`.
-  - `css/theme-beyond5.css`: Tema visual Beyond Compare 5, estilos para `body.platform-darwin`, `body.platform-win32` y `body.platform-linux`.
+  - `css/theme-diffcore.css`: Tema visual DiffCore, estilos para `body.platform-darwin`, `body.platform-win32` y `body.platform-linux`.
 - **Scripts de Automatización (`scripts/`):**
   - `scripts/release.js`: Orquestador que compila los 7 paquetes, consulta GitHub Releases por API REST, actualiza el título a `Release 1.0.0`, elimina versiones previas si existen y sube los 7 assets con barra de progreso.
   - `scripts/build-rpm.js`: Generador de paquetes `.rpm` para Fedora/RHEL usando `nfpm`.
@@ -121,7 +121,7 @@ Si el usuario te dice:
 - *"Falta el paquete para Fedora"*:
   Ejecuta `npm run build:rpm` o verifica que `diffcore-1.0.0.x86_64.rpm` esté presente en `empaquetado/dist/`.
 - *"Revisa los botones de las ventanas o modales"*:
-  Asegúrate de que `initModalControls()` en `fuentes/renderer/js/app.js` y las reglas en `fuentes/renderer/css/theme-beyond5.css` se mantengan intactas para macOS, Windows y Linux.
+  Asegúrate de que `initModalControls()` en `fuentes/renderer/js/app.js` y las reglas en `fuentes/renderer/css/theme-diffcore.css` se mantengan intactas para macOS, Windows y Linux.
 - *"Comparar archivos .class o paquetes .jar/.war/.ear"*:
   - `.class`: Se descompilan al vuelo con `@run-slicer/vf` en `javaDecompiler.js` y se muestran como código fuente Java editable/comparable con badge `Java class to source ▾`.
   - `.jar`, `.war`, `.ear`: Se tratan como carpetas en `archiveHandler.js` y se abren directamente en el Comparador de Carpetas. Si el usuario los arrastra al comparador de texto, DiffCore los redirige automáticamente al Comparador de Carpetas.

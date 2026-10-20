@@ -1,4 +1,4 @@
-/* Beyond Compare 5 - Dark Theme Official Palette */
+/* DiffCore - Dark Theme Official Palette */
 :root {
   color-scheme: dark;
   --bg-main: #181818;
@@ -29,7 +29,7 @@
   --font-mono: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
 }
 
-/* Beyond Compare 5 - Light Theme Official Palette */
+/* DiffCore - Light Theme Official Palette */
 body.theme-light {
   --bg-main: #f4f6f8;
   --bg-panel: #ffffff;
@@ -538,7 +538,7 @@ body.theme-light .tab-add-btn:hover {
    FOLDER COMPARE: TOOLBAR, PATH BARS & DUAL TREE
    ======================================================== */
 
-/* TOOLBAR (Beyond Compare 5 Vertical Buttons Matching Image 3) */
+/* TOOLBAR (DiffCore Vertical Buttons Matching Image 3) */
 .folder-toolbar,
 .bc-toolbar {
   display: flex !important;
@@ -681,7 +681,7 @@ body.theme-light .tab-add-btn:hover {
   color: #fff;
 }
 
-/* DUAL PATH BARS (Beyond Compare 5 Matching Image 3) */
+/* DUAL PATH BARS (DiffCore Matching Image 3) */
 .path-selectors-bar,
 .path-bars {
   display: flex !important;
@@ -765,7 +765,7 @@ body.theme-light .tab-add-btn:hover {
   background: #106ebe;
 }
 
-/* Beyond Compare 5 Recent Folders Combobox Dropdown */
+/* DiffCore Recent Folders Combobox Dropdown */
 .path-history-dropdown {
   position: absolute;
   top: calc(100% + 2px);
@@ -850,7 +850,7 @@ body.theme-light .path-history-item.selected {
   flex-shrink: 0;
 }
 
-/* FOLDER COMPARE DUAL TREE TABLE (Beyond Compare 5 Matching Image 1) */
+/* FOLDER COMPARE DUAL TREE TABLE (DiffCore Matching Image 1) */
 .folder-dual-container,
 .diff-tree-container {
   flex: 1 !important;
@@ -1177,7 +1177,7 @@ body.theme-light .diff-row.selected td {
   scrollbar-color: #3e3e3e #141414;
 }
 
-/* Custom Dark Scrollbar for Log Console (Beyond Compare 5) */
+/* Custom Dark Scrollbar for Log Console (DiffCore) */
 .log-content::-webkit-scrollbar {
   width: 14px;
   height: 14px;
@@ -2023,7 +2023,7 @@ body.platform-linux .about-window-close-x:hover {
   color: #ffffff !important;
 }
 
-/* Save Changes Confirmation Dialog (Beyond Compare 5 matching Image 3) */
+/* Save Changes Confirmation Dialog (DiffCore matching Image 3) */
 .save-confirm-window {
   width: 460px;
   background: #252322 !important;
@@ -2229,7 +2229,7 @@ body.platform-linux .about-window-close-x:hover {
   background: #282828;
 }
 
-/* --- BEYOND COMPARE 5 AUTHENTIC DIRECTORY TREE VIEW --- */
+/* --- DIFFCORE AUTHENTIC DIRECTORY TREE VIEW --- */
 .sessions-tree {
   flex: 1;
   padding: 6px 4px;
@@ -2470,7 +2470,7 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   color: #000;
 }
 
-/* --- CONTEXT MENU (Beyond Compare 5 Authentic) --- */
+/* --- CONTEXT MENU (DiffCore Authentic) --- */
 .context-menu {
   position: fixed;
   background: #202020;
@@ -2699,7 +2699,7 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
 .text-pane-wrapper:last-child {
   border-right: none;
 }
-/* --- BEYOND COMPARE 5 TEXT COMPARE PANES & GUTTER --- */
+/* --- DIFFCORE TEXT COMPARE PANES & GUTTER --- */
 .text-pane-body {
   display: flex;
   flex: 1;
@@ -2752,7 +2752,7 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   box-shadow: 0 0 10px rgba(255, 70, 70, 1);
 }
 
-/* Action arrow buttons rendered directly inside the line gutter (Beyond Compare 5) */
+/* Action arrow buttons rendered directly inside the line gutter (DiffCore) */
 .line-gutter-action {
   position: absolute;
   top: 1px;
@@ -2923,7 +2923,7 @@ body.theme-light .text-left-gutter-scroll {
   height: 29px;
 }
 
-/* Beyond Compare 5 Text Address Bar & File Loaders */
+/* DiffCore Text Address Bar & File Loaders */
 .text-address-bar {
   background: #181a1f;
   border-bottom: 1px solid #282c35;
@@ -3323,7 +3323,7 @@ body.theme-light .sync-vscrollbar-thumb.active {
   outline: none;
 }
 
-/* Beyond Compare 5 Authentic Hatched Diagonal Stripes for Missing Gap */
+/* DiffCore Authentic Hatched Diagonal Stripes for Missing Gap */
 .text-line-row.ghost-hatched {
   background: repeating-linear-gradient(
     -45deg,
@@ -3349,7 +3349,7 @@ body.theme-light .sync-vscrollbar-thumb.active {
   visibility: visible;
 }
 
-/* Beyond Compare 5 Code Diff: Deep Crimson Wine */
+/* DiffCore Code Diff: Deep Crimson Wine */
 .text-line-row.diff-code {
   background: #461417 !important;
   border: none !important;
@@ -3369,7 +3369,7 @@ body.theme-light .sync-vscrollbar-thumb.active {
   color: #c9d1d9;
 }
 
-/* Beyond Compare 5 Intra-Line Difference Highlighting (Clean Text Color, No Border, No Container) */
+/* DiffCore Intra-Line Difference Highlighting (Clean Text Color, No Border, No Container) */
 .diff-inline-diff {
   color: #ff5555 !important;
   font-weight: 700;
@@ -3386,7 +3386,7 @@ body.theme-light .sync-vscrollbar-thumb.active {
   box-shadow: none !important;
 }
 
-/* Beyond Compare 5 Comment Diff: Deep Navy */
+/* DiffCore Comment Diff: Deep Navy */
 .text-line-row.diff-comment {
   background: #14233a !important;
   border: none !important;
@@ -3409,7 +3409,7 @@ body.theme-light .sync-vscrollbar-thumb.active {
   color: #8ac0fc !important;
 }
 
-/* Beyond Compare 5 Whitespace Diff: Deep Navy */
+/* DiffCore Whitespace Diff: Deep Navy */
 .text-line-row.diff-whitespace {
   background: #14233a !important;
   border: none !important;
@@ -3706,7 +3706,7 @@ body.theme-light .token-directive { color: #af00db; }
   background: rgba(255, 255, 255, 0.16);
 }
 
-/* --- LANGUAGE SELECTOR IN TABS (Beyond Compare 5) --- */
+/* --- LANGUAGE SELECTOR IN TABS (DiffCore) --- */
 .lang-selector-wrapper {
   position: relative;
   -webkit-app-region: no-drag;
@@ -3780,7 +3780,7 @@ body.theme-light .lang-opt:hover {
   display: none !important;
 }
 
-/* --- FOLDER SYNC VIEW STYLES (Beyond Compare 5) --- */
+/* --- FOLDER SYNC VIEW STYLES (DiffCore) --- */
 .sync-presets-bar {
   display: flex;
   align-items: center;
@@ -4162,7 +4162,7 @@ body.theme-light .lang-opt:hover {
 }
 
 /* ========================================================
-   BEYOND COMPARE 5 OPTIONS DIALOG (Image 1)
+   DIFFCORE OPTIONS DIALOG (Image 1)
    ======================================================== */
 .bc-options-layout {
   display: flex;
@@ -4226,7 +4226,7 @@ body.theme-light .lang-opt:hover {
 }
 
 /* ========================================================
-   MODAL: ABOUT DIFFCORE (Beyond Compare 5 Authentic Style)
+   MODAL: ABOUT DIFFCORE (DiffCore Authentic Style)
    ======================================================== */
 .about-modal-window {
   width: 530px;
@@ -4447,7 +4447,7 @@ body.theme-light .lang-opt:hover {
 }
 
 /* ==========================================================================
-   BEYOND COMPARE 5: FOLDER RULES MODAL (Image 1 replica)
+   DIFFCORE: FOLDER RULES MODAL (Image 1 replica)
    ========================================================================== */
 .bc-rules-window {
   width: 580px;

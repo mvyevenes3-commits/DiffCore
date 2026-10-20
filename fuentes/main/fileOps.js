@@ -326,7 +326,7 @@ function openTerminal(targetPath) {
 }
 
 /**
- * Beyond Compare 5 Table Compare Parser
+ * DiffCore Table Compare Parser
  * Supports Multi-sheet Excel (.xlsx, .xls, .ods), HTML Tables, and CSV/TSV
  */
 function readTableFile(filePath) {
@@ -442,7 +442,7 @@ const ID3_GENRES = [
 ];
 
 /**
- * Beyond Compare 5 Media Compare Tag Reader (MP3, FLAC, M4A/AAC, WAV, OGG)
+ * DiffCore Media Compare Tag Reader (MP3, FLAC, M4A/AAC, WAV, OGG)
  */
 function readMediaMetadata(filePath) {
   try {
@@ -574,7 +574,7 @@ function readMediaMetadata(filePath) {
 }
 
 /**
- * Beyond Compare 5 Folder Sync Executor
+ * DiffCore Folder Sync Executor
  */
 async function executeFolderSync(tasks) {
   let copied = 0;
