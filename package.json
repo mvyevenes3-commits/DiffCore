@@ -43,10 +43,20 @@
             "x64",
             "arm64"
           ]
+        },
+        {
+          "target": "pkg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "hardenedRuntime": false,
       "gatekeeperAssess": false
+    },
+    "pkg": {
+      "scripts": "scripts/pkg"
     },
     "linux": {
       "icon": "iconos/icons",

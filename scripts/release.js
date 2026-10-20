@@ -159,8 +159,8 @@ async function main() {
   console.log('========================================================');
 
   if (!skipBuild) {
-    console.log('\n[1/5] Compilando instaladores macOS (Apple Silicon arm64 + Intel x64)...');
-    runCommand('npx electron-builder --mac dmg --x64 --arm64');
+    console.log('\n[1/5] Compilando instaladores macOS (DMG y PKG para arm64 + x64)...');
+    runCommand('npx electron-builder --mac dmg pkg --x64 --arm64');
 
     console.log('\n[2/5] Compilando instalador Windows (.exe x64)...');
     runCommand('npx electron-builder --win nsis');
@@ -187,6 +187,10 @@ async function main() {
   const macArm64 = allFiles.find(f => f.endsWith('.dmg') && (f.includes('arm64') || f.includes('arm')));
   // Find macOS x64 DMG
   const macX64 = allFiles.find(f => f.endsWith('.dmg') && (f.includes('x64') || (!f.includes('arm64') && !f.includes('arm')) && f !== macArm64));
+  // Find macOS arm64 PKG
+  const macPkgArm64 = allFiles.find(f => f.endsWith('.pkg') && (f.includes('arm64') || f.includes('arm')));
+  // Find macOS x64 PKG
+  const macPkgX64 = allFiles.find(f => f.endsWith('.pkg') && (f.includes('x64') || (!f.includes('arm64') && !f.includes('arm')) && f !== macPkgArm64));
   // Find Windows exe
   const winExe = allFiles.find(f => f.endsWith('.exe') && !f.includes('uninstaller') && !f.includes('elevate'));
   // Find Linux deb
@@ -212,7 +216,23 @@ async function main() {
     filesToUpload.push({
       path: path.join(DIST_DIR, macX64),
       name: macX64.includes('x64') ? macX64 : 'DiffCore-1.0.0-x64.dmg',
-      label: 'DiffCore 1.0.0 macOS (Intel Core / Xeon)'
+      label: 'DiffCore 1.0.0 macOS (Intel Core / Xeon DMG)'
+    });
+  }
+
+  if (macPkgArm64) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, macPkgArm64),
+      name: macPkgArm64.includes('arm64') ? macPkgArm64 : 'DiffCore-1.0.0-arm64.pkg',
+      label: 'DiffCore 1.0.0 macOS Installer (Apple Silicon M1/M2/M3/M4 PKG)'
+    });
+  }
+
+  if (macPkgX64) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, macPkgX64),
+      name: macPkgX64.includes('x64') ? macPkgX64 : 'DiffCore-1.0.0-x64.pkg',
+      label: 'DiffCore 1.0.0 macOS Installer (Intel Core / Xeon PKG)'
     });
   }
 

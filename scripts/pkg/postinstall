@@ -1,0 +1,11 @@
+#!/bin/bash
+# Post-install script for DiffCore macOS PKG installer
+# Automatically removes quarantine flag so users can open the app without Gatekeeper warnings
+
+APP_PATH="/Applications/DiffCore.app"
+
+if [ -d "$APP_PATH" ]; then
+    /usr/bin/xattr -cr "$APP_PATH" 2>/dev/null || true
+fi
+
+exit 0
