@@ -16,7 +16,7 @@ else
     DMG_NAME="DiffCore-1.0.0-x64.dmg"
 fi
 
-DOWNLOAD_URL="https://github.com/mvyevenes3-commits/DiffCore/releases/download/v1.0.0/$DMG_NAME"
+DOWNLOAD_URL="https://github.com/mvyevenes3-commits/DiffCore/releases/download/1.0.0/$DMG_NAME"
 TMP_DMG="/tmp/$DMG_NAME"
 MOUNT_DIR="/tmp/diffcore-mount-$$"
 
