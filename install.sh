@@ -19,12 +19,12 @@ fi
 TMP_DMG="/tmp/$DMG_NAME"
 MOUNT_DIR="/tmp/diffcore-mount-$$"
 
-# 1. Descarga directa oficial con barra de porcentaje en tiempo real
+# 1. Descarga directa oficial con indicador de progreso y porcentaje
 echo "⬇️  Descargando $DMG_NAME..."
 DOWNLOAD_URL="https://github.com/mvyevenes3-commits/DiffCore/releases/download/1.0.0/$DMG_NAME"
-if ! curl -# -fL "$DOWNLOAD_URL" -o "$TMP_DMG"; then
+if ! curl -fL "$DOWNLOAD_URL" -o "$TMP_DMG"; then
     DOWNLOAD_URL="https://github.com/mvyevenes3-commits/DiffCore/releases/download/v1.0.0/$DMG_NAME"
-    curl -# -fL "$DOWNLOAD_URL" -o "$TMP_DMG"
+    curl -fL "$DOWNLOAD_URL" -o "$TMP_DMG"
 fi
 
 # 2. Montar DMG silenciosamente
