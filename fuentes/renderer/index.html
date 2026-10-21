@@ -682,7 +682,7 @@
           <span class="icon">⬇</span>
           <span class="label" data-i18n="toolbar.next">Next</span>
         </button>
-        <button class="tb-btn" id="btnNextDiffOptions" title="Next Difference Options " data-i18n-title="modal.options_title" onclick="openNextDiffOptionsModal()">
+        <button class="tb-btn" id="btnNextDiffOptions" title="Next Difference Options " data-i18n-title="modal.options_title" onclick="openNextDiffOptionsModal('text_editing')">
           <span class="icon">⚙️</span>
           <span class="label" data-i18n="toolbar.options">Options</span>
         </button>
@@ -714,6 +714,21 @@
           <span class="icon">📋</span>
           <span class="label" data-i18n="toolbar.report">Report</span>
         </button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <!-- Quick Font Size Controls (media_1792570215224_c9d655ea) -->
+      <div class="toolbar-group">
+        <button class="tb-btn" id="btnTextFontDec" title="Decrease font size (Ctrl - / ⌘ -)" data-i18n-title="toolbar.font_dec_tip" onclick="changeEditorFontSize(-1)">
+          <span class="icon"><span class="dc-icon dc-icon-font-decrease"></span></span>
+          <span class="label" data-i18n="toolbar.font_dec">A-</span>
+        </button>
+        <button class="tb-btn" id="btnTextFontInc" title="Increase font size (Ctrl + / ⌘ +)" data-i18n-title="toolbar.font_inc_tip" onclick="changeEditorFontSize(1)">
+          <span class="icon"><span class="dc-icon dc-icon-font-increase"></span></span>
+          <span class="label" data-i18n="toolbar.font_inc">A+</span>
+        </button>
+        <span id="badgeCurrentFontSize" class="tb-font-badge" title="Font size">11px</span>
       </div>
 
       <div class="toolbar-separator"></div>
@@ -1819,52 +1834,90 @@
         <!-- Left Categories Sidebar matching DiffCore (Image 1) -->
         <aside class="bc-options-sidebar">
           <div class="bc-options-search">
-            <input type="text" placeholder="🔍 Search" data-i18n-placeholder="common.search" class="tb-filter-input" style="width: 100%; font-size: 11px;">
+            <input type="text" id="optionsSearchInput" placeholder="🔍 Search" data-i18n-placeholder="common.search" class="tb-filter-input" style="width: 100%; font-size: 11px;" oninput="filterOptionsCategories(this.value)">
           </div>
           <div class="bc-options-cat-list">
-            <div class="bc-opt-cat"><span class="cat-icon">⏻</span> <span data-i18n="modal.opt_cat_startup">Startup</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">📁</span> <span data-i18n="modal.opt_cat_tabs">Tabs</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">🎨</span> <span data-i18n="modal.opt_cat_appearance">Appearance</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">📝</span> <span data-i18n="modal.opt_cat_text_editing">Text Editing</span></div>
-            <div class="bc-opt-cat active"><span class="cat-icon">⬇</span> <span data-i18n="modal.opt_cat_next_diff">Next Difference</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">💾</span> <span data-i18n="modal.opt_cat_backup">Backups</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">⚠️</span> <span data-i18n="modal.opt_cat_file_ops">File Operations</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">📦</span> <span data-i18n="modal.opt_cat_archive">Archive Types</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">⌨️</span> <span data-i18n="modal.opt_cat_commands">Commands</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">🗂️</span> <span data-i18n="modal.opt_cat_open_with">Open With</span></div>
-            <div class="bc-opt-cat"><span class="cat-icon">⚙️</span> <span data-i18n="modal.opt_cat_tweaks">Tweaks</span></div>
+            <div class="bc-opt-cat" data-tab="startup"><span class="cat-icon">⏻</span> <span data-i18n="modal.opt_cat_startup">Startup</span></div>
+            <div class="bc-opt-cat" data-tab="tabs"><span class="cat-icon">📁</span> <span data-i18n="modal.opt_cat_tabs">Tabs</span></div>
+            <div class="bc-opt-cat" data-tab="appearance"><span class="cat-icon">🎨</span> <span data-i18n="modal.opt_cat_appearance">Appearance</span></div>
+            <div class="bc-opt-cat active" data-tab="text_editing"><span class="cat-icon">📝</span> <span data-i18n="modal.opt_cat_text_editing">Text Editing</span></div>
+            <div class="bc-opt-cat" data-tab="next_diff"><span class="cat-icon">⬇</span> <span data-i18n="modal.opt_cat_next_diff">Next Difference</span></div>
+            <div class="bc-opt-cat" data-tab="backup"><span class="cat-icon">💾</span> <span data-i18n="modal.opt_cat_backup">Backups</span></div>
+            <div class="bc-opt-cat" data-tab="file_ops"><span class="cat-icon">⚠️</span> <span data-i18n="modal.opt_cat_file_ops">File Operations</span></div>
+            <div class="bc-opt-cat" data-tab="archive"><span class="cat-icon">📦</span> <span data-i18n="modal.opt_cat_archive">Archive Types</span></div>
+            <div class="bc-opt-cat" data-tab="commands"><span class="cat-icon">⌨️</span> <span data-i18n="modal.opt_cat_commands">Commands</span></div>
+            <div class="bc-opt-cat" data-tab="open_with"><span class="cat-icon">🗂️</span> <span data-i18n="modal.opt_cat_open_with">Open With</span></div>
+            <div class="bc-opt-cat" data-tab="tweaks"><span class="cat-icon">⚙️</span> <span data-i18n="modal.opt_cat_tweaks">Tweaks</span></div>
           </div>
         </aside>
 
-        <!-- Right Settings Panel (Next Difference) -->
+        <!-- Right Settings Panel -->
         <main class="bc-options-content">
-          <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;" data-i18n="modal.opt_cat_next_diff">Next Difference</h3>
+          <!-- PANEL 1: TEXT EDITING (media_1792570193627_fe1f07be) -->
+          <div class="bc-options-panel" id="optPanel_text_editing">
+            <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;" data-i18n="modal.opt_cat_text_editing">Text Editing</h3>
 
-          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;">
-            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="checkbox" id="chkGoToFirstDiffOnLoad">
-              <span data-i18n="modal.chk_first_diff">When <u>l</u>oading new files, go to first difference</span>
-            </label>
-            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="checkbox" id="chkNextDiffAfterCopy">
-              <span data-i18n="modal.chk_next_diff_copy"><u>G</u>o to next difference in files after <u>c</u>opying to other side</span>
-            </label>
-            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="checkbox" id="chkLimitNextDiffToFolder">
-              <span data-i18n="modal.chk_limit_folder">Limit "Next Difference Files" to current fol<u>d</u>er</span>
-            </label>
+            <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #ddd;" data-i18n="options.font_size_title">Editor Font Size</div>
+            <div style="font-size: 11px; color: #888; margin-bottom: 14px;" data-i18n="options.font_size_desc">Adjust the text size for file comparison and editing.</div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; background: #1c1c1c; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color);">
+              <button type="button" class="btn-secondary" style="padding: 4px 10px; font-weight: bold; font-size: 13px;" onclick="changeEditorFontSize(-1)" title="Disminuir (A-)">A-</button>
+              <input type="range" id="rangeEditorFontSize" min="9" max="28" step="1" value="11" style="flex: 1; accent-color: var(--color-blue-btn); cursor: pointer;" oninput="onEditorFontSizeSliderChange(this.value)">
+              <button type="button" class="btn-secondary" style="padding: 4px 10px; font-weight: bold; font-size: 13px;" onclick="changeEditorFontSize(1)" title="Aumentar (A+)">A+</button>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <input type="number" id="numEditorFontSize" min="9" max="32" value="11" style="width: 50px; padding: 4px 6px; background: #262626; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; text-align: center; font-size: 12px;" onchange="onEditorFontSizeInputChange(this.value)">
+                <span style="font-size: 11px; color: #888;">px</span>
+              </div>
+              <button type="button" class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="resetEditorFontSize()" data-i18n="options.default_size">Default (11px)</button>
+            </div>
+
+            <!-- Preview Box -->
+            <div style="border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; background: #141414; margin-top: 12px;">
+              <div style="font-size: 10px; color: #777; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px;" data-i18n="options.preview">Preview</div>
+              <div id="editorFontPreviewBox" style="font-family: var(--font-mono); font-size: 11px; line-height: 16px; color: #d4d4d4; white-space: pre; overflow-x: auto;">
+<span style="color: #6a9955;">// DiffCore - High-Performance Diff Suite</span>
+<span style="color: #569cd6;">function</span> <span style="color: #dcdcaa;">compareFiles</span>(<span style="color: #9cdcfe;">left</span>, <span style="color: #9cdcfe;">right</span>) {
+    <span style="color: #c586c0;">return</span> <span style="color: #ce9178;">"DiffCore Engine Ready"</span>;
+}</div>
+            </div>
           </div>
 
-          <div style="font-size: 12px; font-weight: 600; margin-bottom: 12px; color: #ddd;" data-i18n="modal.when_no_more">When no more differences:</div>
-          <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 12px;">
-            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="checkbox" id="chkWrapAroundDiffs">
-              <span data-i18n="modal.chk_wrap_around"><u>W</u>rap around to first difference</span>
-            </label>
-            <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="checkbox" id="chkShowMessagePanel">
-              <span data-i18n="modal.chk_show_panel">Show <u>m</u>essage panel</span>
-            </label>
+          <!-- PANEL 2: NEXT DIFFERENCE -->
+          <div class="bc-options-panel" id="optPanel_next_diff" style="display: none;">
+            <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;" data-i18n="modal.opt_cat_next_diff">Next Difference</h3>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;">
+              <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="chkGoToFirstDiffOnLoad">
+                <span data-i18n="modal.chk_first_diff">When <u>l</u>oading new files, go to first difference</span>
+              </label>
+              <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="chkNextDiffAfterCopy">
+                <span data-i18n="modal.chk_next_diff_copy"><u>G</u>o to next difference in files after <u>c</u>opying to other side</span>
+              </label>
+              <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="chkLimitNextDiffToFolder">
+                <span data-i18n="modal.chk_limit_folder">Limit "Next Difference Files" to current fol<u>d</u>er</span>
+              </label>
+            </div>
+
+            <div style="font-size: 12px; font-weight: 600; margin-bottom: 12px; color: #ddd;" data-i18n="modal.when_no_more">When no more differences:</div>
+            <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 12px;">
+              <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="chkWrapAroundDiffs">
+                <span data-i18n="modal.chk_wrap_around"><u>W</u>rap around to first difference</span>
+              </label>
+              <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="chkShowMessagePanel">
+                <span data-i18n="modal.chk_show_panel">Show <u>m</u>essage panel</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- PLACEHOLDER FOR OTHER PANELS -->
+          <div class="bc-options-panel" id="optPanel_other" style="display: none;">
+            <h3 id="optPanelOtherTitle" style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;"></h3>
+            <p style="font-size: 12px; color: #888;" data-i18n="options.configured_default">This category uses optimal default settings for DiffCore.</p>
           </div>
         </main>
       </div>

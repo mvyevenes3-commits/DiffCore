@@ -222,6 +222,10 @@
       'toolbar.wrap_tip': 'Toggle Word Wrap',
       'toolbar.layout_tip': 'Toggle Side-by-Side / Over-Under Layout',
       'toolbar.report_tip': 'Generate File Compare Report',
+      'toolbar.font_inc': 'A+',
+      'toolbar.font_dec': 'A-',
+      'toolbar.font_inc_tip': 'Increase font size (Ctrl+Plus / ⌘+)',
+      'toolbar.font_dec_tip': 'Decrease font size (Ctrl+Minus / ⌘-)',
 
       // Table columns
       'table.name': 'Name',
@@ -281,6 +285,11 @@
       'modal.when_no_more': 'When no more differences:',
       'modal.chk_wrap_around': 'Wrap around to first difference',
       'modal.chk_show_panel': 'Show message panel',
+      'options.font_size_title': 'Editor Font Size',
+      'options.font_size_desc': 'Adjust the text size for file comparison and editing.',
+      'options.preview': 'Preview',
+      'options.default_size': 'Default (11px)',
+      'options.configured_default': 'This category uses optimal default settings for DiffCore.',
       'modal.report_title': 'File Compare Report',
       'modal.report_format': 'Report Format',
       'modal.report_layout': 'Layout',
@@ -308,6 +317,8 @@
       'toast.undo_done': 'Change undone',
       'toast.redo_done': 'Change reapplied',
       'toast.file_reloaded_external': 'File reloaded from external change: {file}',
+      'toast.font_size_changed': 'Font size: {size}px',
+      'toast.font_size_reset': 'Font size reset to 11px',
       'modal.external_change_dirty_confirm': 'The file "{file}" was modified externally, but you have unsaved edits in DiffCore.\n\nDo you want to reload from disk and overwrite your local edits?',
 
       // Sessions History
@@ -692,6 +703,10 @@
       'toolbar.wrap_tip': 'Alternar Ajuste de Línea',
       'toolbar.layout_tip': 'Alternar Diseño Lado a Lado / Arriba-Abajo',
       'toolbar.report_tip': 'Generar Informe de Comparación',
+      'toolbar.font_inc': 'A+',
+      'toolbar.font_dec': 'A-',
+      'toolbar.font_inc_tip': 'Aumentar tamaño de fuente (Ctrl+Más / ⌘+)',
+      'toolbar.font_dec_tip': 'Disminuir tamaño de fuente (Ctrl+Menos / ⌘-)',
 
       // Table columns
       'table.name': 'Nombre',
@@ -751,6 +766,11 @@
       'modal.when_no_more': 'Cuando no haya más diferencias:',
       'modal.chk_wrap_around': 'Volver a la primera diferencia (bucle continuo)',
       'modal.chk_show_panel': 'Mostrar panel de mensajes',
+      'options.font_size_title': 'Tamaño de Fuente del Editor',
+      'options.font_size_desc': 'Ajusta el tamaño del texto para la comparación y edición de archivos.',
+      'options.preview': 'Vista Previa',
+      'options.default_size': 'Por Defecto (11px)',
+      'options.configured_default': 'Esta categoría utiliza la configuración predeterminada óptima para DiffCore.',
       'modal.report_title': 'Informe de Comparación de Archivos',
       'modal.report_format': 'Formato del Informe',
       'modal.report_layout': 'Disposición',
@@ -779,6 +799,8 @@
       'toast.undo_done': 'Cambio deshecho',
       'toast.redo_done': 'Cambio rehecho',
       'toast.file_reloaded_external': 'Archivo recargado por cambio externo: {file}',
+      'toast.font_size_changed': 'Tamaño de fuente: {size}px',
+      'toast.font_size_reset': 'Tamaño de fuente restablecido a 11px',
       'modal.external_change_dirty_confirm': 'El archivo "{file}" fue modificado externamente, pero tienes cambios sin guardar en DiffCore.\n\n¿Deseas recargarlo del disco y sobrescribir tus cambios locales?',
 
       // Sessions History
@@ -1163,6 +1185,10 @@
       'toolbar.wrap_tip': 'Alternar Quebra de Linha',
       'toolbar.layout_tip': 'Alternar Layout Lado a Lado / Superior-Inferior',
       'toolbar.report_tip': 'Gerar Relatório de Comparação',
+      'toolbar.font_inc': 'A+',
+      'toolbar.font_dec': 'A-',
+      'toolbar.font_inc_tip': 'Aumentar tamanho da fonte (Ctrl+Mais / ⌘+)',
+      'toolbar.font_dec_tip': 'Diminuir tamanho da fonte (Ctrl+Menos / ⌘-)',
 
       // Table columns
       'table.name': 'Nome',
@@ -1222,6 +1248,11 @@
       'modal.when_no_more': 'Quando não houver mais diferenças:',
       'modal.chk_wrap_around': 'Voltar para a primeira diferença (loop contínuo)',
       'modal.chk_show_panel': 'Exibir painel de mensagens',
+      'options.font_size_title': 'Tamanho da Fonte do Editor',
+      'options.font_size_desc': 'Ajuste o tamanho do texto para comparação e edição de arquivos.',
+      'options.preview': 'Pré-visualização',
+      'options.default_size': 'Padrão (11px)',
+      'options.configured_default': 'Esta categoria usa as configurações padrão ideais para o DiffCore.',
       'modal.report_title': 'Relatório de Comparação de Arquivos',
       'modal.report_format': 'Formato do Relatório',
       'modal.report_layout': 'Layout',
@@ -1250,6 +1281,8 @@
       'toast.undo_done': 'Ação desfeita',
       'toast.redo_done': 'Ação refeita',
       'toast.file_reloaded_external': 'Arquivo recarregado por alteração externa: {file}',
+      'toast.font_size_changed': 'Tamanho da fonte: {size}px',
+      'toast.font_size_reset': 'Tamanho da fonte redefinido para 11px',
       'modal.external_change_dirty_confirm': 'O arquivo "{file}" foi modificado externamente, mas você tem alterações não salvas no DiffCore.\n\nDeseja recarregar do disco e sobrescrever suas alterações locais?',
 
       // Sessions History
@@ -1634,6 +1667,10 @@
       'toolbar.wrap_tip': 'Basculer le Retour à la Ligne',
       'toolbar.layout_tip': 'Basculer Disposition Côte à Côte / Superposée',
       'toolbar.report_tip': 'Générer un Rapport de Comparaison',
+      'toolbar.font_inc': 'A+',
+      'toolbar.font_dec': 'A-',
+      'toolbar.font_inc_tip': 'Augmenter la taille de police (Ctrl+Plus / ⌘+)',
+      'toolbar.font_dec_tip': 'Diminuer la taille de police (Ctrl+Moins / ⌘-)',
 
       // Table columns
       'table.name': 'Nom',
@@ -1693,6 +1730,11 @@
       'modal.when_no_more': 'Lorsqu\'il n\'y a plus de différences :',
       'modal.chk_wrap_around': 'Revenir à la première différence (boucle continue)',
       'modal.chk_show_panel': 'Afficher le panneau de message',
+      'options.font_size_title': 'Taille de la police de l’éditeur',
+      'options.font_size_desc': 'Ajustez la taille du texte pour la comparaison et l’édition de fichiers.',
+      'options.preview': 'Aperçu',
+      'options.default_size': 'Par Défaut (11px)',
+      'options.configured_default': 'Cette catégorie utilise les paramètres optimaux par défaut pour DiffCore.',
       'modal.report_title': 'Rapport de Comparaison de Fichiers',
       'modal.report_format': 'Format du Rapport',
       'modal.report_layout': 'Disposition',
@@ -1721,6 +1763,8 @@
       'toast.undo_done': 'Action annulée',
       'toast.redo_done': 'Action rétablie',
       'toast.file_reloaded_external': 'Fichier rechargé suite à une modification externe : {file}',
+      'toast.font_size_changed': 'Taille de police : {size}px',
+      'toast.font_size_reset': 'Taille de police réinitialisée à 11px',
       'modal.external_change_dirty_confirm': 'Le fichier "{file}" a été modifié à l\'extérieur, mais vous avez des modifications non enregistrées dans DiffCore.\n\nVoulez-vous recharger depuis le disque et écraser vos modifications locales ?',
 
       // Sessions History
@@ -2105,6 +2149,10 @@
       'toolbar.wrap_tip': 'Alterna A Capo Automatico',
       'toolbar.layout_tip': 'Alterna Layout Affiancato / Sovrapposto',
       'toolbar.report_tip': 'Genera Rapporto Confronto File',
+      'toolbar.font_inc': 'A+',
+      'toolbar.font_dec': 'A-',
+      'toolbar.font_inc_tip': 'Aumenta dimensione carattere (Ctrl+Più / ⌘+)',
+      'toolbar.font_dec_tip': 'Diminuisci dimensione carattere (Ctrl+Meno / ⌘-)',
 
       // Table columns
       'table.name': 'Nome',
@@ -2164,6 +2212,11 @@
       'modal.when_no_more': 'Quando non ci sono più differenze:',
       'modal.chk_wrap_around': 'Riavvolgi alla prima differenza (ciclo continuo)',
       'modal.chk_show_panel': 'Mostra pannello messaggi',
+      'options.font_size_title': 'Dimensione del carattere dell’editor',
+      'options.font_size_desc': 'Regola la dimensione del testo per il confronto e la modifica dei file.',
+      'options.preview': 'Anteprima',
+      'options.default_size': 'Predefinito (11px)',
+      'options.configured_default': 'Questa categoria utilizza le impostazioni predefinite ottimali per DiffCore.',
       'modal.report_title': 'Rapporto Confronto File',
       'modal.report_format': 'Formato Rapporto',
       'modal.report_layout': 'Disposizione',
@@ -2192,6 +2245,8 @@
       'toast.undo_done': 'Modifica annullata',
       'toast.redo_done': 'Modifica ripristinata',
       'toast.file_reloaded_external': 'File ricaricato per modifica esterna: {file}',
+      'toast.font_size_changed': 'Dimensione carattere: {size}px',
+      'toast.font_size_reset': 'Dimensione carattere ripristinata a 11px',
       'modal.external_change_dirty_confirm': 'Il file "{file}" è stato modificato esternamente, ma hai modifiche non salvate in DiffCore.\n\nVuoi ricaricare dal disco e sovrascrivere le modifiche locali?',
 
       // Sessions History
@@ -2576,6 +2631,10 @@
       'toolbar.wrap_tip': 'Перенос по словам',
       'toolbar.layout_tip': 'Переключить вид: Рядом / Сверху-Снизу',
       'toolbar.report_tip': 'Сформировать отчет о сравнении',
+      'toolbar.font_inc': 'A+',
+      'toolbar.font_dec': 'A-',
+      'toolbar.font_inc_tip': 'Увеличить размер шрифта (Ctrl+Плюс / ⌘+)',
+      'toolbar.font_dec_tip': 'Уменьшить размер шрифта (Ctrl+Минус / ⌘-)',
 
       // Table columns
       'table.name': 'Имя',
@@ -2635,6 +2694,11 @@
       'modal.when_no_more': 'Когда различий больше нет:',
       'modal.chk_wrap_around': 'Зациклить переход к первому различию',
       'modal.chk_show_panel': 'Показывать панель сообщений',
+      'options.font_size_title': 'Размер шрифта редактора',
+      'options.font_size_desc': 'Настройте размер текста для сравнения и редактирования файлов.',
+      'options.preview': 'Предпросмотр',
+      'options.default_size': 'По умолчанию (11px)',
+      'options.configured_default': 'В этой категории используются оптимальные настройки по умолчанию для DiffCore.',
       'modal.report_title': 'Отчет о сравнении файлов',
       'modal.report_format': 'Формат отчета',
       'modal.report_layout': 'Макет',
@@ -2663,6 +2727,8 @@
       'toast.undo_done': 'Действие отменено',
       'toast.redo_done': 'Действие повторено',
       'toast.file_reloaded_external': 'Файл перезагружен из-за внешнего изменения: {file}',
+      'toast.font_size_changed': 'Размер шрифта: {size}px',
+      'toast.font_size_reset': 'Размер шрифта сброшен до 11px',
       'modal.external_change_dirty_confirm': 'Файл "{file}" был изменен извне, но у вас есть несохраненные изменения в DiffCore.\n\nПерезагрузить с диска и перезаписать локальные изменения?',
 
       // Sessions History

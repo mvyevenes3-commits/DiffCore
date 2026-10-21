@@ -27,6 +27,11 @@
 
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+
+  /* DiffCore Editor Font Metrics (Customizable) */
+  --diff-editor-font-size: 11px;
+  --diff-editor-line-height: 16px;
+  --diff-editor-num-width: 48px;
 }
 
 /* DiffCore - Light Theme Official Palette */
@@ -679,6 +684,28 @@ body.theme-light .tab-add-btn:hover {
 }
 .tb-icon-only-btn:hover {
   color: #fff;
+}
+
+.tb-font-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9cdcfe;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  user-select: none;
+  font-family: var(--font-mono);
+  margin-left: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+}
+body.theme-light .tb-font-badge {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0284c7;
 }
 
 /* DUAL PATH BARS (DiffCore Matching Image 3) */
@@ -3319,9 +3346,9 @@ body.theme-light .sync-vscrollbar-thumb.active {
 
 .text-line-row {
   display: flex;
-  height: 16px !important;
-  min-height: 16px !important;
-  max-height: 16px !important;
+  height: var(--diff-editor-line-height, 16px) !important;
+  min-height: var(--diff-editor-line-height, 16px) !important;
+  max-height: var(--diff-editor-line-height, 16px) !important;
   box-sizing: border-box !important;
   position: relative !important;
   min-width: 100%;
@@ -3333,7 +3360,7 @@ body.theme-light .sync-vscrollbar-thumb.active {
   min-width: 24px;
   max-width: 24px;
   flex-shrink: 0;
-  height: 16px;
+  height: var(--diff-editor-line-height, 16px);
   position: sticky;
   left: 0;
   background: #1f1f1f;
@@ -3378,9 +3405,9 @@ body.theme-light .sync-vscrollbar-thumb.active {
 }
 
 .text-line-num {
-  width: 48px;
-  min-width: 48px;
-  max-width: 48px;
+  width: var(--diff-editor-num-width, 48px);
+  min-width: var(--diff-editor-num-width, 48px);
+  max-width: var(--diff-editor-num-width, 48px);
   flex-shrink: 0;
   padding: 0 6px;
   text-align: right;
@@ -3388,8 +3415,8 @@ body.theme-light .sync-vscrollbar-thumb.active {
   background: #1f1f1f;
   border-right: 1px solid #2d2d2d;
   user-select: none;
-  font-size: 10.5px;
-  line-height: 16px;
+  font-size: calc(var(--diff-editor-font-size, 11px) - 0.5px);
+  line-height: var(--diff-editor-line-height, 16px);
   box-sizing: border-box;
   position: sticky;
   left: 0;
@@ -3401,8 +3428,8 @@ body.theme-light .sync-vscrollbar-thumb.active {
   padding: 0 8px;
   white-space: pre;
   color: #d4d4d4;
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--diff-editor-font-size, 11px);
+  line-height: var(--diff-editor-line-height, 16px);
   box-sizing: border-box;
   outline: none;
   cursor: text;

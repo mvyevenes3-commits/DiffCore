@@ -317,6 +317,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   initModalControls();
   initTheme();
+  initTextEditorFontSize();
   setupLogging();
   setupCliListener();
   setupMenuListeners();
@@ -521,8 +522,8 @@ function setupMenuListeners() {
     catList.addEventListener('click', (e) => {
       const cat = e.target.closest('.bc-opt-cat');
       if (!cat) return;
-      catList.querySelectorAll('.bc-opt-cat').forEach(c => c.classList.remove('active'));
-      cat.classList.add('active');
+      const tab = cat.getAttribute('data-tab') || 'text_editing';
+      switchOptionsTab(tab);
     });
   }
 }
@@ -9198,8 +9199,94 @@ function setupAllDragAndDrop() {
   });
 }
 
+// --- TEXT EDITOR FONT SIZE CONTROLLER (DiffCore - media_1792570193627 / media_1792570215224) ---
+let textEditorFontSize = 11;
+let TEXT_ROW_HEIGHT = 16;
+
+function initTextEditorFontSize() {
+  let size = 11;
+  try {
+    const saved = localStorage.getItem('diffcore_editor_font_size');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 9 && parsed <= 32) {
+        size = parsed;
+      }
+    }
+  } catch (e) {}
+  setTextEditorFontSize(size, false);
+}
+
+function setTextEditorFontSize(size, save = true) {
+  size = Math.max(9, Math.min(32, parseInt(size, 10) || 11));
+  textEditorFontSize = size;
+  TEXT_ROW_HEIGHT = Math.round(size * 1.45);
+  const numWidth = Math.max(48, Math.round(size * 4));
+
+  document.documentElement.style.setProperty('--diff-editor-font-size', `${size}px`);
+  document.documentElement.style.setProperty('--diff-editor-line-height', `${TEXT_ROW_HEIGHT}px`);
+  document.documentElement.style.setProperty('--diff-editor-num-width', `${numWidth}px`);
+
+  // Update badge in toolbar if present
+  const badge = document.getElementById('badgeCurrentFontSize');
+  if (badge) {
+    badge.textContent = `${size}px`;
+  }
+
+  // Update inputs in options modal if present
+  const numInput = document.getElementById('numEditorFontSize');
+  if (numInput && document.activeElement !== numInput) numInput.value = size;
+  const rangeInput = document.getElementById('rangeEditorFontSize');
+  if (rangeInput && document.activeElement !== rangeInput) rangeInput.value = size;
+  const preview = document.getElementById('editorFontPreviewBox');
+  if (preview) {
+    preview.style.fontSize = `${size}px`;
+    preview.style.lineHeight = `${TEXT_ROW_HEIGHT}px`;
+  }
+
+  if (save) {
+    try {
+      localStorage.setItem('diffcore_editor_font_size', String(size));
+    } catch (e) {}
+  }
+
+  // If text diff view has loaded files, refresh display with new row heights
+  if (typeof virtualTextState !== 'undefined' && virtualTextState && virtualTextState.currentDiffResult) {
+    virtualTextState.cacheL.clear();
+    virtualTextState.cacheR.clear();
+    virtualTextState.lastRenderedStart = -1;
+    virtualTextState.lastRenderedEnd = -1;
+    renderTextDiff(virtualTextState.currentDiffResult);
+  }
+}
+
+function changeEditorFontSize(delta) {
+  setTextEditorFontSize(textEditorFontSize + delta, true);
+  const label = window.i18n ? window.i18n.t('toast.font_size_changed', { size: textEditorFontSize }) : `Tamaño de fuente: ${textEditorFontSize}px`;
+  showToast(label, 'info');
+}
+
+function resetEditorFontSize() {
+  setTextEditorFontSize(11, true);
+  const label = window.i18n ? window.i18n.t('toast.font_size_reset') : 'Tamaño de fuente restablecido a 11px';
+  showToast(label, 'info');
+}
+
+function onEditorFontSizeSliderChange(val) {
+  const size = parseInt(val, 10);
+  if (!isNaN(size)) {
+    setTextEditorFontSize(size, true);
+  }
+}
+
+function onEditorFontSizeInputChange(val) {
+  const size = parseInt(val, 10);
+  if (!isNaN(size)) {
+    setTextEditorFontSize(size, true);
+  }
+}
+
 // --- HIGH-PERFORMANCE VIRTUAL SCROLLING ENGINE FOR TEXT COMPARE (DiffCore) ---
-const TEXT_ROW_HEIGHT = 16;
 let virtualTextState = {
   lastRenderedStart: -1,
   lastRenderedEnd: -1,
@@ -9258,7 +9345,8 @@ function renderTextDiff(diffResult) {
     if (r.leftText && r.leftText.length > maxChars) maxChars = r.leftText.length;
     if (r.rightText && r.rightText.length > maxChars) maxChars = r.rightText.length;
   }
-  const maxLineWidthPx = Math.max(900, Math.ceil(maxChars * 7.4 + 80));
+  const charWidth = Math.max(6.5, textEditorFontSize * 0.63);
+  const maxLineWidthPx = Math.max(900, Math.ceil(maxChars * charWidth + 80));
 
   // Initialize Virtual Scrolling State
   virtualTextState.currentDiffResult = diffResult;
@@ -9889,7 +9977,55 @@ function saveDiffOptionsConfig() {
   }
 }
 
-function openNextDiffOptionsModal() {
+function switchOptionsTab(tabName) {
+  const catList = document.querySelector('.bc-options-cat-list');
+  if (catList) {
+    catList.querySelectorAll('.bc-opt-cat').forEach(c => {
+      if (c.getAttribute('data-tab') === tabName) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+  }
+
+  const panels = document.querySelectorAll('.bc-options-panel');
+  panels.forEach(p => {
+    p.style.display = 'none';
+  });
+
+  const target = document.getElementById(`optPanel_${tabName}`);
+  if (target) {
+    target.style.display = 'block';
+  } else {
+    const other = document.getElementById('optPanel_other');
+    if (other) {
+      other.style.display = 'block';
+      const titleEl = document.getElementById('optPanelOtherTitle');
+      const activeCat = catList ? catList.querySelector(`.bc-opt-cat[data-tab="${tabName}"] span:last-child`) : null;
+      if (titleEl && activeCat) {
+        titleEl.textContent = activeCat.textContent.trim();
+      }
+    }
+  }
+}
+
+function filterOptionsCategories(query) {
+  const q = (query || '').toLowerCase().trim();
+  const catList = document.querySelector('.bc-options-cat-list');
+  if (!catList) return;
+  const cats = catList.querySelectorAll('.bc-opt-cat');
+  cats.forEach(c => {
+    const text = c.textContent.toLowerCase();
+    if (!q || text.includes(q)) {
+      c.style.display = 'flex';
+    } else {
+      c.style.display = 'none';
+    }
+  });
+}
+
+function openNextDiffOptionsModal(initialTab = 'text_editing') {
   const opts = appState.diffOptions || loadDiffOptions();
   appState.diffOptions = opts;
 
@@ -9904,6 +10040,26 @@ function openNextDiffOptionsModal() {
   if (chkLimit) chkLimit.checked = !!opts.limitNextDiffToFolder;
   if (chkWrap) chkWrap.checked = !!opts.wrapAroundDiffs;
   if (chkMsg) chkMsg.checked = !!opts.showMessagePanel;
+
+  // Initialize Font Size inputs and preview
+  const numInput = document.getElementById('numEditorFontSize');
+  if (numInput) numInput.value = textEditorFontSize;
+  const rangeInput = document.getElementById('rangeEditorFontSize');
+  if (rangeInput) rangeInput.value = textEditorFontSize;
+  const preview = document.getElementById('editorFontPreviewBox');
+  if (preview) {
+    preview.style.fontSize = `${textEditorFontSize}px`;
+    preview.style.lineHeight = `${TEXT_ROW_HEIGHT}px`;
+  }
+
+  // Switch to the requested tab (defaults to text_editing as shown in user screenshot)
+  switchOptionsTab(initialTab);
+
+  const searchInput = document.getElementById('optionsSearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    filterOptionsCategories('');
+  }
 
   const modal = document.getElementById('nextDiffOptionsModal');
   if (modal) {
@@ -9932,6 +10088,8 @@ function resetNextDiffOptionsToDefaults() {
   if (chkLimit) chkLimit.checked = DEFAULT_DIFF_OPTIONS.limitNextDiffToFolder;
   if (chkWrap) chkWrap.checked = DEFAULT_DIFF_OPTIONS.wrapAroundDiffs;
   if (chkMsg) chkMsg.checked = DEFAULT_DIFF_OPTIONS.showMessagePanel;
+
+  resetEditorFontSize();
 }
 
 function saveNextDiffOptionsFromModal() {
@@ -9958,6 +10116,12 @@ window.openNextDiffOptionsModal = openNextDiffOptionsModal;
 window.closeNextDiffOptionsModal = closeNextDiffOptionsModal;
 window.resetNextDiffOptionsToDefaults = resetNextDiffOptionsToDefaults;
 window.saveNextDiffOptionsFromModal = saveNextDiffOptionsFromModal;
+window.switchOptionsTab = switchOptionsTab;
+window.filterOptionsCategories = filterOptionsCategories;
+window.changeEditorFontSize = changeEditorFontSize;
+window.resetEditorFontSize = resetEditorFontSize;
+window.onEditorFontSizeSliderChange = onEditorFontSizeSliderChange;
+window.onEditorFontSizeInputChange = onEditorFontSizeInputChange;
 
 function openAboutModal() {
   const modal = document.getElementById('aboutModal');
@@ -10082,6 +10246,16 @@ function setupTextSyncScroll() {
   // Zero-lag simultaneous wheel/trackpad scrolling across text compare panes
   if (panes) {
     panes.addEventListener('wheel', (e) => {
+      // Zoom with Ctrl/Cmd + Mouse Wheel
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          changeEditorFontSize(1);
+        } else if (e.deltaY > 0) {
+          changeEditorFontSize(-1);
+        }
+        return;
+      }
       e.preventDefault();
       textScrollDriver = 'wheel';
       clearTimeout(textScrollTimer);
@@ -10771,6 +10945,28 @@ function setupTextKeyboardNavigation() {
     if ((isMod || event.altKey) && event.key === 'ArrowDown') {
       event.preventDefault();
       navDiff(1);
+      return;
+    }
+
+    // Font size zoom shortcuts in Text view:
+    // Ctrl/Cmd + Plus / Equals: Increase Font Size
+    if (isMod && (event.key === '=' || event.key === '+')) {
+      event.preventDefault();
+      changeEditorFontSize(1);
+      return;
+    }
+
+    // Ctrl/Cmd + Minus / Underscore: Decrease Font Size
+    if (isMod && (event.key === '-' || event.key === '_')) {
+      event.preventDefault();
+      changeEditorFontSize(-1);
+      return;
+    }
+
+    // Ctrl/Cmd + 0: Reset Font Size to default
+    if (isMod && event.key === '0') {
+      event.preventDefault();
+      resetEditorFontSize();
       return;
     }
   });
