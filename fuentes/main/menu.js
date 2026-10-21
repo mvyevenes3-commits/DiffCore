@@ -20,6 +20,7 @@ const MENU_TRANSLATIONS = {
     copy: 'Copy',
     paste: 'Paste',
     selectAll: 'Select All',
+    copyDocument: 'Copy Entire Document',
     view: 'View',
     reload: 'Reload',
     forceReload: 'Force Reload',
@@ -57,6 +58,7 @@ const MENU_TRANSLATIONS = {
     copy: 'Copiar',
     paste: 'Pegar',
     selectAll: 'Seleccionar Todo',
+    copyDocument: 'Copiar Documento Entero',
     view: 'Ver',
     reload: 'Recargar',
     forceReload: 'Forzar Recarga',
@@ -92,6 +94,7 @@ const MENU_TRANSLATIONS = {
     copy: 'Copiar',
     paste: 'Colar',
     selectAll: 'Selecionar Tudo',
+    copyDocument: 'Copiar Documento Inteiro',
     view: 'Exibir',
     reload: 'Recarregar',
     forceReload: 'Forçar Recarregamento',
@@ -127,6 +130,7 @@ const MENU_TRANSLATIONS = {
     copy: 'Copier',
     paste: 'Coller',
     selectAll: 'Tout Sélectionner',
+    copyDocument: 'Copier le Document Entier',
     view: 'Présentation',
     reload: 'Recharger',
     forceReload: 'Forcer le Rechargement',
@@ -162,6 +166,7 @@ const MENU_TRANSLATIONS = {
     copy: 'Copia',
     paste: 'Incolla',
     selectAll: 'Seleziona Tutto',
+    copyDocument: 'Copia Documento Intero',
     view: 'Vista',
     reload: 'Ricarica',
     forceReload: 'Ricarica Forzata',
@@ -197,6 +202,7 @@ const MENU_TRANSLATIONS = {
     copy: 'Копировать',
     paste: 'Вставить',
     selectAll: 'Выбрать все',
+    copyDocument: 'Копировать весь документ',
     view: 'Вид',
     reload: 'Перезагрузить',
     forceReload: 'Принудительная перезагрузка',
@@ -322,7 +328,24 @@ function buildMenuTemplate(lang, mainWindow) {
         { label: t.copy, role: 'copy' },
         { label: t.paste, role: 'paste' },
         { type: 'separator' },
-        { label: t.selectAll, role: 'selectAll' }
+        {
+          label: t.selectAll,
+          accelerator: 'CmdOrCtrl+A',
+          click: (_item, focusedWindow) => {
+            if (focusedWindow && !focusedWindow.isDestroyed()) {
+              focusedWindow.webContents.send('menu:selectAll');
+            }
+          }
+        },
+        {
+          label: t.copyDocument || 'Copiar Documento Entero',
+          accelerator: 'CmdOrCtrl+Shift+C',
+          click: (_item, focusedWindow) => {
+            if (focusedWindow && !focusedWindow.isDestroyed()) {
+              focusedWindow.webContents.send('menu:copyEntireDocument');
+            }
+          }
+        }
       ]
     });
   }

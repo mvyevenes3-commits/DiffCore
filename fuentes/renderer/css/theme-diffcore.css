@@ -2639,6 +2639,15 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   gap: 8px;
 }
 
+.ctx-shortcut {
+  font-size: 11px;
+  color: #888888;
+  margin-left: 20px;
+}
+.context-menu-item:hover .ctx-shortcut {
+  color: #dddddd;
+}
+
 .ctx-arrow {
   margin-left: auto;
   padding-left: 18px;
@@ -3414,7 +3423,8 @@ body.theme-light .sync-vscrollbar-thumb.active {
   color: #666;
   background: #1f1f1f;
   border-right: 1px solid #2d2d2d;
-  user-select: none;
+  user-select: none !important;
+  -webkit-user-select: none !important;
   font-size: calc(var(--diff-editor-font-size, 11px) - 0.5px);
   line-height: var(--diff-editor-line-height, 16px);
   box-sizing: border-box;
@@ -3433,11 +3443,51 @@ body.theme-light .sync-vscrollbar-thumb.active {
   box-sizing: border-box;
   outline: none;
   cursor: text;
-  user-select: text;
-  -webkit-user-select: text;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 .text-line-content:focus {
   outline: none;
+}
+.text-line-content[contenteditable="plaintext-only"] {
+  outline: 1px solid rgba(0, 122, 204, 0.7) !important;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Authentic DiffCore Selection Highlights */
+.text-line-content::selection,
+.text-line-content *::selection {
+  background-color: #264f78 !important;
+  color: #ffffff !important;
+}
+
+body.theme-light .text-line-content::selection,
+body.theme-light .text-line-content *::selection {
+  background-color: #add6ff !important;
+  color: #000000 !important;
+}
+
+/* Full Document Selection Indicator */
+#textLeftLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content,
+#textRightLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content {
+  background-color: #264f78 !important;
+  color: #ffffff !important;
+}
+
+#textLeftLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content *,
+#textRightLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content * {
+  color: #ffffff !important;
+}
+
+body.theme-light #textLeftLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content,
+body.theme-light #textRightLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content {
+  background-color: #add6ff !important;
+  color: #000000 !important;
+}
+
+body.theme-light #textLeftLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content *,
+body.theme-light #textRightLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content * {
+  color: #000000 !important;
 }
 
 /* DiffCore Authentic Hatched Diagonal Stripes for Missing Gap */
@@ -3456,7 +3506,8 @@ body.theme-light .sync-vscrollbar-thumb.active {
   background: #15181e !important;
   color: transparent !important;
   border-right: 1px solid #232832 !important;
-  user-select: none;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 .text-line-row.ghost-hatched .text-line-action {
   background: #15181e !important;
@@ -3464,6 +3515,9 @@ body.theme-light .sync-vscrollbar-thumb.active {
 }
 .text-line-row.ghost-hatched .text-line-content {
   visibility: visible;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: none !important;
 }
 
 /* DiffCore Code Diff: Deep Crimson Wine */

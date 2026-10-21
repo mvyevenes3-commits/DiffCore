@@ -488,6 +488,29 @@ function setupMenuListeners() {
     });
   }
 
+  if (window.api && typeof window.api.onSelectAll === 'function') {
+    window.api.onSelectAll(() => {
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (activeTag === 'input' || activeTag === 'textarea') {
+        if (typeof document.activeElement.select === 'function') document.activeElement.select();
+        return;
+      }
+      if (appState.activeView === 'text') {
+        selectEntireDocument(appState.activeTextSide || 'left');
+      } else if (appState.activeView === 'folder') {
+        selectAllRows();
+      }
+    });
+  }
+
+  if (window.api && typeof window.api.onCopyEntireDocument === 'function') {
+    window.api.onCopyEntireDocument(() => {
+      if (appState.activeView === 'text') {
+        copyEntireDocument(appState.activeTextSide || 'left');
+      }
+    });
+  }
+
   initUpdaterListeners();
 
   // Global shortcuts (Settings, Help, Escape)
@@ -503,6 +526,15 @@ function setupMenuListeners() {
       event.preventDefault();
       openNextDiffOptionsModal();
     } else if (event.key === 'Escape') {
+      const textMenu = document.getElementById('textDiffContextMenu');
+      if (textMenu && textMenu.style.display !== 'none') {
+        textMenu.style.display = 'none';
+        return;
+      }
+      if (appState.fullDocSelectedSide) {
+        clearDocumentSelection();
+        return;
+      }
       const aboutM = document.getElementById('aboutModal');
       if (aboutM && aboutM.classList.contains('active')) {
         closeAboutModal();
@@ -530,6 +562,12 @@ function setupMenuListeners() {
 
 function setupWindowClickHandlers() {
   window.addEventListener('click', (event) => {
+    const textMenu = document.getElementById('textDiffContextMenu');
+    if (textMenu && textMenu.style.display !== 'none') {
+      if (!textMenu.contains(event.target)) {
+        textMenu.style.display = 'none';
+      }
+    }
     const menu = document.getElementById('folderContextMenu');
     if (menu && menu.style.display !== 'none') {
       if (!menu.contains(event.target)) {
@@ -563,10 +601,26 @@ function setupUniversalInputClipboardShortcuts() {
 
     const key = event.key.toLowerCase();
     const activeEl = document.activeElement;
+
+    // In text compare view, if focused in contenteditable or pane, delegate to text handlers
+    if (activeEl && activeEl.isContentEditable) {
+      if (appState.activeView === 'text') {
+        if (key === 'a') {
+          event.preventDefault();
+          selectEntireDocument(appState.activeTextSide || 'left');
+          return;
+        } else if (key === 'c') {
+          copyCurrentSelectionOrDocument();
+          event.preventDefault();
+          return;
+        }
+      }
+      return;
+    }
+
     const isInput = activeEl && (
       activeEl.tagName === 'INPUT' ||
-      activeEl.tagName === 'TEXTAREA' ||
-      activeEl.isContentEditable
+      activeEl.tagName === 'TEXTAREA'
     );
 
     if (!isInput) return;
@@ -1365,6 +1419,7 @@ function clearFolderCompareDOM() {
 }
 
 function clearTextCompareDOM() {
+  if (typeof clearDocumentSelection === 'function') clearDocumentSelection();
   const containerL = document.getElementById('textLeftLines');
   const containerR = document.getElementById('textRightLines');
   const gutter = document.getElementById('textCenterGutter');
@@ -9530,15 +9585,15 @@ function renderVisibleTextWindow(force = false) {
     let rowHtmlL = cacheL.get(i);
     if (!rowHtmlL) {
       if (row.type === 'same') {
-        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="left" data-row="${i}">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
       } else if (row.isGhostL) {
         const ghostClsL = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
-        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-num"></div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="left" data-row="${i}"></div></div>`;
+        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-num"></div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}"></div></div>`;
       } else {
         const isCommL = row.isCommentL;
         const isWsL = row.isWhitespaceDiff;
         const clsL = isWsL ? 'diff-whitespace' : (isCommL ? 'diff-comment' : 'diff-code');
-        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="left" data-row="${i}">${renderDiffLineContent(row.leftChunks, row.leftText, lang, clsL, isCommL)}</div></div>`;
+        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}">${renderDiffLineContent(row.leftChunks, row.leftText, lang, clsL, isCommL)}</div></div>`;
       }
       cacheL.set(i, rowHtmlL);
     }
@@ -9548,15 +9603,15 @@ function renderVisibleTextWindow(force = false) {
     let rowHtmlR = cacheR.get(i);
     if (!rowHtmlR) {
       if (row.type === 'same') {
-        rowHtmlR = `<div class="text-line-row" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="right" data-row="${i}">${highlightSyntax(row.rightText, lang, false, false)}</div></div>`;
+        rowHtmlR = `<div class="text-line-row" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}">${highlightSyntax(row.rightText, lang, false, false)}</div></div>`;
       } else if (row.isGhostR) {
         const ghostClsR = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
-        rowHtmlR = `<div class="text-line-row ${ghostClsR}" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="right" data-row="${i}"></div></div>`;
+        rowHtmlR = `<div class="text-line-row ${ghostClsR}" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}"></div></div>`;
       } else {
         const isCommR = row.isCommentR;
         const isWsR = row.isWhitespaceDiff;
         const clsR = isWsR ? 'diff-whitespace' : (isCommR ? 'diff-comment' : 'diff-code');
-        rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" contenteditable="plaintext-only" spellcheck="false" data-side="right" data-row="${i}">${renderDiffLineContent(row.rightChunks, row.rightText, lang, clsR, isCommR)}</div></div>`;
+        rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}">${renderDiffLineContent(row.rightChunks, row.rightText, lang, clsR, isCommR)}</div></div>`;
       }
       cacheR.set(i, rowHtmlR);
     }
@@ -9601,6 +9656,24 @@ function renderVisibleTextWindow(force = false) {
   } else {
     containerL.innerHTML = htmlL;
     containerR.innerHTML = htmlR;
+  }
+
+  // Restore active line editing attribute if present in visible window
+  if (activeInlineEdit) {
+    const activeRowEl = document.getElementById(`row-${activeInlineEdit.side === 'left' ? 'l' : 'r'}-${activeInlineEdit.rowIndex}`);
+    if (activeRowEl) {
+      const activeContentEl = activeRowEl.querySelector('.text-line-content');
+      if (activeContentEl) {
+        activeContentEl.setAttribute('contenteditable', 'plaintext-only');
+      }
+    }
+  }
+
+  // Preserve full document selection class on container across scrolls
+  if (appState.fullDocSelectedSide === 'left') {
+    containerL.classList.add('doc-full-selection');
+  } else if (appState.fullDocSelectedSide === 'right') {
+    containerR.classList.add('doc-full-selection');
   }
 
   // Render ONLY visible left gutter action arrows & brackets
@@ -10650,6 +10723,10 @@ function commitActiveLineHighlight(target, side, rowIndex) {
   }
 }
 
+let textDragStart = null;
+let isDraggingText = false;
+let activeInlineTarget = null;
+
 function handleTextLineKeydown(e, target, side, rowIndex) {
   const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
   if (!diffResult || !diffResult.rows) return;
@@ -10657,34 +10734,51 @@ function handleTextLineKeydown(e, target, side, rowIndex) {
   if (e.key === 'Enter') {
     e.preventDefault();
     commitActiveLineHighlight(target, side, rowIndex);
+    target.removeAttribute('contenteditable');
     // Move to next line if available
     if (rowIndex < diffResult.rows.length - 1) {
       const nextId = `row-${side === 'left' ? 'l' : 'r'}-${rowIndex + 1}`;
-      const nextTarget = document.getElementById(nextId)?.querySelector('.text-line-content');
-      if (nextTarget) {
+      const nextRow = document.getElementById(nextId);
+      const nextTarget = nextRow?.querySelector('.text-line-content');
+      if (nextTarget && !nextRow.classList.contains('ghost-hatched')) {
+        nextTarget.setAttribute('contenteditable', 'plaintext-only');
         nextTarget.focus();
         setCaretPosition(nextTarget, 0);
+        activeInlineTarget = nextTarget;
+        activeInlineEdit = { rowIndex: rowIndex + 1, side, lastSnapshotTime: Date.now() };
       }
     }
   } else if (e.key === 'ArrowDown') {
     if (rowIndex < diffResult.rows.length - 1) {
       const nextId = `row-${side === 'left' ? 'l' : 'r'}-${rowIndex + 1}`;
-      const nextTarget = document.getElementById(nextId)?.querySelector('.text-line-content');
-      if (nextTarget) {
+      const nextRow = document.getElementById(nextId);
+      const nextTarget = nextRow?.querySelector('.text-line-content');
+      if (nextTarget && !nextRow.classList.contains('ghost-hatched')) {
         const offset = getCaretCharacterOffsetWithin(target);
+        commitActiveLineHighlight(target, side, rowIndex);
+        target.removeAttribute('contenteditable');
+        nextTarget.setAttribute('contenteditable', 'plaintext-only');
         nextTarget.focus();
         setCaretPosition(nextTarget, offset);
+        activeInlineTarget = nextTarget;
+        activeInlineEdit = { rowIndex: rowIndex + 1, side, lastSnapshotTime: Date.now() };
         e.preventDefault();
       }
     }
   } else if (e.key === 'ArrowUp') {
     if (rowIndex > 0) {
       const prevId = `row-${side === 'left' ? 'l' : 'r'}-${rowIndex - 1}`;
-      const prevTarget = document.getElementById(prevId)?.querySelector('.text-line-content');
-      if (prevTarget) {
+      const prevRow = document.getElementById(prevId);
+      const prevTarget = prevRow?.querySelector('.text-line-content');
+      if (prevTarget && !prevRow.classList.contains('ghost-hatched')) {
         const offset = getCaretCharacterOffsetWithin(target);
+        commitActiveLineHighlight(target, side, rowIndex);
+        target.removeAttribute('contenteditable');
+        prevTarget.setAttribute('contenteditable', 'plaintext-only');
         prevTarget.focus();
         setCaretPosition(prevTarget, offset);
+        activeInlineTarget = prevTarget;
+        activeInlineEdit = { rowIndex: rowIndex - 1, side, lastSnapshotTime: Date.now() };
         e.preventDefault();
       }
     }
@@ -10697,18 +10791,151 @@ function handleTextLineKeydown(e, target, side, rowIndex) {
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
     e.preventDefault();
     redoTextChange();
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+    e.preventDefault();
+    selectEntireDocument(side);
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.toString().length === 0) {
+      e.preventDefault();
+      copyEntireDocument(side);
+    }
+  } else if (e.key === 'Escape') {
+    commitActiveLineHighlight(target, side, rowIndex);
+    target.removeAttribute('contenteditable');
+    activeInlineTarget = null;
+    activeInlineEdit = null;
+    if (appState.fullDocSelectedSide) {
+      clearDocumentSelection();
+    }
   }
 }
 
 function handleTextLineBlur(target, side, rowIndex) {
   clearTimeout(textEditCommitTimer);
   commitActiveLineHighlight(target, side, rowIndex);
+  target.removeAttribute('contenteditable');
+  if (activeInlineTarget === target) activeInlineTarget = null;
   activeInlineEdit = null;
 }
 
 function setupTextInlineEditing() {
   const panes = document.querySelector('#textView .text-compare-panes') || document.querySelector('.text-compare-panes');
   if (!panes) return;
+
+  panes.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; // Only primary button
+
+    const sideWrapper = e.target.closest('#textLeftPaneWrapper') ? 'left' : (e.target.closest('#textRightPaneWrapper') ? 'right' : null);
+    if (sideWrapper) {
+      appState.activeTextSide = sideWrapper;
+    }
+
+    if (appState.fullDocSelectedSide) {
+      clearDocumentSelection();
+    }
+
+    const contentEl = e.target.closest('.text-line-content');
+    const rowEl = e.target.closest('.text-line-row');
+
+    if (!contentEl || (rowEl && rowEl.classList.contains('ghost-hatched'))) {
+      if (activeInlineTarget) {
+        const side = activeInlineTarget.getAttribute('data-side');
+        const rowIndex = parseInt(activeInlineTarget.getAttribute('data-row'), 10);
+        commitActiveLineHighlight(activeInlineTarget, side, rowIndex);
+        activeInlineTarget.removeAttribute('contenteditable');
+        activeInlineTarget = null;
+        activeInlineEdit = null;
+      }
+      return;
+    }
+
+    textDragStart = {
+      x: e.clientX,
+      y: e.clientY,
+      target: contentEl,
+      time: Date.now()
+    };
+    isDraggingText = false;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!textDragStart) return;
+    const dist = Math.hypot(e.clientX - textDragStart.x, e.clientY - textDragStart.y);
+    if (dist > 3 && !isDraggingText) {
+      isDraggingText = true;
+      // Dragging to select text across lines: remove contenteditable so drag can freely cross lines
+      if (activeInlineTarget) {
+        const side = activeInlineTarget.getAttribute('data-side');
+        const rowIndex = parseInt(activeInlineTarget.getAttribute('data-row'), 10);
+        commitActiveLineHighlight(activeInlineTarget, side, rowIndex);
+        activeInlineTarget.removeAttribute('contenteditable');
+        activeInlineTarget = null;
+        activeInlineEdit = null;
+      }
+    }
+  });
+
+  panes.addEventListener('mouseup', (e) => {
+    if (!textDragStart) return;
+    const wasDragging = isDraggingText;
+    textDragStart = null;
+    isDraggingText = false;
+
+    // Check if there is an active non-collapsed text selection (from drag or double click)
+    const sel = window.getSelection();
+    if (wasDragging || (sel && !sel.isCollapsed && sel.toString().trim().length > 0)) {
+      return;
+    }
+
+    // It was a single click without drag: activate inline editing for this line
+    const clickedContent = e.target.closest('.text-line-content');
+    const rowEl = e.target.closest('.text-line-row');
+    if (!clickedContent || (rowEl && rowEl.classList.contains('ghost-hatched'))) return;
+
+    const side = clickedContent.getAttribute('data-side');
+    const rowIndex = parseInt(clickedContent.getAttribute('data-row'), 10);
+    if (!side || isNaN(rowIndex)) return;
+
+    if (activeInlineTarget && activeInlineTarget !== clickedContent) {
+      const prevSide = activeInlineTarget.getAttribute('data-side');
+      const prevRow = parseInt(activeInlineTarget.getAttribute('data-row'), 10);
+      commitActiveLineHighlight(activeInlineTarget, prevSide, prevRow);
+      activeInlineTarget.removeAttribute('contenteditable');
+    }
+
+    clickedContent.setAttribute('contenteditable', 'plaintext-only');
+    activeInlineTarget = clickedContent;
+    activeInlineEdit = { rowIndex, side, lastSnapshotTime: Date.now() };
+    clickedContent.focus();
+
+    if (document.caretRangeFromPoint) {
+      const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+      if (range && clickedContent.contains(range.startContainer)) {
+        const s = window.getSelection();
+        s.removeAllRanges();
+        s.addRange(range);
+      }
+    }
+  });
+
+  // Clicking on line number selects that entire line
+  panes.addEventListener('click', (e) => {
+    const numEl = e.target.closest('.text-line-num');
+    if (!numEl) return;
+    const rowEl = numEl.closest('.text-line-row');
+    if (!rowEl || rowEl.classList.contains('ghost-hatched')) return;
+    const contentEl = rowEl.querySelector('.text-line-content');
+    if (contentEl) {
+      const range = document.createRange();
+      range.selectNodeContents(contentEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      const side = contentEl.getAttribute('data-side') || 'left';
+      appState.activeTextSide = side;
+    }
+  });
 
   panes.addEventListener('input', (e) => {
     const target = e.target.closest('.text-line-content');
@@ -10917,6 +11144,50 @@ function setupTextKeyboardNavigation() {
 
     const isMod = event.ctrlKey || event.metaKey;
 
+    // Select Entire Document: Cmd+A / Ctrl+A
+    if (isMod && (event.key === 'a' || event.key === 'A')) {
+      event.preventDefault();
+      selectEntireDocument(appState.activeTextSide || 'left');
+      return;
+    }
+
+    // Copy Selection or Document: Cmd+C / Ctrl+C
+    if (isMod && (event.key === 'c' || event.key === 'C')) {
+      const activeEl = document.activeElement;
+      if (!activeEl || !activeEl.isContentEditable) {
+        event.preventDefault();
+        copyCurrentSelectionOrDocument();
+        return;
+      }
+      // If inside contenteditable, check if text is selected
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.toString().length === 0) {
+        event.preventDefault();
+        copyCurrentSelectionOrDocument();
+        return;
+      }
+    }
+
+    // Save File: Cmd+S / Ctrl+S
+    if (isMod && (event.key === 's' || event.key === 'S')) {
+      event.preventDefault();
+      saveTextFile(appState.activeTextSide || 'left');
+      return;
+    }
+
+    // Escape: Clear Document Selection or Context Menu
+    if (event.key === 'Escape') {
+      const textMenu = document.getElementById('textDiffContextMenu');
+      if (textMenu && textMenu.style.display !== 'none') {
+        textMenu.style.display = 'none';
+        return;
+      }
+      if (appState.fullDocSelectedSide) {
+        clearDocumentSelection();
+        return;
+      }
+    }
+
     // Undo: Ctrl+Z (Win/Linux) or Cmd+Z (Mac)
     if (isMod && !event.shiftKey && (event.key === 'z' || event.key === 'Z')) {
       event.preventDefault();
@@ -10972,7 +11243,298 @@ function setupTextKeyboardNavigation() {
   });
 }
 
+// --- DIFFCORE TEXT COMPARISON SELECTION & CLIPBOARD CONTROLLER ---
+
+function getSelectedDiffText() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return '';
+
+  const range = sel.getRangeAt(0);
+  const textLeft = document.getElementById('textLeftLines');
+  const textRight = document.getElementById('textRightLines');
+
+  const common = range.commonAncestorContainer;
+  const isLeft = textLeft && textLeft.contains(common);
+  const isRight = textRight && textRight.contains(common);
+
+  if (!isLeft && !isRight) {
+    const inLeft = textLeft && textLeft.contains(range.startContainer);
+    const inRight = textRight && textRight.contains(range.startContainer);
+    if (!inLeft && !inRight) return sel.toString();
+  }
+
+  const container = (textLeft && textLeft.contains(range.startContainer)) ? textLeft : textRight;
+  const rows = container.querySelectorAll('.text-line-row');
+  const lines = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (row.classList.contains('ghost-hatched')) continue;
+
+    const contentEl = row.querySelector('.text-line-content');
+    if (!contentEl) continue;
+
+    const containsNode = sel.containsNode ? sel.containsNode(contentEl, true) : true;
+    if (containsNode) {
+      if (contentEl.contains(range.startContainer) && contentEl.contains(range.endContainer)) {
+        return range.toString();
+      } else if (contentEl.contains(range.startContainer)) {
+        const sub = range.cloneRange();
+        sub.setEndAfter(contentEl.lastChild || contentEl);
+        lines.push(sub.toString());
+      } else if (contentEl.contains(range.endContainer)) {
+        const sub = range.cloneRange();
+        sub.setStartBefore(contentEl.firstChild || contentEl);
+        lines.push(sub.toString());
+      } else {
+        lines.push(contentEl.innerText.replace(/\r\n|\r|\n/g, ''));
+      }
+    }
+  }
+
+  if (lines.length > 0) {
+    return lines.join('\n');
+  }
+
+  return sel.toString();
+}
+
+function selectEntireDocument(side = 'left') {
+  if (appState.activeView !== 'text' || !appState.currentTextFile) return;
+
+  appState.activeTextSide = side;
+  appState.fullDocSelectedSide = side;
+
+  if (activeInlineEdit) {
+    const el = document.getElementById(`row-${activeInlineEdit.side === 'left' ? 'l' : 'r'}-${activeInlineEdit.rowIndex}`)?.querySelector('.text-line-content');
+    if (el) {
+      commitActiveLineHighlight(el, activeInlineEdit.side, activeInlineEdit.rowIndex);
+      el.removeAttribute('contenteditable');
+    }
+    activeInlineEdit = null;
+    activeInlineTarget = null;
+  }
+
+  const otherSide = side === 'left' ? 'right' : 'left';
+  const otherContainer = document.getElementById(otherSide === 'left' ? 'textLeftLines' : 'textRightLines');
+  if (otherContainer) otherContainer.classList.remove('doc-full-selection');
+
+  const targetContainer = document.getElementById(side === 'left' ? 'textLeftLines' : 'textRightLines');
+  if (targetContainer) targetContainer.classList.add('doc-full-selection');
+
+  const content = (side === 'left') ? appState.currentTextFile.leftContent : appState.currentTextFile.rightContent;
+  const lineCount = content ? content.split('\n').length : 0;
+  const sideLabel = side === 'left'
+    ? (window.i18n ? window.i18n.t('text.left_side', 'Izquierda') : 'Izquierda')
+    : (window.i18n ? window.i18n.t('text.right_side', 'Derecha') : 'Derecha');
+
+  showToast(`Documento ${sideLabel} seleccionado completo (${lineCount} líneas). Presiona ⌘C o Ctrl+C para copiar.`, 'info');
+}
+
+function clearDocumentSelection() {
+  appState.fullDocSelectedSide = null;
+  const cL = document.getElementById('textLeftLines');
+  const cR = document.getElementById('textRightLines');
+  if (cL) cL.classList.remove('doc-full-selection');
+  if (cR) cR.classList.remove('doc-full-selection');
+}
+
+async function copyEntireDocument(side = 'left') {
+  if (appState.activeView !== 'text' || !appState.currentTextFile) return;
+
+  const content = (side === 'left') ? appState.currentTextFile.leftContent : appState.currentTextFile.rightContent;
+  if (content === undefined || content === null) {
+    showToast('El archivo está vacío', 'info');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(content);
+    const lineCount = content.length > 0 ? content.split('\n').length : 0;
+    const sideLabel = side === 'left'
+      ? (window.i18n ? window.i18n.t('text.left_side', 'Izquierda') : 'Izquierda')
+      : (window.i18n ? window.i18n.t('text.right_side', 'Derecha') : 'Derecha');
+    showToast(`Documento ${sideLabel} copiado al portapapeles (${lineCount} líneas)`, 'info');
+  } catch (err) {
+    console.error('Failed to copy entire document:', err);
+    showToast('Error al copiar al portapapeles', 'error');
+  }
+}
+
+async function copyCurrentSelectionOrDocument() {
+  if (appState.activeView !== 'text' || !appState.currentTextFile) return;
+
+  if (appState.fullDocSelectedSide) {
+    await copyEntireDocument(appState.fullDocSelectedSide);
+    return;
+  }
+
+  const fragment = getSelectedDiffText();
+  if (fragment && fragment.trim().length > 0) {
+    try {
+      await navigator.clipboard.writeText(fragment);
+      const lineCount = fragment.split('\n').length;
+      if (lineCount > 1) {
+        showToast(`Copiado fragmento al portapapeles (${lineCount} líneas)`, 'info');
+      } else {
+        showToast('Copiado al portapapeles', 'info');
+      }
+    } catch (err) {
+      console.error('Failed to copy fragment:', err);
+    }
+    return;
+  }
+
+  const side = appState.activeTextSide || 'left';
+  await copyEntireDocument(side);
+}
+
+document.addEventListener('copy', (e) => {
+  if (appState.activeView !== 'text') return;
+
+  if (appState.fullDocSelectedSide) {
+    const side = appState.fullDocSelectedSide;
+    const content = (side === 'left') ? appState.currentTextFile?.leftContent : appState.currentTextFile?.rightContent;
+    if (content !== undefined && content !== null) {
+      e.clipboardData.setData('text/plain', content);
+      e.preventDefault();
+      const lineCount = content.length > 0 ? content.split('\n').length : 0;
+      const sideLabel = side === 'left' ? 'izquierda' : 'derecha';
+      showToast(`Documento (${sideLabel}) copiado completo (${lineCount} líneas)`, 'info');
+      return;
+    }
+  }
+
+  const fragment = getSelectedDiffText();
+  if (fragment && fragment.length > 0) {
+    e.clipboardData.setData('text/plain', fragment);
+    e.preventDefault();
+    const lineCount = fragment.split('\n').length;
+    if (lineCount > 1) {
+      showToast(`Copiado fragmento al portapapeles (${lineCount} líneas)`, 'info');
+    } else {
+      showToast('Copiado al portapapeles', 'info');
+    }
+  }
+});
+
+function handleTextCompareContextMenu(e, side) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  appState.activeTextSide = side;
+
+  const menu = document.getElementById('textDiffContextMenu');
+  if (!menu) return;
+
+  const file = appState.currentTextFile;
+  const hasFile = !!file;
+  const fullContent = (side === 'left') ? file?.leftContent : file?.rightContent;
+  const hasFullContent = !!(fullContent && fullContent.length > 0);
+
+  const selectedFragment = getSelectedDiffText();
+  const hasFragment = !!(selectedFragment && selectedFragment.length > 0);
+  const isFullDocSelected = (appState.fullDocSelectedSide === side);
+  const canCopy = hasFragment || isFullDocSelected || hasFullContent;
+
+  const canUndo = !!(appState.textHistory && appState.textHistory.undoStack.length > 0);
+  const canRedo = !!(appState.textHistory && appState.textHistory.redoStack.length > 0);
+
+  const isLeft = (side === 'left');
+  const copyLabel = hasFragment
+    ? (window.i18n ? window.i18n.t('toolbar.copy', 'Copiar selección') : 'Copiar selección')
+    : (window.i18n ? window.i18n.t('toolbar.copy', 'Copiar') : 'Copiar');
+
+  const copyDocLabel = isLeft
+    ? (window.i18n ? window.i18n.t('ctx.copy_left_file', 'Copiar documento izquierdo completo') : 'Copiar documento izquierdo completo')
+    : (window.i18n ? window.i18n.t('ctx.copy_right_file', 'Copiar documento derecho completo') : 'Copiar documento derecho completo');
+
+  const selectDocLabel = isLeft
+    ? (window.i18n ? window.i18n.t('ctx.select_left_doc', 'Seleccionar documento izquierdo entero') : 'Seleccionar documento izquierdo entero')
+    : (window.i18n ? window.i18n.t('ctx.select_right_doc', 'Seleccionar documento derecho entero') : 'Seleccionar documento derecho entero');
+
+  menu.innerHTML = `
+    <div class="context-menu-item ${!canCopy ? 'disabled' : ''}" onclick="textContextAction('copy')">
+      <span class="ctx-label"><span class="icon">📋</span> ${copyLabel}</span>
+      <span class="ctx-shortcut">⌘C / Ctrl+C</span>
+    </div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-item ${!hasFullContent ? 'disabled' : ''}" onclick="textContextAction('select_all')">
+      <span class="ctx-label"><span class="icon">📄</span> ${selectDocLabel}</span>
+      <span class="ctx-shortcut">⌘A / Ctrl+A</span>
+    </div>
+    <div class="context-menu-item ${!hasFullContent ? 'disabled' : ''}" onclick="textContextAction('copy_doc')">
+      <span class="ctx-label"><span class="icon">📑</span> ${copyDocLabel}</span>
+      <span class="ctx-shortcut">⌘⇧C</span>
+    </div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-item ${!canUndo ? 'disabled' : ''}" onclick="textContextAction('undo')">
+      <span class="ctx-label"><span class="icon"><span class="dc-icon dc-icon-undo"></span></span> Deshacer</span>
+      <span class="ctx-shortcut">⌘Z</span>
+    </div>
+    <div class="context-menu-item ${!canRedo ? 'disabled' : ''}" onclick="textContextAction('redo')">
+      <span class="ctx-label"><span class="icon"><span class="dc-icon dc-icon-redo"></span></span> Rehacer</span>
+      <span class="ctx-shortcut">⌘Y</span>
+    </div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-item ${!hasFile ? 'disabled' : ''}" onclick="textContextAction('save')">
+      <span class="ctx-label"><span class="icon">💾</span> Guardar (${isLeft ? 'Izquierda' : 'Derecha'})</span>
+      <span class="ctx-shortcut">⌘S</span>
+    </div>
+  `;
+
+  menu.style.display = 'block';
+  const menuWidth = 320;
+  const menuHeight = 260;
+  let posX = e.clientX;
+  let posY = e.clientY;
+
+  if (posX + menuWidth > window.innerWidth) {
+    posX = Math.max(10, window.innerWidth - menuWidth - 10);
+  }
+  if (posY + menuHeight > window.innerHeight) {
+    posY = Math.max(10, window.innerHeight - menuHeight - 10);
+  }
+
+  menu.style.left = `${posX}px`;
+  menu.style.top = `${posY}px`;
+}
+
+function textContextAction(action) {
+  const menu = document.getElementById('textDiffContextMenu');
+  if (menu) menu.style.display = 'none';
+
+  const side = appState.activeTextSide || 'left';
+
+  switch (action) {
+    case 'copy':
+      copyCurrentSelectionOrDocument();
+      break;
+    case 'select_all':
+      selectEntireDocument(side);
+      break;
+    case 'copy_doc':
+      copyEntireDocument(side);
+      break;
+    case 'undo':
+      undoTextChange();
+      break;
+    case 'redo':
+      redoTextChange();
+      break;
+    case 'save':
+      saveTextFile(side);
+      break;
+  }
+}
+
 // Global window exposure
+window.copyEntireDocument = copyEntireDocument;
+window.selectEntireDocument = selectEntireDocument;
+window.clearDocumentSelection = clearDocumentSelection;
+window.copyCurrentSelectionOrDocument = copyCurrentSelectionOrDocument;
+window.handleTextCompareContextMenu = handleTextCompareContextMenu;
+window.textContextAction = textContextAction;
 window.undoTextChange = undoTextChange;
 window.redoTextChange = redoTextChange;
 

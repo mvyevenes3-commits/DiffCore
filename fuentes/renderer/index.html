@@ -714,6 +714,10 @@
           <span class="icon">📋</span>
           <span class="label" data-i18n="toolbar.report">Report</span>
         </button>
+        <button class="tb-btn" id="btnTextCopySelection" title="Copiar selección o documento al portapapeles (⌘C / Ctrl+C)" data-i18n-title="toolbar.copy" onclick="copyCurrentSelectionOrDocument()">
+          <span class="icon">📋</span>
+          <span class="label" data-i18n="toolbar.copy">Copiar</span>
+        </button>
       </div>
 
       <div class="toolbar-separator"></div>
@@ -745,10 +749,11 @@
 
     <div class="text-compare-panes">
       <!-- Left Text Pane -->
-      <div class="text-pane-wrapper" id="textLeftPaneWrapper">
+      <div class="text-pane-wrapper" id="textLeftPaneWrapper" oncontextmenu="handleTextCompareContextMenu(event, 'left')">
         <div class="text-address-bar">
           <div class="text-address-input-row">
             <input type="text" id="textLeftPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'left')" onblur="handlePathInputBlur('left')" spellcheck="false">
+            <button class="text-address-btn" id="btnCopyEntireLeft" title="Copiar documento izquierdo completo al portapapeles" onclick="copyEntireDocument('left')">📋</button>
             <button class="text-address-btn" title="Browse for Left File" onclick="browseTextFile('left')">📁▾</button>
           </div>
           <div class="text-address-sub-row" id="textLeftSubRow">
@@ -787,10 +792,11 @@
       </div>
 
       <!-- Right Text Pane -->
-      <div class="text-pane-wrapper" id="textRightPaneWrapper">
+      <div class="text-pane-wrapper" id="textRightPaneWrapper" oncontextmenu="handleTextCompareContextMenu(event, 'right')">
         <div class="text-address-bar">
           <div class="text-address-input-row">
             <input type="text" id="textRightPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'right')" onblur="handlePathInputBlur('right')" spellcheck="false">
+            <button class="text-address-btn" id="btnCopyEntireRight" title="Copiar documento derecho completo al portapapeles" onclick="copyEntireDocument('right')">📋</button>
             <button class="text-address-btn" title="Browse for Right File" onclick="browseTextFile('right')">📁▾</button>
           </div>
           <div class="text-address-sub-row" id="textRightSubRow">
@@ -1448,6 +1454,9 @@
 
   <!-- CONTEXT MENU FOR ROWS (Image 1 Folder / Image 2 File) -->
   <div class="context-menu" id="folderContextMenu"></div>
+
+  <!-- CONTEXT MENU FOR TEXT COMPARE PANES -->
+  <div class="context-menu" id="textDiffContextMenu"></div>
 
   <!-- MODAL: FOLDER RULES (DiffCore Rules Modal) -->
   <div class="modal-backdrop" id="folderRulesModal" onclick="if(event.target === this) closeFolderRulesModal()">
