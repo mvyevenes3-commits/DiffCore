@@ -125,6 +125,20 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('help:navigateTo', handler);
   },
 
+  // Auto-Update API
+  startUpdate: () => ipcRenderer.invoke('updater:start'),
+  cancelUpdate: () => ipcRenderer.invoke('updater:cancel'),
+  onUpdateProgress: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('updater:progress', handler);
+    return () => ipcRenderer.removeListener('updater:progress', handler);
+  },
+  onMenuCheckForUpdates: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:checkForUpdates', handler);
+    return () => ipcRenderer.removeListener('menu:checkForUpdates', handler);
+  },
+
   onFileChanged: (callback) => {
     const handler = (_event, data) => callback(data);
     ipcRenderer.on('file:changed', handler);

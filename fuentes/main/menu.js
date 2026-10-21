@@ -34,12 +34,14 @@ const MENU_TRANSLATIONS = {
     help: 'Help',
     diffCoreHelp: 'DiffCore Help',
     openHelpInBrowser: 'Open Manual in Web Browser...',
+    checkForUpdates: 'Check for Updates...',
     exit: 'Exit'
   },
   es: {
     app: 'DiffCore',
     about: 'Acerca de DiffCore',
     settings: 'Configuración...',
+    checkForUpdates: 'Buscar actualizaciones...',
     services: 'Servicios',
     hide: 'Ocultar DiffCore',
     hideOthers: 'Ocultar otros',
@@ -244,6 +246,14 @@ function buildMenuTemplate(lang, mainWindow) {
             }
           }
         },
+        {
+          label: t.checkForUpdates || 'Buscar actualizaciones...',
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('menu:checkForUpdates');
+            }
+          }
+        },
         { type: 'separator' },
         { label: t.services, role: 'services' },
         { type: 'separator' },
@@ -369,6 +379,14 @@ function buildMenuTemplate(lang, mainWindow) {
         click: () => {
           if (typeof helpBrowserOpener === 'function') {
             helpBrowserOpener();
+          }
+        }
+      },
+      {
+        label: t.checkForUpdates || 'Buscar actualizaciones...',
+        click: () => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('menu:checkForUpdates');
           }
         }
       },

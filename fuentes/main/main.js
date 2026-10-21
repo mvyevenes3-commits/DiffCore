@@ -11,6 +11,7 @@ const fileOps = require('./fileOps');
 const archiveHandler = require('./archiveHandler');
 const javaDecompiler = require('./javaDecompiler');
 const { setupApplicationMenu, updateMenuLanguage, updateActiveView, getContextMenuForEditable, getContextMenuForSelection, setHelpOpener, setHelpBrowserOpener } = require('./menu');
+const { setupUpdaterIPC } = require('./updater');
 
 // Set application identity
 app.name = 'DiffCore';
@@ -128,6 +129,7 @@ app.whenReady().then(() => {
   }
 
   createWindow();
+  setupUpdaterIPC(mainWindow);
   setupApplicationMenu(mainWindow);
   setHelpOpener(openHelpWindow);
   setHelpBrowserOpener(openHelpInBrowser);

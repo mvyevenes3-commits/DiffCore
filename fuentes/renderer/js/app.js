@@ -487,6 +487,8 @@ function setupMenuListeners() {
     });
   }
 
+  initUpdaterListeners();
+
   // Global shortcuts (Settings, Help, Escape)
   window.addEventListener('keydown', (event) => {
     if (event.key === 'F1' || ((event.metaKey || event.ctrlKey) && (event.key === '?' || event.key === '/'))) {
@@ -11441,4 +11443,134 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// ========================================================
+// IN-APP AUTO-UPDATER ENGINE
+// ========================================================
+let updaterActive = false;
+
+function openUpdaterModal() {
+  const modal = document.getElementById('updaterModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+
+  const iconEl = document.getElementById('updaterIcon');
+  if (iconEl) iconEl.textContent = '⬇️';
+
+  const statusEl = document.getElementById('updaterStatusText');
+  if (statusEl) statusEl.textContent = 'Descargando actualización...';
+
+  const detailsEl = document.getElementById('updaterDetailsText');
+  if (detailsEl) detailsEl.textContent = 'Conectando con el servidor...';
+
+  const pBar = document.getElementById('updaterProgressBar');
+  if (pBar) pBar.style.width = '0%';
+
+  const pText = document.getElementById('updaterPercentText');
+  if (pText) pText.textContent = '0%';
+
+  const sText = document.getElementById('updaterSpeedText');
+  if (sText) sText.textContent = '0.0 MB/s';
+
+  const errBox = document.getElementById('updaterErrorBox');
+  if (errBox) errBox.style.display = 'none';
+
+  const cancelBtn = document.getElementById('updaterCancelBtn');
+  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+  const closeBtn = document.getElementById('updaterHeaderCloseBtn');
+  if (closeBtn) closeBtn.style.display = 'inline-block';
+
+  updaterActive = true;
+  if (window.api && typeof window.api.startUpdate === 'function') {
+    window.api.startUpdate();
+  }
+}
+
+function closeUpdaterModal() {
+  const modal = document.getElementById('updaterModal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  modal.classList.remove('active');
+  updaterActive = false;
+}
+
+function cancelAndCloseUpdater() {
+  if (window.api && typeof window.api.cancelUpdate === 'function') {
+    window.api.cancelUpdate();
+  }
+  closeUpdaterModal();
+  showToast('Actualización cancelada', 'info');
+}
+
+function initUpdaterListeners() {
+  if (!window.api) return;
+
+  if (typeof window.api.onMenuCheckForUpdates === 'function') {
+    window.api.onMenuCheckForUpdates(() => {
+      openUpdaterModal();
+    });
+  }
+
+  if (typeof window.api.onUpdateProgress === 'function') {
+    window.api.onUpdateProgress((data) => {
+      if (!updaterActive) return;
+
+      if (data.status === 'downloading') {
+        const percent = data.percent || 0;
+        const downloadedMb = (data.downloadedBytes / (1024 * 1024)).toFixed(1);
+        const totalMb = data.totalBytes > 0 ? (data.totalBytes / (1024 * 1024)).toFixed(1) : '...';
+
+        const pBar = document.getElementById('updaterProgressBar');
+        if (pBar) pBar.style.width = `${percent}%`;
+
+        const pText = document.getElementById('updaterPercentText');
+        if (pText) pText.textContent = `${percent}%`;
+
+        const sText = document.getElementById('updaterSpeedText');
+        if (sText) sText.textContent = `${data.speedMb || '0.0'} MB/s`;
+
+        const dText = document.getElementById('updaterDetailsText');
+        if (dText) dText.textContent = `Descargando: ${downloadedMb} MB de ${totalMb} MB`;
+      } else if (data.status === 'installing') {
+        const pBar = document.getElementById('updaterProgressBar');
+        if (pBar) pBar.style.width = '100%';
+
+        const pText = document.getElementById('updaterPercentText');
+        if (pText) pText.textContent = '100%';
+
+        const sText = document.getElementById('updaterSpeedText');
+        if (sText) sText.textContent = 'Descarga lista';
+
+        const iconEl = document.getElementById('updaterIcon');
+        if (iconEl) iconEl.textContent = '🚀';
+
+        const statusEl = document.getElementById('updaterStatusText');
+        if (statusEl) statusEl.textContent = 'Instalando en /Applications...';
+
+        const dText = document.getElementById('updaterDetailsText');
+        if (dText) dText.textContent = 'DiffCore se reiniciará automáticamente en unos segundos.';
+
+        const cancelBtn = document.getElementById('updaterCancelBtn');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+
+        const closeBtn = document.getElementById('updaterHeaderCloseBtn');
+        if (closeBtn) closeBtn.style.display = 'none';
+      } else if (data.status === 'error') {
+        const iconEl = document.getElementById('updaterIcon');
+        if (iconEl) iconEl.textContent = '⚠️';
+
+        const statusEl = document.getElementById('updaterStatusText');
+        if (statusEl) statusEl.textContent = 'Error al actualizar';
+
+        const errBox = document.getElementById('updaterErrorBox');
+        if (errBox) {
+          errBox.textContent = data.error || 'Ocurrió un error inesperado al descargar la actualización.';
+          errBox.style.display = 'block';
+        }
+      }
+    });
+  }
 }
