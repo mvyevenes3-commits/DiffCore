@@ -16,13 +16,16 @@ else
     DMG_NAME="DiffCore-1.0.0-x64.dmg"
 fi
 
-DOWNLOAD_URL="https://github.com/mvyevenes2-png/homebrew-diffcore/releases/download/v1.0.0/$DMG_NAME"
 TMP_DMG="/tmp/$DMG_NAME"
 MOUNT_DIR="/tmp/diffcore-mount-$$"
 
-# 1. Descarga directa oficial
+# 1. Descarga directa oficial con indicador de progreso y porcentaje
 echo "⬇️  Descargando $DMG_NAME..."
-curl -fL "$DOWNLOAD_URL" -o "$TMP_DMG"
+DOWNLOAD_URL="https://github.com/mvyevenes3-commits/DiffCore/releases/download/1.0.0/$DMG_NAME"
+if ! curl -fL "$DOWNLOAD_URL" -o "$TMP_DMG"; then
+    DOWNLOAD_URL="https://github.com/mvyevenes3-commits/DiffCore/releases/download/v1.0.0/$DMG_NAME"
+    curl -fL "$DOWNLOAD_URL" -o "$TMP_DMG"
+fi
 
 # 2. Montar DMG silenciosamente
 echo "📂  Extrayendo aplicación..."

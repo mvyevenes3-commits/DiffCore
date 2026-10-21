@@ -13,6 +13,7 @@ build/
 # Other excluded folders & backups
 otros/
 fuentes_backup_*/
+fuentes_mvyevenes*/
 *.bak
 
 # Logs and runtime data

@@ -138,7 +138,17 @@ DiffCore/
 
 ---
 
-## 🛠️ Requisitos e Instalación
+## ⚡ Instalación Rápida en macOS (1 Línea)
+
+Para instalar DiffCore directamente en `/Applications` en cualquier Mac (detecta automáticamente Apple Silicon M1/M2/M3/M4 o Intel y desbloquea permisos de Gatekeeper sin pedir comandos adicionales):
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/mvyevenes3-commits/DiffCore/main/install.sh)"
+```
+
+---
+
+## 🛠️ Requisitos e Instalación para Desarrollo
 
 ### Requisitos previos:
 - [Node.js](https://nodejs.org/) (versión 18 o superior recomendada)
@@ -146,7 +156,7 @@ DiffCore/
 
 ### Instalación de dependencias:
 ```bash
-git clone https://github.com/mvyevenes7/DiffCore.git
+git clone https://github.com/mvyevenes3-commits/DiffCore.git
 cd DiffCore
 npm install
 ```
