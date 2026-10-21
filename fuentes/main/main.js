@@ -12,6 +12,7 @@ const archiveHandler = require('./archiveHandler');
 const javaDecompiler = require('./javaDecompiler');
 const { setupApplicationMenu, updateMenuLanguage, updateActiveView, getContextMenuForEditable, getContextMenuForSelection, setHelpOpener, setHelpBrowserOpener } = require('./menu');
 const { setupUpdaterIPC } = require('./updater');
+const { loadWindowState, trackWindowState } = require('./windowState');
 
 // Set application identity
 app.name = 'DiffCore';
@@ -47,9 +48,17 @@ function getAppIcon() {
 
 function createWindow() {
   const appIcon = getAppIcon();
-  mainWindow = new BrowserWindow({
-    width: 1440,
-    height: 920,
+  const windowState = loadWindowState({
+    defaultWidth: 1440,
+    defaultHeight: 920,
+    minWidth: 960,
+    minHeight: 640,
+    defaultMaximized: true
+  });
+
+  const windowOptions = {
+    width: windowState.width,
+    height: windowState.height,
     minWidth: 960,
     minHeight: 640,
     title: 'DiffCore',
@@ -61,10 +70,20 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false
     }
-  });
+  };
 
-  // Always start maximized on launch
-  mainWindow.maximize();
+  if (typeof windowState.x === 'number' && typeof windowState.y === 'number') {
+    windowOptions.x = windowState.x;
+    windowOptions.y = windowState.y;
+  }
+
+  mainWindow = new BrowserWindow(windowOptions);
+
+  if (windowState.isMaximized) {
+    mainWindow.maximize();
+  }
+
+  trackWindowState(mainWindow, windowState);
 
   if (appIcon && process.platform !== 'darwin') {
     mainWindow.setIcon(appIcon);
