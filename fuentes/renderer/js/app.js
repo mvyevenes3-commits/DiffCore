@@ -113,7 +113,14 @@ let appState = {
   selectedIndices: new Set(),
   selectedPaths: new Set(),
   selectedSide: 'left',
+  selectedLeftIndices: new Set(),
+  selectedRightIndices: new Set(),
+  selectedLeftPaths: new Set(),
+  selectedRightPaths: new Set(),
   lastClickedIndex: -1,
+  lastClickedSide: 'left',
+  lastClickedLeftIndex: -1,
+  lastClickedRightIndex: -1,
   currentFilter: localStorage.getItem('diffcore_filter') || 'diffs', // 'all', 'diffs', 'same', 'orphans' (default diffs)
   exclusions: loadExclusionsConfig(),
   tableSearchQuery: '',
@@ -1209,16 +1216,26 @@ function launchSelectedSession() {
   }
 }
 
+function clearAllSelections() {
+  if (appState.selectedLeftIndices) appState.selectedLeftIndices.clear();
+  if (appState.selectedRightIndices) appState.selectedRightIndices.clear();
+  if (appState.selectedLeftPaths) appState.selectedLeftPaths.clear();
+  if (appState.selectedRightPaths) appState.selectedRightPaths.clear();
+  if (appState.selectedIndices) appState.selectedIndices.clear();
+  if (appState.selectedPaths) appState.selectedPaths.clear();
+  appState.selectedIndex = -1;
+  appState.lastClickedIndex = -1;
+  appState.lastClickedLeftIndex = -1;
+  appState.lastClickedRightIndex = -1;
+}
+
 function openFolderCompare(left = '', right = '', sessionName = 'Folder Compare') {
   appState.leftPath = left || '';
   appState.rightPath = right || '';
 
   // Always reset folderOpenState for newly opened sessions so subfolders start collapsed
   appState.folderOpenState.clear();
-  appState.selectedIndices.clear();
-  appState.selectedPaths.clear();
-  appState.selectedIndex = -1;
-  appState.lastClickedIndex = -1;
+  clearAllSelections();
   appState.lastComparedLeft = '';
   appState.lastComparedRight = '';
   appState.comparisonItems = [];
@@ -1281,10 +1298,7 @@ function renderEmptyFolderCompare(sessionName = 'New Folder Compare') {
   appState.comparisonItems = [];
   appState.treeRoot = null;
   appState.treeFlattened = [];
-  appState.selectedIndices.clear();
-  appState.selectedPaths.clear();
-  appState.selectedIndex = -1;
-  appState.lastClickedIndex = -1;
+  clearAllSelections();
 
   const inL = document.getElementById('leftPathInput');
   const inR = document.getElementById('rightPathInput');
@@ -3325,19 +3339,76 @@ function scrollToRow(index) {
   if (typeof folderSyncScrollbar !== 'undefined' && folderSyncScrollbar) folderSyncScrollbar.update();
 }
 
+function syncSelectionState() {
+  if (!appState.selectedLeftIndices) appState.selectedLeftIndices = new Set();
+  if (!appState.selectedRightIndices) appState.selectedRightIndices = new Set();
+  if (!appState.selectedLeftPaths) appState.selectedLeftPaths = new Set();
+  if (!appState.selectedRightPaths) appState.selectedRightPaths = new Set();
+  if (!appState.selectedPaths) appState.selectedPaths = new Set();
+
+  appState.selectedLeftPaths.clear();
+  for (const idx of appState.selectedLeftIndices) {
+    const it = appState.filteredItems[idx];
+    if (it && it.relativePath) appState.selectedLeftPaths.add(it.relativePath);
+  }
+
+  appState.selectedRightPaths.clear();
+  for (const idx of appState.selectedRightIndices) {
+    const it = appState.filteredItems[idx];
+    if (it && it.relativePath) appState.selectedRightPaths.add(it.relativePath);
+  }
+
+  appState.selectedIndices = new Set([
+    ...appState.selectedLeftIndices,
+    ...appState.selectedRightIndices
+  ]);
+
+  appState.selectedPaths = new Set([
+    ...appState.selectedLeftPaths,
+    ...appState.selectedRightPaths
+  ]);
+
+  const hasLeft = appState.selectedLeftIndices.size > 0;
+  const hasRight = appState.selectedRightIndices.size > 0;
+  if (hasLeft && hasRight) {
+    appState.selectedSide = 'both';
+  } else if (hasLeft) {
+    appState.selectedSide = 'left';
+  } else if (hasRight) {
+    appState.selectedSide = 'right';
+  } else {
+    appState.selectedSide = appState.lastClickedSide || 'left';
+  }
+}
+
 function selectAllRows() {
-  appState.selectedIndices.clear();
-  appState.selectedPaths.clear();
-  const side = appState.selectedSide || 'left';
-  for (let i = 0; i < appState.filteredItems.length; i++) {
-    const item = appState.filteredItems[i];
-    if (side === 'left' && !item.hasLeft) continue;
-    if (side === 'right' && !item.hasRight) continue;
-    appState.selectedIndices.add(i);
-    if (item && item.relativePath) {
-      appState.selectedPaths.add(item.relativePath);
+  if (!appState.selectedLeftIndices) appState.selectedLeftIndices = new Set();
+  if (!appState.selectedRightIndices) appState.selectedRightIndices = new Set();
+  const side = appState.selectedSide || appState.lastClickedSide || 'left';
+
+  if (side === 'left') {
+    appState.selectedLeftIndices.clear();
+    for (let i = 0; i < appState.filteredItems.length; i++) {
+      const item = appState.filteredItems[i];
+      if (item && item.hasLeft) appState.selectedLeftIndices.add(i);
+    }
+  } else if (side === 'right') {
+    appState.selectedRightIndices.clear();
+    for (let i = 0; i < appState.filteredItems.length; i++) {
+      const item = appState.filteredItems[i];
+      if (item && item.hasRight) appState.selectedRightIndices.add(i);
+    }
+  } else {
+    appState.selectedLeftIndices.clear();
+    appState.selectedRightIndices.clear();
+    for (let i = 0; i < appState.filteredItems.length; i++) {
+      const item = appState.filteredItems[i];
+      if (item && item.hasLeft) appState.selectedLeftIndices.add(i);
+      if (item && item.hasRight) appState.selectedRightIndices.add(i);
     }
   }
+
+  syncSelectionState();
   if (appState.filteredItems.length > 0) {
     appState.selectedIndex = 0;
     appState.lastClickedIndex = 0;
@@ -3351,22 +3422,43 @@ function selectAllRows() {
 }
 
 function selectFilesOnly() {
-  appState.selectedIndices.clear();
-  appState.selectedPaths.clear();
-  const side = appState.selectedSide || 'left';
+  if (!appState.selectedLeftIndices) appState.selectedLeftIndices = new Set();
+  if (!appState.selectedRightIndices) appState.selectedRightIndices = new Set();
+  const side = appState.selectedSide || appState.lastClickedSide || 'left';
   let firstSelected = -1;
-  for (let i = 0; i < appState.filteredItems.length; i++) {
-    const item = appState.filteredItems[i];
-    if (item && !item.isDirectory) {
-      if (side === 'left' && !item.hasLeft) continue;
-      if (side === 'right' && !item.hasRight) continue;
-      appState.selectedIndices.add(i);
-      if (item.relativePath) {
-        appState.selectedPaths.add(item.relativePath);
+
+  if (side === 'left') {
+    appState.selectedLeftIndices.clear();
+    for (let i = 0; i < appState.filteredItems.length; i++) {
+      const item = appState.filteredItems[i];
+      if (item && !item.isDirectory && item.hasLeft) {
+        appState.selectedLeftIndices.add(i);
+        if (firstSelected === -1) firstSelected = i;
       }
-      if (firstSelected === -1) firstSelected = i;
+    }
+  } else if (side === 'right') {
+    appState.selectedRightIndices.clear();
+    for (let i = 0; i < appState.filteredItems.length; i++) {
+      const item = appState.filteredItems[i];
+      if (item && !item.isDirectory && item.hasRight) {
+        appState.selectedRightIndices.add(i);
+        if (firstSelected === -1) firstSelected = i;
+      }
+    }
+  } else {
+    appState.selectedLeftIndices.clear();
+    appState.selectedRightIndices.clear();
+    for (let i = 0; i < appState.filteredItems.length; i++) {
+      const item = appState.filteredItems[i];
+      if (item && !item.isDirectory) {
+        if (item.hasLeft) appState.selectedLeftIndices.add(i);
+        if (item.hasRight) appState.selectedRightIndices.add(i);
+        if (firstSelected === -1) firstSelected = i;
+      }
     }
   }
+
+  syncSelectionState();
   if (firstSelected !== -1) {
     appState.selectedIndex = firstSelected;
     appState.lastClickedIndex = firstSelected;
@@ -3416,33 +3508,37 @@ function applyFilterAndRender() {
 
   appState.filteredItems = flattenVisibleTree(appState.treeRoot, filter, query);
 
-  // Synchronize selectedIndices and selectedPaths with current visible items in filteredItems.
-  // This guarantees that expanding/collapsing folders or applying filters never leaves "ghost"
-  // selections on newly revealed children or shifted rows.
-  if (!appState.selectedPaths) {
-    appState.selectedPaths = new Set();
-  }
-  const newSelectedIndices = new Set();
+  // Synchronize selections with current visible items in filteredItems.
+  if (!appState.selectedLeftPaths) appState.selectedLeftPaths = new Set();
+  if (!appState.selectedRightPaths) appState.selectedRightPaths = new Set();
+  const newSelectedLeft = new Set();
+  const newSelectedRight = new Set();
   const visiblePaths = new Set();
 
   for (let i = 0; i < appState.filteredItems.length; i++) {
     const item = appState.filteredItems[i];
     if (item && item.relativePath) {
       visiblePaths.add(item.relativePath);
-      if (appState.selectedPaths.has(item.relativePath)) {
-        newSelectedIndices.add(i);
+      if (item.hasLeft && appState.selectedLeftPaths.has(item.relativePath)) {
+        newSelectedLeft.add(i);
+      }
+      if (item.hasRight && appState.selectedRightPaths.has(item.relativePath)) {
+        newSelectedRight.add(i);
       }
     }
   }
 
   // Prune paths that are no longer in visible tree to avoid stale selections
-  for (const p of appState.selectedPaths) {
-    if (!visiblePaths.has(p)) {
-      appState.selectedPaths.delete(p);
-    }
+  for (const p of appState.selectedLeftPaths) {
+    if (!visiblePaths.has(p)) appState.selectedLeftPaths.delete(p);
+  }
+  for (const p of appState.selectedRightPaths) {
+    if (!visiblePaths.has(p)) appState.selectedRightPaths.delete(p);
   }
 
-  appState.selectedIndices = newSelectedIndices;
+  appState.selectedLeftIndices = newSelectedLeft;
+  appState.selectedRightIndices = newSelectedRight;
+  syncSelectionState();
 
   if (appState.selectedIndices.size > 0) {
     if (!appState.selectedIndices.has(appState.selectedIndex)) {
@@ -3524,9 +3620,8 @@ function renderVisibleWindow(force = false) {
   // Render ONLY visible rows (approx. 40 to 60 rows)
   for (let index = startIndex; index < endIndex; index++) {
     const item = items[index];
-    const isIndexSelected = appState.selectedIndices.has(index);
-    const isLeftSelected = isIndexSelected && (appState.selectedSide === 'left' || appState.selectedSide === 'both');
-    const isRightSelected = isIndexSelected && (appState.selectedSide === 'right' || appState.selectedSide === 'both');
+    const isLeftSelected = appState.selectedLeftIndices ? appState.selectedLeftIndices.has(index) : false;
+    const isRightSelected = appState.selectedRightIndices ? appState.selectedRightIndices.has(index) : false;
     const isDir = item.isDirectory;
     const bothSidesLoaded = !!(appState.leftPath && appState.rightPath);
     const isDiff = bothSidesLoaded && (item.status === 'different');
@@ -3639,79 +3734,94 @@ function renderVisibleWindow(force = false) {
   rightTbody.innerHTML = rightRowsHtml;
 }
 
-// O(1) Instant Selection with Multi-Select Support
+// O(1) Instant Selection with Multi-Select Support across both sides
 function selectTableRow(index, event, side) {
   if (index < 0 || index >= appState.filteredItems.length) return;
   const it = appState.filteredItems[index];
   if (!it) return;
 
-  const targetSide = side || appState.selectedSide || 'left';
+  if (!appState.selectedLeftIndices) appState.selectedLeftIndices = new Set();
+  if (!appState.selectedRightIndices) appState.selectedRightIndices = new Set();
+
+  const targetSide = side || appState.lastClickedSide || 'left';
 
   // Do not select empty ghost slots where item doesn't exist on clicked side
-  if (side === 'left' && !it.hasLeft) return;
-  if (side === 'right' && !it.hasRight) return;
-
-  if (!appState.selectedPaths) appState.selectedPaths = new Set();
+  if (targetSide === 'left' && !it.hasLeft) return;
+  if (targetSide === 'right' && !it.hasRight) return;
 
   const isMeta = event && (event.metaKey || event.ctrlKey);
   const isShift = event && event.shiftKey;
 
-  // When switching sides on a normal click or shift-click, reset selection to the new side
-  if (appState.selectedSide && appState.selectedSide !== targetSide && !isMeta) {
-    appState.selectedIndices.clear();
-    appState.selectedPaths.clear();
-    appState.lastClickedIndex = -1;
-  }
-  appState.selectedSide = targetSide;
+  const targetSet = (targetSide === 'left') ? appState.selectedLeftIndices : appState.selectedRightIndices;
 
-  if (isShift && appState.lastClickedIndex >= 0) {
-    // Range selection: select all rows from lastClickedIndex to index on targetSide
-    const start = Math.min(appState.lastClickedIndex, index);
-    const end = Math.max(appState.lastClickedIndex, index);
-    if (!isMeta) {
-      appState.selectedIndices.clear();
-      appState.selectedPaths.clear();
+  if (!isMeta && !isShift) {
+    // Normal click: single selection on clicked side ONLY, clear both sides
+    appState.selectedLeftIndices.clear();
+    appState.selectedRightIndices.clear();
+    targetSet.add(index);
+    if (targetSide === 'left') {
+      appState.lastClickedLeftIndex = index;
+    } else {
+      appState.lastClickedRightIndex = index;
     }
+    appState.lastClickedIndex = index;
+    appState.lastClickedSide = targetSide;
+  } else if (isMeta && !isShift) {
+    // Ctrl / Cmd (Meta) click: toggle this item on clicked side, preserving other side selections
+    if (targetSet.has(index)) {
+      targetSet.delete(index);
+    } else {
+      targetSet.add(index);
+    }
+    if (targetSide === 'left') {
+      appState.lastClickedLeftIndex = index;
+    } else {
+      appState.lastClickedRightIndex = index;
+    }
+    appState.lastClickedIndex = index;
+    appState.lastClickedSide = targetSide;
+  } else if (isShift) {
+    // Shift click: range selection on clicked side
+    let anchor = (targetSide === 'left') ? appState.lastClickedLeftIndex : appState.lastClickedRightIndex;
+    if (anchor < 0 || anchor >= appState.filteredItems.length) {
+      anchor = appState.lastClickedIndex >= 0 ? appState.lastClickedIndex : index;
+    }
+
+    const start = Math.min(anchor, index);
+    const end = Math.max(anchor, index);
+
+    if (!isMeta) {
+      targetSet.clear();
+    }
+
     for (let i = start; i <= end; i++) {
       const rowItem = appState.filteredItems[i];
       if (rowItem) {
         if (targetSide === 'left' && !rowItem.hasLeft) continue;
         if (targetSide === 'right' && !rowItem.hasRight) continue;
-        appState.selectedIndices.add(i);
-        if (rowItem.relativePath) appState.selectedPaths.add(rowItem.relativePath);
+        targetSet.add(i);
       }
     }
-  } else if (isMeta) {
-    // Toggle individual selection
-    if (appState.selectedIndices.has(index)) {
-      appState.selectedIndices.delete(index);
-      if (it && it.relativePath) appState.selectedPaths.delete(it.relativePath);
+
+    if (targetSide === 'left') {
+      appState.lastClickedLeftIndex = index;
     } else {
-      appState.selectedIndices.add(index);
-      if (it && it.relativePath) appState.selectedPaths.add(it.relativePath);
+      appState.lastClickedRightIndex = index;
     }
     appState.lastClickedIndex = index;
-  } else {
-    // Normal click: select only this row
-    appState.selectedIndices.clear();
-    appState.selectedPaths.clear();
-    appState.selectedIndices.add(index);
-    if (it && it.relativePath) appState.selectedPaths.add(it.relativePath);
-    appState.lastClickedIndex = index;
+    appState.lastClickedSide = targetSide;
   }
 
   appState.selectedIndex = index;
+  syncSelectionState();
   updateSelectionDOM();
 }
 
 function updateSelectionDOM() {
-  const isLeftActive = (appState.selectedSide === 'left' || appState.selectedSide === 'both');
-  const isRightActive = (appState.selectedSide === 'right' || appState.selectedSide === 'both');
-
   document.querySelectorAll('#leftTableBody tr.diff-row').forEach(tr => {
     const idx = parseInt(tr.dataset.index, 10);
     if (!isNaN(idx)) {
-      if (isLeftActive && appState.selectedIndices.has(idx)) {
+      if (appState.selectedLeftIndices && appState.selectedLeftIndices.has(idx)) {
         tr.classList.add('selected');
       } else {
         tr.classList.remove('selected');
@@ -3722,7 +3832,7 @@ function updateSelectionDOM() {
   document.querySelectorAll('#rightTableBody tr.diff-row').forEach(tr => {
     const idx = parseInt(tr.dataset.index, 10);
     if (!isNaN(idx)) {
-      if (isRightActive && appState.selectedIndices.has(idx)) {
+      if (appState.selectedRightIndices && appState.selectedRightIndices.has(idx)) {
         tr.classList.add('selected');
       } else {
         tr.classList.remove('selected');
@@ -3774,10 +3884,7 @@ function setupFolderKeyboardNavigation() {
     }
 
     if (event.key === 'Escape') {
-      appState.selectedIndices.clear();
-      appState.selectedPaths.clear();
-      appState.selectedIndex = -1;
-      appState.lastClickedIndex = -1;
+      clearAllSelections();
       updateSelectionDOM();
       return;
     }
@@ -3785,7 +3892,7 @@ function setupFolderKeyboardNavigation() {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       const curr = appState.selectedIndex >= 0 ? appState.selectedIndex : -1;
-      const side = appState.selectedSide || 'left';
+      const side = appState.lastClickedSide || appState.selectedSide || 'left';
       let next = -1;
       for (let i = curr + 1; i < total; i++) {
         const item = appState.filteredItems[i];
@@ -3918,7 +4025,8 @@ function handleTableContextMenu(event, side) {
   const isLeft = side ? (side === 'left') : !!row.closest('#leftTableBody');
   const clickedSide = isLeft ? 'left' : 'right';
 
-  if (!appState.selectedIndices.has(index) || appState.selectedSide !== clickedSide) {
+  const sideSet = (clickedSide === 'left') ? appState.selectedLeftIndices : appState.selectedRightIndices;
+  if (!sideSet || !sideSet.has(index)) {
     selectTableRow(index, event, clickedSide);
   }
   const item = appState.filteredItems[index];
@@ -4395,60 +4503,74 @@ async function performQuickCompare(item) {
 
 async function copyItemToSide(item, clickedSide) {
   if (!item) return;
-  let srcPath = '';
-  let destPath = '';
-  let sideName = '';
 
-  if (clickedSide === 'left') {
-    if (!item.left || !appState.rightPath) return;
-    srcPath = item.left.fullPath;
-    destPath = `${appState.rightPath}/${item.relativePath}`;
-    sideName = 'Right';
+  const sideSet = (clickedSide === 'left') ? appState.selectedLeftIndices : appState.selectedRightIndices;
+  const itemIndex = appState.filteredItems.indexOf(item);
+  let targetItems = [];
+
+  if (sideSet && sideSet.size > 1 && itemIndex >= 0 && sideSet.has(itemIndex)) {
+    targetItems = Array.from(sideSet).map(idx => appState.filteredItems[idx]).filter(Boolean);
   } else {
-    if (!item.right || !appState.leftPath) return;
-    srcPath = item.right.fullPath;
-    destPath = `${appState.leftPath}/${item.relativePath}`;
-    sideName = 'Left';
+    targetItems = [item];
   }
 
-  appendLog(`Copying to ${sideName}: ${item.relativePath}`);
-  const res = await window.api.copyItem(srcPath, destPath);
-  if (res.success) {
-    showToast(`Copied "${item.name}" to ${sideName}`, 'success');
+  const sideName = (clickedSide === 'left') ? 'Right' : 'Left';
+  const destBase = (clickedSide === 'left') ? appState.rightPath : appState.leftPath;
+  if (!destBase) return;
+
+  let successCount = 0;
+  for (const it of targetItems) {
+    const srcPath = (clickedSide === 'left' && it.left) ? it.left.fullPath :
+                    (clickedSide === 'right' && it.right) ? it.right.fullPath : null;
+    if (!srcPath) continue;
+    const destPath = `${destBase}/${it.relativePath}`;
+    appendLog(`Copying to ${sideName}: ${it.relativePath}`);
+    const res = await window.api.copyItem(srcPath, destPath);
+    if (res && res.success) successCount++;
+  }
+
+  if (successCount > 0) {
+    showToast(targetItems.length > 1 ? `Copied ${successCount} items to ${sideName}` : `Copied "${item.name}" to ${sideName}`, 'success');
     runFolderComparison();
-  } else {
-    showToast(`Copy failed: ${res.error}`, 'error');
   }
 }
 
 async function moveItemToSide(item, clickedSide) {
   if (!item) return;
   const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
-  let srcPath = '';
-  let destPath = '';
-  let sideName = '';
 
-  if (clickedSide === 'left') {
-    if (!item.left || !appState.rightPath) return;
-    srcPath = item.left.fullPath;
-    destPath = `${appState.rightPath}/${item.relativePath}`;
-    sideName = t('common.right', 'Right');
+  const sideSet = (clickedSide === 'left') ? appState.selectedLeftIndices : appState.selectedRightIndices;
+  const itemIndex = appState.filteredItems.indexOf(item);
+  let targetItems = [];
+
+  if (sideSet && sideSet.size > 1 && itemIndex >= 0 && sideSet.has(itemIndex)) {
+    targetItems = Array.from(sideSet).map(idx => appState.filteredItems[idx]).filter(Boolean);
   } else {
-    if (!item.right || !appState.leftPath) return;
-    srcPath = item.right.fullPath;
-    destPath = `${appState.leftPath}/${item.relativePath}`;
-    sideName = t('common.left', 'Left');
+    targetItems = [item];
   }
 
-  const confirmMsg = t('ctx.confirm_move', 'Move "{name}" to {side}?').replace('{name}', item.name).replace('{side}', sideName);
+  const sideName = (clickedSide === 'left') ? t('common.right', 'Right') : t('common.left', 'Left');
+  const destBase = (clickedSide === 'left') ? appState.rightPath : appState.leftPath;
+  if (!destBase) return;
+
+  const confirmMsg = targetItems.length > 1
+    ? `Move ${targetItems.length} items to ${sideName}?`
+    : t('ctx.confirm_move', 'Move "{name}" to {side}?').replace('{name}', item.name).replace('{side}', sideName);
+
   if (confirm(confirmMsg)) {
-    appendLog(`Moving to ${sideName}: ${item.relativePath}`);
-    const res = await window.api.moveItem(srcPath, destPath);
-    if (res.success) {
-      showToast(`Moved "${item.name}" to ${sideName}`, 'success');
+    let successCount = 0;
+    for (const it of targetItems) {
+      const srcPath = (clickedSide === 'left' && it.left) ? it.left.fullPath :
+                      (clickedSide === 'right' && it.right) ? it.right.fullPath : null;
+      if (!srcPath) continue;
+      const destPath = `${destBase}/${it.relativePath}`;
+      appendLog(`Moving to ${sideName}: ${it.relativePath}`);
+      const res = await window.api.moveItem(srcPath, destPath);
+      if (res && res.success) successCount++;
+    }
+    if (successCount > 0) {
+      showToast(targetItems.length > 1 ? `Moved ${successCount} items to ${sideName}` : `Moved "${item.name}" to ${sideName}`, 'success');
       runFolderComparison();
-    } else {
-      showToast(`Move failed: ${res.error}`, 'error');
     }
   }
 }
@@ -4497,18 +4619,34 @@ async function moveItemToFolder(item, clickedSide) {
 async function deleteContextItem(item, clickedSide) {
   if (!item) return;
   const t = (k, f) => (window.i18n ? window.i18n.t(k) : f);
+
+  const sideSet = (clickedSide === 'left') ? appState.selectedLeftIndices : appState.selectedRightIndices;
+  const itemIndex = appState.filteredItems.indexOf(item);
+  let targetItems = [];
+
+  if (sideSet && sideSet.size > 1 && itemIndex >= 0 && sideSet.has(itemIndex)) {
+    targetItems = Array.from(sideSet).map(idx => appState.filteredItems[idx]).filter(Boolean);
+  } else {
+    targetItems = [item];
+  }
+
   const sideLabel = clickedSide === 'left' ? t('ctx.left_side', 'Left side') : (clickedSide === 'right' ? t('ctx.right_side', 'Right side') : t('ctx.both_sides', 'both sides'));
-  const confirmMsg = t('ctx.confirm_delete', 'Delete "{name}" from {side}?').replace('{name}', item.name).replace('{side}', sideLabel);
+  const confirmMsg = targetItems.length > 1
+    ? `¿Eliminar ${targetItems.length} elementos de ${sideLabel}?`
+    : t('ctx.confirm_delete', 'Delete "{name}" from {side}?').replace('{name}', item.name).replace('{side}', sideLabel);
+
   if (confirm(confirmMsg)) {
-    if (clickedSide === 'left' && item.left) {
-      await window.api.deleteItem(item.left.fullPath);
-    } else if (clickedSide === 'right' && item.right) {
-      await window.api.deleteItem(item.right.fullPath);
-    } else {
-      if (item.left) await window.api.deleteItem(item.left.fullPath);
-      if (item.right) await window.api.deleteItem(item.right.fullPath);
+    for (const it of targetItems) {
+      if (clickedSide === 'left' && it.left) {
+        await window.api.deleteItem(it.left.fullPath);
+      } else if (clickedSide === 'right' && it.right) {
+        await window.api.deleteItem(it.right.fullPath);
+      } else {
+        if (it.left) await window.api.deleteItem(it.left.fullPath);
+        if (it.right) await window.api.deleteItem(it.right.fullPath);
+      }
     }
-    showToast(`Deleted "${item.name}"`, 'info');
+    showToast(targetItems.length > 1 ? `Eliminado(s) de ${sideLabel}` : `Deleted "${item.name}"`, 'info');
     runFolderComparison();
   }
 }
@@ -11187,22 +11325,19 @@ function updateStatusBar() {
   if (!sLC || !sRC) return;
 
   const t = (k, fb, params) => (window.i18n ? window.i18n.t(k, params) : fb);
-  const hasSelection = appState.selectedIndices && appState.selectedIndices.size > 0;
-  const isLeftActive = hasSelection && (appState.selectedSide === 'left' || appState.selectedSide === 'both');
-  const isRightActive = hasSelection && (appState.selectedSide === 'right' || appState.selectedSide === 'both');
+  const hasLeftSelection = appState.selectedLeftIndices && appState.selectedLeftIndices.size > 0;
+  const hasRightSelection = appState.selectedRightIndices && appState.selectedRightIndices.size > 0;
 
-  if (isLeftActive) {
+  if (hasLeftSelection) {
     let leftFolders = 0, leftFiles = 0, leftSelBytes = 0;
-    for (const idx of appState.selectedIndices) {
+    for (const idx of appState.selectedLeftIndices) {
       const item = appState.filteredItems[idx];
-      if (!item) continue;
-      if (item.hasLeft) {
-        if (item.isDirectory) {
-          leftFolders++;
-        } else {
-          leftFiles++;
-          leftSelBytes += (item.left && item.left.size) ? item.left.size : (item.leftSize || 0);
-        }
+      if (!item || !item.hasLeft) continue;
+      if (item.isDirectory) {
+        leftFolders++;
+      } else {
+        leftFiles++;
+        leftSelBytes += (item.left && item.left.size) ? item.left.size : (item.leftSize || 0);
       }
     }
     sLC.textContent = formatSelectedStatus(leftFolders, leftFiles, leftSelBytes);
@@ -11212,18 +11347,16 @@ function updateStatusBar() {
     if (sLS) sLS.textContent = formatBytes(leftBytes);
   }
 
-  if (isRightActive) {
+  if (hasRightSelection) {
     let rightFolders = 0, rightFiles = 0, rightSelBytes = 0;
-    for (const idx of appState.selectedIndices) {
+    for (const idx of appState.selectedRightIndices) {
       const item = appState.filteredItems[idx];
-      if (!item) continue;
-      if (item.hasRight) {
-        if (item.isDirectory) {
-          rightFolders++;
-        } else {
-          rightFiles++;
-          rightSelBytes += (item.right && item.right.size) ? item.right.size : (item.rightSize || 0);
-        }
+      if (!item || !item.hasRight) continue;
+      if (item.isDirectory) {
+        rightFolders++;
+      } else {
+        rightFiles++;
+        rightSelBytes += (item.right && item.right.size) ? item.right.size : (item.rightSize || 0);
       }
     }
     sRC.textContent = formatSelectedStatus(rightFolders, rightFiles, rightSelBytes);
