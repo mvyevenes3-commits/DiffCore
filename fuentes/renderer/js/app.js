@@ -11646,42 +11646,49 @@ function escapeHtml(str) {
 // ========================================================
 let updaterActive = false;
 
-function openUpdaterModal() {
+function openUpdaterModal(force = false) {
   const modal = document.getElementById('updaterModal');
   if (!modal) return;
   modal.style.display = 'flex';
   modal.classList.add('active');
 
   const iconEl = document.getElementById('updaterIcon');
-  if (iconEl) iconEl.textContent = '⬇️';
+  if (iconEl) iconEl.textContent = '🔍';
 
   const statusEl = document.getElementById('updaterStatusText');
-  if (statusEl) statusEl.textContent = 'Descargando actualización...';
+  if (statusEl) statusEl.textContent = 'Buscando actualizaciones...';
 
   const detailsEl = document.getElementById('updaterDetailsText');
-  if (detailsEl) detailsEl.textContent = 'Conectando con el servidor...';
+  if (detailsEl) detailsEl.textContent = 'Consultando la versión más reciente en GitHub...';
 
   const pBar = document.getElementById('updaterProgressBar');
-  if (pBar) pBar.style.width = '0%';
+  if (pBar) {
+    pBar.style.width = '0%';
+    pBar.style.background = 'linear-gradient(90deg, #007acc, #00a8ff)';
+  }
 
   const pText = document.getElementById('updaterPercentText');
-  if (pText) pText.textContent = '0%';
+  if (pText) pText.textContent = '';
 
   const sText = document.getElementById('updaterSpeedText');
-  if (sText) sText.textContent = '0.0 MB/s';
+  if (sText) sText.textContent = '';
 
   const errBox = document.getElementById('updaterErrorBox');
   if (errBox) errBox.style.display = 'none';
 
   const cancelBtn = document.getElementById('updaterCancelBtn');
-  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+  if (cancelBtn) {
+    cancelBtn.style.display = 'inline-block';
+    cancelBtn.textContent = 'Cancelar';
+    cancelBtn.onclick = cancelAndCloseUpdater;
+  }
 
   const closeBtn = document.getElementById('updaterHeaderCloseBtn');
   if (closeBtn) closeBtn.style.display = 'inline-block';
 
   updaterActive = true;
   if (window.api && typeof window.api.startUpdate === 'function') {
-    window.api.startUpdate();
+    window.api.startUpdate(force);
   }
 }
 
@@ -11714,13 +11721,58 @@ function initUpdaterListeners() {
     window.api.onUpdateProgress((data) => {
       if (!updaterActive) return;
 
-      if (data.status === 'downloading') {
+      if (data.status === 'checking') {
+        const iconEl = document.getElementById('updaterIcon');
+        if (iconEl) iconEl.textContent = '🔍';
+
+        const statusEl = document.getElementById('updaterStatusText');
+        if (statusEl) statusEl.textContent = 'Buscando actualizaciones...';
+
+        const detailsEl = document.getElementById('updaterDetailsText');
+        if (detailsEl) detailsEl.textContent = `Comprobando versión actual (v${data.currentVersion || '1.0.0'})...`;
+      } else if (data.status === 'up-to-date') {
+        const iconEl = document.getElementById('updaterIcon');
+        if (iconEl) iconEl.textContent = '✅';
+
+        const statusEl = document.getElementById('updaterStatusText');
+        if (statusEl) statusEl.textContent = 'DiffCore está actualizado';
+
+        const detailsEl = document.getElementById('updaterDetailsText');
+        if (detailsEl) detailsEl.textContent = `Tienes la versión más reciente (v${data.currentVersion || '1.0.0'}).`;
+
+        const pBar = document.getElementById('updaterProgressBar');
+        if (pBar) {
+          pBar.style.width = '100%';
+          pBar.style.background = '#22c55e';
+        }
+
+        const pText = document.getElementById('updaterPercentText');
+        if (pText) pText.textContent = 'Al día';
+
+        const sText = document.getElementById('updaterSpeedText');
+        if (sText) sText.textContent = '';
+
+        const cancelBtn = document.getElementById('updaterCancelBtn');
+        if (cancelBtn) {
+          cancelBtn.textContent = 'Cerrar';
+          cancelBtn.onclick = closeUpdaterModal;
+        }
+      } else if (data.status === 'downloading') {
+        const iconEl = document.getElementById('updaterIcon');
+        if (iconEl) iconEl.textContent = '⬇️';
+
+        const statusEl = document.getElementById('updaterStatusText');
+        if (statusEl) statusEl.textContent = `Descargando actualización (v${data.targetVersion || '1.0.0'})...`;
+
         const percent = data.percent || 0;
         const downloadedMb = (data.downloadedBytes / (1024 * 1024)).toFixed(1);
         const totalMb = data.totalBytes > 0 ? (data.totalBytes / (1024 * 1024)).toFixed(1) : '...';
 
         const pBar = document.getElementById('updaterProgressBar');
-        if (pBar) pBar.style.width = `${percent}%`;
+        if (pBar) {
+          pBar.style.width = `${percent}%`;
+          pBar.style.background = 'linear-gradient(90deg, #007acc, #00a8ff)';
+        }
 
         const pText = document.getElementById('updaterPercentText');
         if (pText) pText.textContent = `${percent}%`;

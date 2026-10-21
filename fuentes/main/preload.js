@@ -126,7 +126,7 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   // Auto-Update API
-  startUpdate: () => ipcRenderer.invoke('updater:start'),
+  startUpdate: (force = false) => ipcRenderer.invoke('updater:start', force),
   cancelUpdate: () => ipcRenderer.invoke('updater:cancel'),
   onUpdateProgress: (callback) => {
     const handler = (_event, data) => callback(data);

@@ -8,6 +8,60 @@ let isUpdating = false;
 let activeRequest = null;
 
 /**
+ * Fetches the latest release metadata from GitHub Releases API.
+ */
+function fetchLatestReleaseJson(repo = 'mvyevenes3-commits/DiffCore') {
+  return new Promise((resolve, reject) => {
+    function getReq(url, redirects = 0) {
+      if (redirects > 5) return reject(new Error('Demasiadas redirecciones HTTP'));
+      const options = {
+        headers: {
+          'User-Agent': 'DiffCore-App-Updater',
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      };
+      const req = https.get(url, options, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          return getReq(res.headers.location, redirects + 1);
+        }
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              reject(e);
+            }
+          } else {
+            reject(new Error(`GitHub API HTTP ${res.statusCode}`));
+          }
+        });
+      });
+      req.on('error', reject);
+    }
+    getReq(`https://api.github.com/repos/${repo}/releases/latest`);
+  });
+}
+
+/**
+ * Compares two semantic version strings (e.g. "1.0.1" vs "1.0.0").
+ * Returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal.
+ */
+function compareVersions(v1, v2) {
+  const clean = (v) => (v || '').replace(/^v/, '').trim().split('.').map(n => parseInt(n, 10) || 0);
+  const p1 = clean(v1);
+  const p2 = clean(v2);
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    const a = p1[i] || 0;
+    const b = p2[i] || 0;
+    if (a > b) return 1;
+    if (a < b) return -1;
+  }
+  return 0;
+}
+
+/**
  * Downloads a file from a URL with live progress reporting and HTTP redirect tracking.
  */
 function downloadFile(url, destPath, onProgress) {
@@ -95,45 +149,78 @@ function downloadFile(url, destPath, onProgress) {
  * 2. Spawns a detached replacement script.
  * 3. Quits the current app so it can be replaced and reopened.
  */
-async function startUpdate(mainWindow) {
+async function startUpdate(mainWindow, force = false) {
   if (isUpdating) {
     return { success: false, error: 'Ya hay una actualización en curso' };
   }
 
   isUpdating = true;
 
-  /*
-  // =========================================================================
-  // TODO: VALIDACIÓN AUTOMÁTICA DE VERSIONES (Comentado para pruebas locales)
-  // Cuando se publiquen versiones incrementales en GitHub Releases, descomentar:
-  // =========================================================================
-  // const currentVersion = app.getVersion();
-  // const remoteRelease = await fetchLatestReleaseJson();
-  // if (remoteRelease.tag_name === `v${currentVersion}` || remoteRelease.tag_name === currentVersion) {
-  //   mainWindow.webContents.send('updater:noUpdateAvailable');
-  //   isUpdating = false;
-  //   return { success: true, updated: false };
-  // }
-  // =========================================================================
-  */
-
-  const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
-  const dmgName = `DiffCore-1.0.0-${arch}.dmg`;
-  const downloadUrl = `https://github.com/mvyevenes3-commits/DiffCore/releases/download/1.0.0/${dmgName}`;
-  const tempDmgPath = path.join('/tmp', dmgName);
-
   try {
+    const currentVersion = app.getVersion() || '1.0.0';
+
+    // 1. Informar al renderer que estamos comprobando actualizaciones
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('updater:progress', {
+        status: 'checking',
+        currentVersion
+      });
+    }
+
+    // 2. Consultar la última versión disponible en GitHub Releases
+    let remoteRelease = null;
+    try {
+      remoteRelease = await fetchLatestReleaseJson('mvyevenes3-commits/DiffCore');
+    } catch (apiErr) {
+      console.warn('[Updater] No se pudo consultar la API de GitHub:', apiErr.message);
+    }
+
+    if (remoteRelease && remoteRelease.tag_name) {
+      const remoteVersion = remoteRelease.tag_name.replace(/^v/, '').trim();
+      const isNewer = compareVersions(remoteVersion, currentVersion) > 0;
+
+      // Si la versión actual es igual o mayor a la remota (y no se forzó)
+      if (!isNewer && !force) {
+        isUpdating = false;
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('updater:progress', {
+            status: 'up-to-date',
+            currentVersion,
+            remoteVersion
+          });
+        }
+        return { success: true, isLatest: true };
+      }
+    }
+
+    // 3. Determinar el instalador DMG según arquitectura de la máquina
+    const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
+    let targetVersion = (remoteRelease && remoteRelease.tag_name) ? remoteRelease.tag_name.replace(/^v/, '').trim() : '1.0.0';
+    let downloadUrl = `https://github.com/mvyevenes3-commits/DiffCore/releases/download/${targetVersion}/DiffCore-${targetVersion}-${arch}.dmg`;
+
+    // Si la release remota tiene assets específicos, buscar el DMG correspondiente
+    if (remoteRelease && remoteRelease.assets && remoteRelease.assets.length > 0) {
+      const match = remoteRelease.assets.find(a => a.name.includes(`-${arch}.dmg`) || (arch === 'x64' && a.name.includes('x64.dmg')) || (arch === 'arm64' && a.name.includes('arm64.dmg')));
+      if (match && match.browser_download_url) {
+        downloadUrl = match.browser_download_url;
+      }
+    }
+
+    const dmgName = `DiffCore-${targetVersion}-${arch}.dmg`;
+    const tempDmgPath = path.join('/tmp', dmgName);
+
     mainWindow.webContents.send('updater:progress', {
       status: 'downloading',
       percent: 0,
       downloadedBytes: 0,
       totalBytes: 0,
-      speedMb: '0.0'
+      speedMb: '0.0',
+      targetVersion
     });
 
     await downloadFile(downloadUrl, tempDmgPath, (progress) => {
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('updater:progress', progress);
+        mainWindow.webContents.send('updater:progress', { ...progress, targetVersion });
       }
     });
 
@@ -141,7 +228,8 @@ async function startUpdate(mainWindow) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('updater:progress', {
         status: 'installing',
-        percent: 100
+        percent: 100,
+        targetVersion
       });
     }
 
@@ -197,8 +285,8 @@ function cancelUpdate() {
 }
 
 function setupUpdaterIPC(mainWindow) {
-  ipcMain.handle('updater:start', async () => {
-    return await startUpdate(mainWindow);
+  ipcMain.handle('updater:start', async (_event, force = false) => {
+    return await startUpdate(mainWindow, force);
   });
 
   ipcMain.handle('updater:cancel', () => {
