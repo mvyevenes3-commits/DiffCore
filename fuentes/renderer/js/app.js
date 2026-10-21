@@ -112,6 +112,7 @@ let appState = {
   selectedIndex: -1,
   selectedIndices: new Set(),
   selectedPaths: new Set(),
+  selectedSide: 'left',
   lastClickedIndex: -1,
   currentFilter: localStorage.getItem('diffcore_filter') || 'diffs', // 'all', 'diffs', 'same', 'orphans' (default diffs)
   exclusions: loadExclusionsConfig(),
@@ -3327,9 +3328,12 @@ function scrollToRow(index) {
 function selectAllRows() {
   appState.selectedIndices.clear();
   appState.selectedPaths.clear();
+  const side = appState.selectedSide || 'left';
   for (let i = 0; i < appState.filteredItems.length; i++) {
-    appState.selectedIndices.add(i);
     const item = appState.filteredItems[i];
+    if (side === 'left' && !item.hasLeft) continue;
+    if (side === 'right' && !item.hasRight) continue;
+    appState.selectedIndices.add(i);
     if (item && item.relativePath) {
       appState.selectedPaths.add(item.relativePath);
     }
@@ -3349,10 +3353,13 @@ function selectAllRows() {
 function selectFilesOnly() {
   appState.selectedIndices.clear();
   appState.selectedPaths.clear();
+  const side = appState.selectedSide || 'left';
   let firstSelected = -1;
   for (let i = 0; i < appState.filteredItems.length; i++) {
     const item = appState.filteredItems[i];
     if (item && !item.isDirectory) {
+      if (side === 'left' && !item.hasLeft) continue;
+      if (side === 'right' && !item.hasRight) continue;
       appState.selectedIndices.add(i);
       if (item.relativePath) {
         appState.selectedPaths.add(item.relativePath);
@@ -3389,7 +3396,8 @@ function copySelectedToRight() {
   if (appState.selectedIndex >= 0 && appState.filteredItems[appState.selectedIndex]) {
     const item = appState.filteredItems[appState.selectedIndex];
     appState.contextItem = item;
-    contextAction('copy_to_right');
+    const side = appState.selectedSide || 'left';
+    copyItemToSide(item, side);
   }
 }
 
@@ -3516,7 +3524,9 @@ function renderVisibleWindow(force = false) {
   // Render ONLY visible rows (approx. 40 to 60 rows)
   for (let index = startIndex; index < endIndex; index++) {
     const item = items[index];
-    const isSelected = appState.selectedIndices.has(index);
+    const isIndexSelected = appState.selectedIndices.has(index);
+    const isLeftSelected = isIndexSelected && (appState.selectedSide === 'left' || appState.selectedSide === 'both');
+    const isRightSelected = isIndexSelected && (appState.selectedSide === 'right' || appState.selectedSide === 'both');
     const isDir = item.isDirectory;
     const bothSidesLoaded = !!(appState.leftPath && appState.rightPath);
     const isDiff = bothSidesLoaded && (item.status === 'different');
@@ -3552,7 +3562,8 @@ function renderVisibleWindow(force = false) {
 
     const diffMarkerBox = hasDiff ? '<span class="red-diff-box" title="Difference"></span>' : '';
     const zebraClass = (index % 2 === 0 ? 'even' : 'odd');
-    const selectedClass = isSelected ? 'selected' : '';
+    const leftSelectedClass = isLeftSelected ? 'selected' : '';
+    const rightSelectedClass = isRightSelected ? 'selected' : '';
 
     // LEFT ROW
     if (item.hasLeft) {
@@ -3561,7 +3572,7 @@ function renderVisibleWindow(force = false) {
       const leftLabelClass = isOrphanLeft ? 'text-orphan' : '';
 
       leftRowsHtml += `
-        <tr class="diff-row ${zebraClass} ${selectedClass}" data-index="${index}">
+        <tr class="diff-row ${zebraClass} ${leftSelectedClass}" data-index="${index}">
           <td>
             <div class="tree-cell">
               ${guidesHtml}
@@ -3576,7 +3587,7 @@ function renderVisibleWindow(force = false) {
         </tr>`;
     } else {
       leftRowsHtml += `
-        <tr class="diff-row empty-ghost ${zebraClass} ${selectedClass}" data-index="${index}">
+        <tr class="diff-row empty-ghost ${zebraClass} ${leftSelectedClass}" data-index="${index}">
           <td></td><td></td><td></td><td class="diff-marker-cell"></td>
         </tr>`;
     }
@@ -3589,7 +3600,7 @@ function renderVisibleWindow(force = false) {
       const rightMetaClass = isDiff ? 'text-diff' : '';
 
       rightRowsHtml += `
-        <tr class="diff-row ${zebraClass} ${selectedClass}" data-index="${index}">
+        <tr class="diff-row ${zebraClass} ${rightSelectedClass}" data-index="${index}">
           <td>
             <div class="tree-cell">
               ${guidesHtml}
@@ -3604,7 +3615,7 @@ function renderVisibleWindow(force = false) {
         </tr>`;
     } else {
       rightRowsHtml += `
-        <tr class="diff-row empty-ghost ${zebraClass} ${selectedClass}" data-index="${index}">
+        <tr class="diff-row empty-ghost ${zebraClass} ${rightSelectedClass}" data-index="${index}">
           <td></td><td></td><td></td><td class="diff-marker-cell"></td>
         </tr>`;
     }
@@ -3629,15 +3640,32 @@ function renderVisibleWindow(force = false) {
 }
 
 // O(1) Instant Selection with Multi-Select Support
-function selectTableRow(index, event) {
+function selectTableRow(index, event, side) {
   if (index < 0 || index >= appState.filteredItems.length) return;
+  const it = appState.filteredItems[index];
+  if (!it) return;
+
+  const targetSide = side || appState.selectedSide || 'left';
+
+  // Do not select empty ghost slots where item doesn't exist on clicked side
+  if (side === 'left' && !it.hasLeft) return;
+  if (side === 'right' && !it.hasRight) return;
+
   if (!appState.selectedPaths) appState.selectedPaths = new Set();
 
   const isMeta = event && (event.metaKey || event.ctrlKey);
   const isShift = event && event.shiftKey;
 
+  // When switching sides on a normal click or shift-click, reset selection to the new side
+  if (appState.selectedSide && appState.selectedSide !== targetSide && !isMeta) {
+    appState.selectedIndices.clear();
+    appState.selectedPaths.clear();
+    appState.lastClickedIndex = -1;
+  }
+  appState.selectedSide = targetSide;
+
   if (isShift && appState.lastClickedIndex >= 0) {
-    // Range selection: select all rows from lastClickedIndex to index
+    // Range selection: select all rows from lastClickedIndex to index on targetSide
     const start = Math.min(appState.lastClickedIndex, index);
     const end = Math.max(appState.lastClickedIndex, index);
     if (!isMeta) {
@@ -3645,13 +3673,16 @@ function selectTableRow(index, event) {
       appState.selectedPaths.clear();
     }
     for (let i = start; i <= end; i++) {
-      appState.selectedIndices.add(i);
-      const it = appState.filteredItems[i];
-      if (it && it.relativePath) appState.selectedPaths.add(it.relativePath);
+      const rowItem = appState.filteredItems[i];
+      if (rowItem) {
+        if (targetSide === 'left' && !rowItem.hasLeft) continue;
+        if (targetSide === 'right' && !rowItem.hasRight) continue;
+        appState.selectedIndices.add(i);
+        if (rowItem.relativePath) appState.selectedPaths.add(rowItem.relativePath);
+      }
     }
   } else if (isMeta) {
     // Toggle individual selection
-    const it = appState.filteredItems[index];
     if (appState.selectedIndices.has(index)) {
       appState.selectedIndices.delete(index);
       if (it && it.relativePath) appState.selectedPaths.delete(it.relativePath);
@@ -3665,7 +3696,6 @@ function selectTableRow(index, event) {
     appState.selectedIndices.clear();
     appState.selectedPaths.clear();
     appState.selectedIndices.add(index);
-    const it = appState.filteredItems[index];
     if (it && it.relativePath) appState.selectedPaths.add(it.relativePath);
     appState.lastClickedIndex = index;
   }
@@ -3675,16 +3705,31 @@ function selectTableRow(index, event) {
 }
 
 function updateSelectionDOM() {
-  document.querySelectorAll('#leftTableBody tr.diff-row, #rightTableBody tr.diff-row').forEach(tr => {
+  const isLeftActive = (appState.selectedSide === 'left' || appState.selectedSide === 'both');
+  const isRightActive = (appState.selectedSide === 'right' || appState.selectedSide === 'both');
+
+  document.querySelectorAll('#leftTableBody tr.diff-row').forEach(tr => {
     const idx = parseInt(tr.dataset.index, 10);
     if (!isNaN(idx)) {
-      if (appState.selectedIndices.has(idx)) {
+      if (isLeftActive && appState.selectedIndices.has(idx)) {
         tr.classList.add('selected');
       } else {
         tr.classList.remove('selected');
       }
     }
   });
+
+  document.querySelectorAll('#rightTableBody tr.diff-row').forEach(tr => {
+    const idx = parseInt(tr.dataset.index, 10);
+    if (!isNaN(idx)) {
+      if (isRightActive && appState.selectedIndices.has(idx)) {
+        tr.classList.add('selected');
+      } else {
+        tr.classList.remove('selected');
+      }
+    }
+  });
+
   updateStatusBar();
 }
 
@@ -3740,18 +3785,76 @@ function setupFolderKeyboardNavigation() {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       const curr = appState.selectedIndex >= 0 ? appState.selectedIndex : -1;
-      const next = Math.min(total - 1, curr + 1);
-      selectTableRow(next, event);
-      scrollToRow(next);
+      const side = appState.selectedSide || 'left';
+      let next = -1;
+      for (let i = curr + 1; i < total; i++) {
+        const item = appState.filteredItems[i];
+        if (item && ((side === 'left' && item.hasLeft) || (side === 'right' && item.hasRight))) {
+          next = i;
+          break;
+        }
+      }
+      if (next >= 0) {
+        selectTableRow(next, event, side);
+        scrollToRow(next);
+      }
       return;
     }
 
     if (event.key === 'ArrowUp') {
       event.preventDefault();
       const curr = appState.selectedIndex >= 0 ? appState.selectedIndex : total;
-      const prev = Math.max(0, curr - 1);
-      selectTableRow(prev, event);
-      scrollToRow(prev);
+      const side = appState.selectedSide || 'left';
+      let prev = -1;
+      for (let i = curr - 1; i >= 0; i--) {
+        const item = appState.filteredItems[i];
+        if (item && ((side === 'left' && item.hasLeft) || (side === 'right' && item.hasRight))) {
+          prev = i;
+          break;
+        }
+      }
+      if (prev >= 0) {
+        selectTableRow(prev, event, side);
+        scrollToRow(prev);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      if (appState.selectedSide !== 'left') {
+        let idx = appState.selectedIndex >= 0 ? appState.selectedIndex : 0;
+        const it = appState.filteredItems[idx];
+        if (it && !it.hasLeft) {
+          let found = -1;
+          for (let d = 1; d < total; d++) {
+            if (idx - d >= 0 && appState.filteredItems[idx - d].hasLeft) { found = idx - d; break; }
+            if (idx + d < total && appState.filteredItems[idx + d].hasLeft) { found = idx + d; break; }
+          }
+          if (found >= 0) idx = found;
+        }
+        selectTableRow(idx, event, 'left');
+        scrollToRow(idx);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      if (appState.selectedSide !== 'right') {
+        let idx = appState.selectedIndex >= 0 ? appState.selectedIndex : 0;
+        const it = appState.filteredItems[idx];
+        if (it && !it.hasRight) {
+          let found = -1;
+          for (let d = 1; d < total; d++) {
+            if (idx - d >= 0 && appState.filteredItems[idx - d].hasRight) { found = idx - d; break; }
+            if (idx + d < total && appState.filteredItems[idx + d].hasRight) { found = idx + d; break; }
+          }
+          if (found >= 0) idx = found;
+        }
+        selectTableRow(idx, event, 'right');
+        scrollToRow(idx);
+      }
       return;
     }
 
@@ -3804,7 +3907,7 @@ function showToast(message, type = 'info') {
   }, 3200);
 }
 
-function handleTableContextMenu(event) {
+function handleTableContextMenu(event, side) {
   event.preventDefault();
   const row = event.target.closest('tr.diff-row');
   if (!row) return;
@@ -3812,14 +3915,14 @@ function handleTableContextMenu(event) {
   const index = parseInt(row.dataset.index, 10);
   if (isNaN(index)) return;
 
-  if (!appState.selectedIndices.has(index)) {
-    selectTableRow(index);
+  const isLeft = side ? (side === 'left') : !!row.closest('#leftTableBody');
+  const clickedSide = isLeft ? 'left' : 'right';
+
+  if (!appState.selectedIndices.has(index) || appState.selectedSide !== clickedSide) {
+    selectTableRow(index, event, clickedSide);
   }
   const item = appState.filteredItems[index];
   if (!item) return;
-
-  const isLeft = !!row.closest('#leftTableBody');
-  const clickedSide = isLeft ? 'left' : 'right';
 
   const t = (k, fb) => (window.i18n ? window.i18n.t(k, fb) : fb);
   const copySideLabel = isLeft ? t('ctx.copy_to_right', 'Copy to Right...') : t('ctx.copy_to_left', 'Copy to Left...');
@@ -7034,6 +7137,7 @@ function setupTableEventDelegation() {
   ['leftTableBody', 'rightTableBody'].forEach(tbodyId => {
     const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
+    const side = (tbodyId === 'leftTableBody') ? 'left' : 'right';
 
     // Fast Delegated Click Handler
     tbody.addEventListener('click', (event) => {
@@ -7054,7 +7158,7 @@ function setupTableEventDelegation() {
           event.stopPropagation();
           const index = parseInt(row.dataset.index, 10);
           if (!isNaN(index)) {
-            selectTableRow(index, event);
+            selectTableRow(index, event, side);
             scrollToRow(index);
             return;
           }
@@ -7065,7 +7169,7 @@ function setupTableEventDelegation() {
       const row = event.target.closest('tr.diff-row');
       if (!row || !row.dataset.index) return;
       const index = parseInt(row.dataset.index, 10);
-      if (!isNaN(index)) selectTableRow(index, event);
+      if (!isNaN(index)) selectTableRow(index, event, side);
     });
 
     // Fast Delegated Double Click Handler
@@ -7087,7 +7191,7 @@ function setupTableEventDelegation() {
 
     // Delegated Context Menu Handler
     tbody.addEventListener('contextmenu', (event) => {
-      handleTableContextMenu(event);
+      handleTableContextMenu(event, side);
     });
   });
 }
@@ -11084,11 +11188,11 @@ function updateStatusBar() {
 
   const t = (k, fb, params) => (window.i18n ? window.i18n.t(k, params) : fb);
   const hasSelection = appState.selectedIndices && appState.selectedIndices.size > 0;
+  const isLeftActive = hasSelection && (appState.selectedSide === 'left' || appState.selectedSide === 'both');
+  const isRightActive = hasSelection && (appState.selectedSide === 'right' || appState.selectedSide === 'both');
 
-  if (hasSelection) {
+  if (isLeftActive) {
     let leftFolders = 0, leftFiles = 0, leftSelBytes = 0;
-    let rightFolders = 0, rightFiles = 0, rightSelBytes = 0;
-
     for (const idx of appState.selectedIndices) {
       const item = appState.filteredItems[idx];
       if (!item) continue;
@@ -11100,6 +11204,19 @@ function updateStatusBar() {
           leftSelBytes += (item.left && item.left.size) ? item.left.size : (item.leftSize || 0);
         }
       }
+    }
+    sLC.textContent = formatSelectedStatus(leftFolders, leftFiles, leftSelBytes);
+    if (sLS) sLS.textContent = '';
+  } else {
+    sLC.textContent = t('status.items_count', `${leftCount} items`, { count: leftCount });
+    if (sLS) sLS.textContent = formatBytes(leftBytes);
+  }
+
+  if (isRightActive) {
+    let rightFolders = 0, rightFiles = 0, rightSelBytes = 0;
+    for (const idx of appState.selectedIndices) {
+      const item = appState.filteredItems[idx];
+      if (!item) continue;
       if (item.hasRight) {
         if (item.isDirectory) {
           rightFolders++;
@@ -11109,16 +11226,9 @@ function updateStatusBar() {
         }
       }
     }
-
-    sLC.textContent = formatSelectedStatus(leftFolders, leftFiles, leftSelBytes);
-    if (sLS) sLS.textContent = '';
-
     sRC.textContent = formatSelectedStatus(rightFolders, rightFiles, rightSelBytes);
     if (sRS) sRS.textContent = '';
   } else {
-    sLC.textContent = t('status.items_count', `${leftCount} items`, { count: leftCount });
-    if (sLS) sLS.textContent = formatBytes(leftBytes);
-
     sRC.textContent = t('status.items_count', `${rightCount} items`, { count: rightCount });
     if (sRS) sRS.textContent = formatBytes(rightBytes);
   }
