@@ -3755,10 +3755,14 @@ function selectTableRow(index, event, side) {
   const targetSet = (targetSide === 'left') ? appState.selectedLeftIndices : appState.selectedRightIndices;
 
   if (!isMeta && !isShift) {
-    // Normal click: single selection on clicked side ONLY, clear both sides
+    // -------------------------------------------------------------
+    // 1. NORMAL CLICK:
+    // Single selection on clicked side ONLY, clear both sides
+    // -------------------------------------------------------------
     appState.selectedLeftIndices.clear();
     appState.selectedRightIndices.clear();
     targetSet.add(index);
+
     if (targetSide === 'left') {
       appState.lastClickedLeftIndex = index;
     } else {
@@ -3766,13 +3770,18 @@ function selectTableRow(index, event, side) {
     }
     appState.lastClickedIndex = index;
     appState.lastClickedSide = targetSide;
+
   } else if (isMeta && !isShift) {
-    // Ctrl / Cmd (Meta) click: toggle this item on clicked side, preserving other side selections
+    // -------------------------------------------------------------
+    // 2. CONTROL / CMD CLICK (Individual Multi-Select):
+    // Toggle clicked item on targetSide, preserving existing selections
+    // -------------------------------------------------------------
     if (targetSet.has(index)) {
       targetSet.delete(index);
     } else {
       targetSet.add(index);
     }
+
     if (targetSide === 'left') {
       appState.lastClickedLeftIndex = index;
     } else {
@@ -3780,26 +3789,49 @@ function selectTableRow(index, event, side) {
     }
     appState.lastClickedIndex = index;
     appState.lastClickedSide = targetSide;
+
   } else if (isShift) {
-    // Shift click: range selection on clicked side
-    let anchor = (targetSide === 'left') ? appState.lastClickedLeftIndex : appState.lastClickedRightIndex;
-    if (anchor < 0 || anchor >= appState.filteredItems.length) {
-      anchor = appState.lastClickedIndex >= 0 ? appState.lastClickedIndex : index;
-    }
+    // -------------------------------------------------------------
+    // 3. SHIFT CLICK (Range Selection):
+    // If Shift-click is on the SAME side: selects range on that side.
+    // If Shift-click is on the OTHER side (cross-pane): selects range on BOTH sides!
+    // -------------------------------------------------------------
+    const anchor = (appState.lastClickedIndex >= 0 && appState.lastClickedIndex < appState.filteredItems.length)
+      ? appState.lastClickedIndex
+      : index;
+    const anchorSide = appState.lastClickedSide || targetSide;
 
     const start = Math.min(anchor, index);
     const end = Math.max(anchor, index);
 
+    const isCrossSide = (anchorSide !== targetSide);
+
     if (!isMeta) {
-      targetSet.clear();
+      if (isCrossSide) {
+        // Cross-pane: select range on both sides
+        appState.selectedLeftIndices.clear();
+        appState.selectedRightIndices.clear();
+      } else {
+        // Same-side: clear and replace range on target side
+        targetSet.clear();
+      }
     }
 
     for (let i = start; i <= end; i++) {
       const rowItem = appState.filteredItems[i];
-      if (rowItem) {
-        if (targetSide === 'left' && !rowItem.hasLeft) continue;
-        if (targetSide === 'right' && !rowItem.hasRight) continue;
-        targetSet.add(i);
+      if (!rowItem) continue;
+
+      if (isCrossSide) {
+        // Range spans across both panes: select both sides
+        if (rowItem.hasLeft) appState.selectedLeftIndices.add(i);
+        if (rowItem.hasRight) appState.selectedRightIndices.add(i);
+      } else {
+        // Range strictly on target side
+        if (targetSide === 'left' && rowItem.hasLeft) {
+          appState.selectedLeftIndices.add(i);
+        } else if (targetSide === 'right' && rowItem.hasRight) {
+          appState.selectedRightIndices.add(i);
+        }
       }
     }
 
@@ -3808,8 +3840,7 @@ function selectTableRow(index, event, side) {
     } else {
       appState.lastClickedRightIndex = index;
     }
-    appState.lastClickedIndex = index;
-    appState.lastClickedSide = targetSide;
+    // Keep anchor (lastClickedIndex & lastClickedSide) untouched so subsequent Shift clicks re-extend
   }
 
   appState.selectedIndex = index;
