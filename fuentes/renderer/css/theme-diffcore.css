@@ -3454,40 +3454,77 @@ body.theme-light .sync-vscrollbar-thumb.active {
   background-color: rgba(255, 255, 255, 0.03);
 }
 
-/* Authentic DiffCore Selection Highlights */
-.text-line-content::selection,
-.text-line-content *::selection {
-  background-color: #264f78 !important;
+/* Authentic DiffCore Code Block Wrapper */
+.text-line-code {
+  display: inline-block;
+  height: 100%;
+  min-height: var(--diff-editor-line-height, 16px);
+  line-height: var(--diff-editor-line-height, 16px);
+  vertical-align: top;
+  box-sizing: border-box;
+  white-space: pre;
+  padding: 0 4px 0 2px;
+  border-radius: 1px;
+}
+
+.text-line-code.is-empty {
+  display: inline-block;
+  width: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Authentic Continuous Solid Blue Selection (Matching Beyond Compare - Image 2) */
+.text-line-row.line-selected .text-line-code:not(.is-empty),
+.text-line-content.line-selected .text-line-code:not(.is-empty) {
+  background-color: #2b5b88 !important;
   color: #ffffff !important;
 }
 
-body.theme-light .text-line-content::selection,
-body.theme-light .text-line-content *::selection {
+.text-line-row.line-selected .text-line-code:not(.is-empty) *,
+.text-line-content.line-selected .text-line-code:not(.is-empty) * {
+  color: #ffffff !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Light Theme Selection */
+body.theme-light .text-line-row.line-selected .text-line-code:not(.is-empty),
+body.theme-light .text-line-content.line-selected .text-line-code:not(.is-empty) {
   background-color: #add6ff !important;
   color: #000000 !important;
 }
 
-/* Full Document Selection Indicator */
-#textLeftLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content,
-#textRightLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content {
-  background-color: #264f78 !important;
+body.theme-light .text-line-row.line-selected .text-line-code:not(.is-empty) *,
+body.theme-light .text-line-content.line-selected .text-line-code:not(.is-empty) * {
+  color: #000000 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Native Selection Support (Single Word / Editable Line Selection) */
+.text-line-content[contenteditable="plaintext-only"]::selection,
+.text-line-content[contenteditable="plaintext-only"] *::selection {
+  background-color: #2b5b88 !important;
   color: #ffffff !important;
 }
 
-#textLeftLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content *,
-#textRightLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content * {
-  color: #ffffff !important;
-}
-
-body.theme-light #textLeftLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content,
-body.theme-light #textRightLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content {
+body.theme-light .text-line-content[contenteditable="plaintext-only"]::selection,
+body.theme-light .text-line-content[contenteditable="plaintext-only"] *::selection {
   background-color: #add6ff !important;
   color: #000000 !important;
 }
 
-body.theme-light #textLeftLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content *,
-body.theme-light #textRightLines.doc-full-selection .text-line-row:not(.ghost-hatched) .text-line-content * {
-  color: #000000 !important;
+/* Ghost Hatched Lines NEVER Show Selection Background */
+.text-line-row.ghost-hatched .text-line-code,
+.text-line-row.ghost-hatched.line-selected,
+.text-line-row.ghost-hatched.line-selected .text-line-content,
+.text-line-row.ghost-hatched.line-selected .text-line-code {
+  background-color: transparent !important;
 }
 
 /* DiffCore Authentic Hatched Diagonal Stripes for Missing Gap */

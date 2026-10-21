@@ -610,6 +610,10 @@ function setupUniversalInputClipboardShortcuts() {
           selectEntireDocument(appState.activeTextSide || 'left');
           return;
         } else if (key === 'c') {
+          const sel = window.getSelection();
+          if (sel && !sel.isCollapsed && sel.toString().length > 0) {
+            return; // Let native copy handle the sub-line selection
+          }
           copyCurrentSelectionOrDocument();
           event.preventDefault();
           return;
@@ -9585,15 +9589,21 @@ function renderVisibleTextWindow(force = false) {
     let rowHtmlL = cacheL.get(i);
     if (!rowHtmlL) {
       if (row.type === 'same') {
-        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}">${highlightSyntax(row.leftText, lang, false, false)}</div></div>`;
+        const textL = row.leftText || '';
+        const isEmptyL = textL.length === 0;
+        const codeHtmlL = highlightSyntax(textL, lang, false, false);
+        rowHtmlL = `<div class="text-line-row" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}"><span class="text-line-code${isEmptyL ? ' is-empty' : ''}">${codeHtmlL}</span></div></div>`;
       } else if (row.isGhostL) {
         const ghostClsL = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
-        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-num"></div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}"></div></div>`;
+        rowHtmlL = `<div class="text-line-row ${ghostClsL}" id="row-l-${i}"><div class="text-line-num"></div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}"><span class="text-line-code is-empty"></span></div></div>`;
       } else {
         const isCommL = row.isCommentL;
         const isWsL = row.isWhitespaceDiff;
         const clsL = isWsL ? 'diff-whitespace' : (isCommL ? 'diff-comment' : 'diff-code');
-        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}">${renderDiffLineContent(row.leftChunks, row.leftText, lang, clsL, isCommL)}</div></div>`;
+        const textL = row.leftText || '';
+        const isEmptyL = textL.length === 0;
+        const codeHtmlL = renderDiffLineContent(row.leftChunks, textL, lang, clsL, isCommL);
+        rowHtmlL = `<div class="text-line-row ${clsL}" id="row-l-${i}"><div class="text-line-num">${row.leftNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="left" data-row="${i}"><span class="text-line-code${isEmptyL ? ' is-empty' : ''}">${codeHtmlL}</span></div></div>`;
       }
       cacheL.set(i, rowHtmlL);
     }
@@ -9603,15 +9613,21 @@ function renderVisibleTextWindow(force = false) {
     let rowHtmlR = cacheR.get(i);
     if (!rowHtmlR) {
       if (row.type === 'same') {
-        rowHtmlR = `<div class="text-line-row" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}">${highlightSyntax(row.rightText, lang, false, false)}</div></div>`;
+        const textR = row.rightText || '';
+        const isEmptyR = textR.length === 0;
+        const codeHtmlR = highlightSyntax(textR, lang, false, false);
+        rowHtmlR = `<div class="text-line-row" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}"><span class="text-line-code${isEmptyR ? ' is-empty' : ''}">${codeHtmlR}</span></div></div>`;
       } else if (row.isGhostR) {
         const ghostClsR = row.isWhitespaceDiff ? 'ghost-hatched ghost-whitespace' : 'ghost-hatched';
-        rowHtmlR = `<div class="text-line-row ${ghostClsR}" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}"></div></div>`;
+        rowHtmlR = `<div class="text-line-row ${ghostClsR}" id="row-r-${i}"><div class="text-line-num"></div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}"><span class="text-line-code is-empty"></span></div></div>`;
       } else {
         const isCommR = row.isCommentR;
         const isWsR = row.isWhitespaceDiff;
         const clsR = isWsR ? 'diff-whitespace' : (isCommR ? 'diff-comment' : 'diff-code');
-        rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}">${renderDiffLineContent(row.rightChunks, row.rightText, lang, clsR, isCommR)}</div></div>`;
+        const textR = row.rightText || '';
+        const isEmptyR = textR.length === 0;
+        const codeHtmlR = renderDiffLineContent(row.rightChunks, textR, lang, clsR, isCommR);
+        rowHtmlR = `<div class="text-line-row ${clsR}" id="row-r-${i}"><div class="text-line-num">${row.rightNum || ''}</div><div class="text-line-content" spellcheck="false" data-side="right" data-row="${i}"><span class="text-line-code${isEmptyR ? ' is-empty' : ''}">${codeHtmlR}</span></div></div>`;
       }
       cacheR.set(i, rowHtmlR);
     }
@@ -9669,12 +9685,8 @@ function renderVisibleTextWindow(force = false) {
     }
   }
 
-  // Preserve full document selection class on container across scrolls
-  if (appState.fullDocSelectedSide === 'left') {
-    containerL.classList.add('doc-full-selection');
-  } else if (appState.fullDocSelectedSide === 'right') {
-    containerR.classList.add('doc-full-selection');
-  }
+  // Apply visual line selection across rendered DOM rows (matching Beyond Compare)
+  updateVisualTextSelection();
 
   // Render ONLY visible left gutter action arrows & brackets
   const leftGutter = document.getElementById('textLeftGutter');
@@ -10650,7 +10662,8 @@ function handleTextLineInput(target, side, rowIndex) {
       if (side === 'left' && !row.isGhostR) {
         const contentR = rowElR.querySelector('.text-line-content');
         if (contentR) {
-          contentR.innerHTML = renderDiffLineContent(row.rightChunks, row.rightText, virtualTextState.lang, 'diff-code', false);
+          const isEmptyR = (!row.rightText || row.rightText.length === 0);
+          contentR.innerHTML = `<span class="text-line-code${isEmptyR ? ' is-empty' : ''}">${renderDiffLineContent(row.rightChunks, row.rightText, virtualTextState.lang, 'diff-code', false)}</span>`;
         }
       }
     }
@@ -10658,7 +10671,8 @@ function handleTextLineInput(target, side, rowIndex) {
     if (side === 'right' && !row.isGhostL && rowElL) {
       const contentL = rowElL.querySelector('.text-line-content');
       if (contentL) {
-        contentL.innerHTML = renderDiffLineContent(row.leftChunks, row.leftText, virtualTextState.lang, 'diff-code', false);
+        const isEmptyL = (!row.leftText || row.leftText.length === 0);
+        contentL.innerHTML = `<span class="text-line-code${isEmptyL ? ' is-empty' : ''}">${renderDiffLineContent(row.leftChunks, row.leftText, virtualTextState.lang, 'diff-code', false)}</span>`;
       }
     }
   } else {
@@ -10674,14 +10688,16 @@ function handleTextLineInput(target, side, rowIndex) {
       if (side === 'left' && !row.isGhostR) {
         const contentR = rowElR.querySelector('.text-line-content');
         if (contentR) {
-          contentR.innerHTML = highlightSyntax(row.rightText, virtualTextState.lang, false, false);
+          const isEmptyR = (!row.rightText || row.rightText.length === 0);
+          contentR.innerHTML = `<span class="text-line-code${isEmptyR ? ' is-empty' : ''}">${highlightSyntax(row.rightText, virtualTextState.lang, false, false)}</span>`;
         }
       }
     }
     if (side === 'right' && !row.isGhostL && rowElL) {
       const contentL = rowElL.querySelector('.text-line-content');
       if (contentL) {
-        contentL.innerHTML = highlightSyntax(row.leftText, virtualTextState.lang, false, false);
+        const isEmptyL = (!row.leftText || row.leftText.length === 0);
+        contentL.innerHTML = `<span class="text-line-code${isEmptyL ? ' is-empty' : ''}">${highlightSyntax(row.leftText, virtualTextState.lang, false, false)}</span>`;
       }
     }
   }
@@ -10711,11 +10727,11 @@ function commitActiveLineHighlight(target, side, rowIndex) {
   const isFocused = (document.activeElement === target);
   let caretOffset = isFocused ? getCaretCharacterOffsetWithin(target) : -1;
 
-  if (isDiff) {
-    target.innerHTML = renderDiffLineContent(chunks, text, virtualTextState.lang, 'diff-code', false);
-  } else {
-    target.innerHTML = highlightSyntax(text, virtualTextState.lang, false, false);
-  }
+  const isEmpty = (!text || text.length === 0);
+  const codeHtml = isDiff
+    ? renderDiffLineContent(chunks, text, virtualTextState.lang, 'diff-code', false)
+    : highlightSyntax(text, virtualTextState.lang, false, false);
+  target.innerHTML = `<span class="text-line-code${isEmpty ? ' is-empty' : ''}">${codeHtml}</span>`;
 
   // Restore caret
   if (isFocused && caretOffset >= 0) {
@@ -10798,16 +10814,14 @@ function handleTextLineKeydown(e, target, side, rowIndex) {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.toString().length === 0) {
       e.preventDefault();
-      copyEntireDocument(side);
+      copyCurrentSelectionOrDocument();
     }
   } else if (e.key === 'Escape') {
     commitActiveLineHighlight(target, side, rowIndex);
     target.removeAttribute('contenteditable');
     activeInlineTarget = null;
     activeInlineEdit = null;
-    if (appState.fullDocSelectedSide) {
-      clearDocumentSelection();
-    }
+    clearDocumentSelection();
   }
 }
 
@@ -10817,6 +10831,86 @@ function handleTextLineBlur(target, side, rowIndex) {
   target.removeAttribute('contenteditable');
   if (activeInlineTarget === target) activeInlineTarget = null;
   activeInlineEdit = null;
+}
+
+let textDragSession = null;
+
+function getRowIndexAtClientY(side, clientY) {
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+  if (!diffResult || !diffResult.totalRows) return 0;
+
+  const scrollPane = document.getElementById(side === 'left' ? 'textLeftScroll' : 'textRightScroll');
+  if (!scrollPane) return 0;
+
+  const rect = scrollPane.getBoundingClientRect();
+  const yInScroll = clientY - rect.top + scrollPane.scrollTop;
+  const rowIndex = Math.floor(yInScroll / TEXT_ROW_HEIGHT);
+  return Math.max(0, Math.min(diffResult.totalRows - 1, rowIndex));
+}
+
+function updateVisualTextSelection() {
+  const sel = appState.textSelection;
+  const isFullDocL = appState.fullDocSelectedSide === 'left';
+  const isFullDocR = appState.fullDocSelectedSide === 'right';
+
+  const containerL = document.getElementById('textLeftLines');
+  const containerR = document.getElementById('textRightLines');
+
+  if (containerL) {
+    const childrenL = containerL.children;
+    for (let idx = 0; idx < childrenL.length; idx++) {
+      const el = childrenL[idx];
+      if (!el.id || !el.id.startsWith('row-l-')) continue;
+      const rIdx = parseInt(el.id.substring(6), 10);
+      const isSel = isFullDocL || (sel && sel.side === 'left' && rIdx >= sel.minRow && rIdx <= sel.maxRow);
+      if (isSel) {
+        el.classList.add('line-selected');
+      } else {
+        el.classList.remove('line-selected');
+      }
+    }
+  }
+
+  if (containerR) {
+    const childrenR = containerR.children;
+    for (let idx = 0; idx < childrenR.length; idx++) {
+      const el = childrenR[idx];
+      if (!el.id || !el.id.startsWith('row-r-')) continue;
+      const rIdx = parseInt(el.id.substring(6), 10);
+      const isSel = isFullDocR || (sel && sel.side === 'right' && rIdx >= sel.minRow && rIdx <= sel.maxRow);
+      if (isSel) {
+        el.classList.add('line-selected');
+      } else {
+        el.classList.remove('line-selected');
+      }
+    }
+  }
+}
+
+function getSelectedRowsText(side, minRow, maxRow) {
+  const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
+  if (!diffResult || !diffResult.rows) return '';
+
+  const start = Math.min(minRow, maxRow);
+  const end = Math.max(minRow, maxRow);
+  const lines = [];
+  const rows = diffResult.rows;
+  const isLeft = (side === 'left');
+
+  for (let i = start; i <= end; i++) {
+    const row = rows[i];
+    if (!row) continue;
+
+    if (isLeft) {
+      if (row.isGhostL) continue;
+      lines.push(row.leftText !== undefined && row.leftText !== null ? row.leftText : '');
+    } else {
+      if (row.isGhostR) continue;
+      lines.push(row.rightText !== undefined && row.rightText !== null ? row.rightText : '');
+    }
+  }
+
+  return lines.join('\n');
 }
 
 function setupTextInlineEditing() {
@@ -10831,40 +10925,88 @@ function setupTextInlineEditing() {
       appState.activeTextSide = sideWrapper;
     }
 
-    if (appState.fullDocSelectedSide) {
-      clearDocumentSelection();
-    }
-
+    const numEl = e.target.closest('.text-line-num');
     const contentEl = e.target.closest('.text-line-content');
     const rowEl = e.target.closest('.text-line-row');
 
+    // Clicking line number: select full line or start drag selection
+    if (numEl && rowEl && !rowEl.classList.contains('ghost-hatched')) {
+      const rowMatch = rowEl.id.match(/^row-[lr]-(\d+)$/);
+      if (rowMatch) {
+        const rowIndex = parseInt(rowMatch[1], 10);
+        if (activeInlineTarget) {
+          const pSide = activeInlineTarget.getAttribute('data-side');
+          const pRow = parseInt(activeInlineTarget.getAttribute('data-row'), 10);
+          commitActiveLineHighlight(activeInlineTarget, pSide, pRow);
+          activeInlineTarget.removeAttribute('contenteditable');
+          activeInlineTarget = null;
+          activeInlineEdit = null;
+        }
+
+        const side = sideWrapper || (rowEl.id.startsWith('row-l-') ? 'left' : 'right');
+        textDragSession = {
+          side,
+          startRow: rowIndex,
+          currentRow: rowIndex,
+          startX: e.clientX,
+          startY: e.clientY,
+          isDragging: false,
+          isLineNumDrag: true
+        };
+
+        appState.textSelection = {
+          side,
+          startRow: rowIndex,
+          endRow: rowIndex,
+          minRow: rowIndex,
+          maxRow: rowIndex
+        };
+        appState.fullDocSelectedSide = null;
+        updateVisualTextSelection();
+        return;
+      }
+    }
+
     if (!contentEl || (rowEl && rowEl.classList.contains('ghost-hatched'))) {
-      if (activeInlineTarget) {
-        const side = activeInlineTarget.getAttribute('data-side');
-        const rowIndex = parseInt(activeInlineTarget.getAttribute('data-row'), 10);
-        commitActiveLineHighlight(activeInlineTarget, side, rowIndex);
-        activeInlineTarget.removeAttribute('contenteditable');
-        activeInlineTarget = null;
-        activeInlineEdit = null;
+      if (!e.target.closest('.diff-arrow-btn') && !e.target.closest('.diff-bracket-left') && !e.target.closest('.diff-bracket-right')) {
+        if (activeInlineTarget) {
+          const side = activeInlineTarget.getAttribute('data-side');
+          const rowIndex = parseInt(activeInlineTarget.getAttribute('data-row'), 10);
+          commitActiveLineHighlight(activeInlineTarget, side, rowIndex);
+          activeInlineTarget.removeAttribute('contenteditable');
+          activeInlineTarget = null;
+          activeInlineEdit = null;
+        }
+        if (appState.textSelection || appState.fullDocSelectedSide) {
+          clearDocumentSelection();
+        }
       }
       return;
     }
 
-    textDragStart = {
-      x: e.clientX,
-      y: e.clientY,
+    const side = contentEl.getAttribute('data-side') || sideWrapper || 'left';
+    const rowIndex = parseInt(contentEl.getAttribute('data-row'), 10);
+    if (isNaN(rowIndex)) return;
+
+    textDragSession = {
+      side,
+      startRow: rowIndex,
+      currentRow: rowIndex,
+      startX: e.clientX,
+      startY: e.clientY,
       target: contentEl,
-      time: Date.now()
+      isDragging: false,
+      isLineNumDrag: false
     };
-    isDraggingText = false;
   });
 
   window.addEventListener('mousemove', (e) => {
-    if (!textDragStart) return;
-    const dist = Math.hypot(e.clientX - textDragStart.x, e.clientY - textDragStart.y);
-    if (dist > 3 && !isDraggingText) {
-      isDraggingText = true;
-      // Dragging to select text across lines: remove contenteditable so drag can freely cross lines
+    if (!textDragSession) return;
+
+    const dist = Math.hypot(e.clientX - textDragSession.startX, e.clientY - textDragSession.startY);
+    if (dist > 4) {
+      textDragSession.isDragging = true;
+
       if (activeInlineTarget) {
         const side = activeInlineTarget.getAttribute('data-side');
         const rowIndex = parseInt(activeInlineTarget.getAttribute('data-row'), 10);
@@ -10873,29 +11015,69 @@ function setupTextInlineEditing() {
         activeInlineTarget = null;
         activeInlineEdit = null;
       }
+
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed) {
+        sel.removeAllRanges();
+      }
+
+      const currentRow = getRowIndexAtClientY(textDragSession.side, e.clientY);
+      textDragSession.currentRow = currentRow;
+
+      const minRow = Math.min(textDragSession.startRow, currentRow);
+      const maxRow = Math.max(textDragSession.startRow, currentRow);
+
+      appState.textSelection = {
+        side: textDragSession.side,
+        startRow: textDragSession.startRow,
+        endRow: currentRow,
+        minRow,
+        maxRow
+      };
+      appState.activeTextSide = textDragSession.side;
+      appState.fullDocSelectedSide = null;
+
+      const scrollPane = document.getElementById(textDragSession.side === 'left' ? 'textLeftScroll' : 'textRightScroll');
+      if (scrollPane) {
+        const rect = scrollPane.getBoundingClientRect();
+        if (e.clientY < rect.top + 25) {
+          scrollPane.scrollTop -= 20;
+          renderVisibleTextWindow();
+        } else if (e.clientY > rect.bottom - 25) {
+          scrollPane.scrollTop += 20;
+          renderVisibleTextWindow();
+        }
+      }
+
+      updateVisualTextSelection();
     }
   });
 
   panes.addEventListener('mouseup', (e) => {
-    if (!textDragStart) return;
-    const wasDragging = isDraggingText;
-    textDragStart = null;
-    isDraggingText = false;
+    if (!textDragSession) return;
 
-    // Check if there is an active non-collapsed text selection (from drag or double click)
-    const sel = window.getSelection();
-    if (wasDragging || (sel && !sel.isCollapsed && sel.toString().trim().length > 0)) {
-      return;
+    const wasDragging = textDragSession.isDragging;
+    const session = textDragSession;
+    textDragSession = null;
+
+    if (wasDragging) {
+      return; // Drag selection completed and remains highlighted
     }
 
-    // It was a single click without drag: activate inline editing for this line
-    const clickedContent = e.target.closest('.text-line-content');
-    const rowEl = e.target.closest('.text-line-row');
-    if (!clickedContent || (rowEl && rowEl.classList.contains('ghost-hatched'))) return;
+    if (session.isLineNumDrag) {
+      return; // Single line selected via line number click
+    }
 
-    const side = clickedContent.getAttribute('data-side');
-    const rowIndex = parseInt(clickedContent.getAttribute('data-row'), 10);
-    if (!side || isNaN(rowIndex)) return;
+    // Single click on code content: activate inline editing for that line
+    const clickedContent = session.target;
+    if (!clickedContent || !document.contains(clickedContent)) return;
+
+    appState.textSelection = null;
+    appState.fullDocSelectedSide = null;
+    updateVisualTextSelection();
+
+    const side = session.side;
+    const rowIndex = session.startRow;
 
     if (activeInlineTarget && activeInlineTarget !== clickedContent) {
       const prevSide = activeInlineTarget.getAttribute('data-side');
@@ -11315,12 +11497,19 @@ function selectEntireDocument(side = 'left') {
     activeInlineTarget = null;
   }
 
-  const otherSide = side === 'left' ? 'right' : 'left';
-  const otherContainer = document.getElementById(otherSide === 'left' ? 'textLeftLines' : 'textRightLines');
-  if (otherContainer) otherContainer.classList.remove('doc-full-selection');
+  const diffResult = appState.currentTextFile.diffResult;
+  const totalRows = diffResult ? diffResult.totalRows : 0;
+  if (totalRows > 0) {
+    appState.textSelection = {
+      side,
+      startRow: 0,
+      endRow: totalRows - 1,
+      minRow: 0,
+      maxRow: totalRows - 1
+    };
+  }
 
-  const targetContainer = document.getElementById(side === 'left' ? 'textLeftLines' : 'textRightLines');
-  if (targetContainer) targetContainer.classList.add('doc-full-selection');
+  updateVisualTextSelection();
 
   const content = (side === 'left') ? appState.currentTextFile.leftContent : appState.currentTextFile.rightContent;
   const lineCount = content ? content.split('\n').length : 0;
@@ -11333,10 +11522,8 @@ function selectEntireDocument(side = 'left') {
 
 function clearDocumentSelection() {
   appState.fullDocSelectedSide = null;
-  const cL = document.getElementById('textLeftLines');
-  const cR = document.getElementById('textRightLines');
-  if (cL) cL.classList.remove('doc-full-selection');
-  if (cR) cR.classList.remove('doc-full-selection');
+  appState.textSelection = null;
+  updateVisualTextSelection();
 }
 
 async function copyEntireDocument(side = 'left') {
@@ -11369,6 +11556,20 @@ async function copyCurrentSelectionOrDocument() {
     return;
   }
 
+  if (appState.textSelection) {
+    const text = getSelectedRowsText(appState.textSelection.side, appState.textSelection.minRow, appState.textSelection.maxRow);
+    if (text !== undefined && text !== null) {
+      try {
+        await navigator.clipboard.writeText(text);
+        const lineCount = text.length > 0 ? text.split('\n').length : 0;
+        showToast(`Copiado al portapapeles (${lineCount} líneas)`, 'info');
+      } catch (err) {
+        console.error('Failed to copy selection:', err);
+      }
+      return;
+    }
+  }
+
   const fragment = getSelectedDiffText();
   if (fragment && fragment.trim().length > 0) {
     try {
@@ -11392,6 +11593,16 @@ async function copyCurrentSelectionOrDocument() {
 document.addEventListener('copy', (e) => {
   if (appState.activeView !== 'text') return;
 
+  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+  if (activeTag === 'input' || activeTag === 'textarea') return;
+
+  if (activeInlineTarget && document.activeElement === activeInlineTarget) {
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed && sel.toString().length > 0) {
+      return;
+    }
+  }
+
   if (appState.fullDocSelectedSide) {
     const side = appState.fullDocSelectedSide;
     const content = (side === 'left') ? appState.currentTextFile?.leftContent : appState.currentTextFile?.rightContent;
@@ -11401,6 +11612,17 @@ document.addEventListener('copy', (e) => {
       const lineCount = content.length > 0 ? content.split('\n').length : 0;
       const sideLabel = side === 'left' ? 'izquierda' : 'derecha';
       showToast(`Documento (${sideLabel}) copiado completo (${lineCount} líneas)`, 'info');
+      return;
+    }
+  }
+
+  if (appState.textSelection) {
+    const text = getSelectedRowsText(appState.textSelection.side, appState.textSelection.minRow, appState.textSelection.maxRow);
+    if (text !== undefined && text !== null) {
+      e.clipboardData.setData('text/plain', text);
+      e.preventDefault();
+      const lineCount = text.length > 0 ? text.split('\n').length : 0;
+      showToast(`Copiado al portapapeles (${lineCount} líneas)`, 'info');
       return;
     }
   }
@@ -11424,6 +11646,27 @@ function handleTextCompareContextMenu(e, side) {
 
   appState.activeTextSide = side;
 
+  // If user right-clicked on an unselected row, select it
+  const rowEl = e.target.closest('.text-line-row');
+  if (rowEl && !rowEl.classList.contains('ghost-hatched')) {
+    const rowMatch = rowEl.id.match(/^row-[lr]-(\d+)$/);
+    if (rowMatch) {
+      const rowIndex = parseInt(rowMatch[1], 10);
+      const sel = appState.textSelection;
+      const isInside = sel && sel.side === side && rowIndex >= sel.minRow && rowIndex <= sel.maxRow;
+      if (!isInside && !appState.fullDocSelectedSide) {
+        appState.textSelection = {
+          side,
+          startRow: rowIndex,
+          endRow: rowIndex,
+          minRow: rowIndex,
+          maxRow: rowIndex
+        };
+        updateVisualTextSelection();
+      }
+    }
+  }
+
   const menu = document.getElementById('textDiffContextMenu');
   if (!menu) return;
 
@@ -11432,8 +11675,9 @@ function handleTextCompareContextMenu(e, side) {
   const fullContent = (side === 'left') ? file?.leftContent : file?.rightContent;
   const hasFullContent = !!(fullContent && fullContent.length > 0);
 
+  const hasLineSelection = !!(appState.textSelection && appState.textSelection.side === side);
   const selectedFragment = getSelectedDiffText();
-  const hasFragment = !!(selectedFragment && selectedFragment.length > 0);
+  const hasFragment = hasLineSelection || !!(selectedFragment && selectedFragment.length > 0);
   const isFullDocSelected = (appState.fullDocSelectedSide === side);
   const canCopy = hasFragment || isFullDocSelected || hasFullContent;
 
@@ -11441,9 +11685,13 @@ function handleTextCompareContextMenu(e, side) {
   const canRedo = !!(appState.textHistory && appState.textHistory.redoStack.length > 0);
 
   const isLeft = (side === 'left');
-  const copyLabel = hasFragment
-    ? (window.i18n ? window.i18n.t('toolbar.copy', 'Copiar selección') : 'Copiar selección')
-    : (window.i18n ? window.i18n.t('toolbar.copy', 'Copiar') : 'Copiar');
+  let copyLabel = window.i18n ? window.i18n.t('toolbar.copy', 'Copiar selección') : 'Copiar selección';
+  if (hasLineSelection) {
+    const count = appState.textSelection.maxRow - appState.textSelection.minRow + 1;
+    copyLabel = `Copiar selección (${count} ${count === 1 ? 'línea' : 'líneas'})`;
+  } else if (!hasFragment) {
+    copyLabel = window.i18n ? window.i18n.t('toolbar.copy', 'Copiar') : 'Copiar';
+  }
 
   const copyDocLabel = isLeft
     ? (window.i18n ? window.i18n.t('ctx.copy_left_file', 'Copiar documento izquierdo completo') : 'Copiar documento izquierdo completo')
