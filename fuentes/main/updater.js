@@ -2,6 +2,7 @@ const { app, ipcMain } = require('electron');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { spawn } = require('child_process');
 
 let isUpdating = false;
@@ -193,21 +194,58 @@ async function startUpdate(mainWindow, force = false) {
       }
     }
 
-    // 3. Determinar el instalador DMG según arquitectura de la máquina
+    // 3. Determinar instalador según plataforma (macOS, Windows, Linux) y arquitectura
+    const platform = process.platform;
     const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
     let targetVersion = (remoteRelease && remoteRelease.tag_name) ? remoteRelease.tag_name.replace(/^v/, '').trim() : '1.0.0';
-    let downloadUrl = `https://github.com/mvyevenes3-commits/DiffCore/releases/download/${targetVersion}/DiffCore-${targetVersion}-${arch}.dmg`;
 
-    // Si la release remota tiene assets específicos, buscar el DMG correspondiente
-    if (remoteRelease && remoteRelease.assets && remoteRelease.assets.length > 0) {
-      const match = remoteRelease.assets.find(a => a.name.includes(`-${arch}.dmg`) || (arch === 'x64' && a.name.includes('x64.dmg')) || (arch === 'arm64' && a.name.includes('arm64.dmg')));
+    const assets = (remoteRelease && Array.isArray(remoteRelease.assets)) ? remoteRelease.assets : [];
+    let assetName = '';
+    let downloadUrl = '';
+
+    if (platform === 'darwin') {
+      // macOS: instalador DMG para arm64 (Apple Silicon) o x64 (Intel)
+      assetName = `DiffCore-${targetVersion}-${arch}.dmg`;
+      const match = assets.find(a => 
+        a.name.endsWith('.dmg') && (a.name.includes(`-${arch}`) || (arch === 'arm64' ? a.name.includes('arm64') : a.name.includes('x64')))
+      ) || assets.find(a => a.name.endsWith('.dmg'));
+
       if (match && match.browser_download_url) {
+        assetName = match.name;
         downloadUrl = match.browser_download_url;
+      } else {
+        downloadUrl = `https://github.com/mvyevenes3-commits/DiffCore/releases/download/${targetVersion}/${assetName}`;
       }
+    } else if (platform === 'win32') {
+      // Windows: instalador ejecutable Setup .exe
+      assetName = `DiffCore-Setup-${targetVersion}.exe`;
+      const match = assets.find(a => 
+        a.name.endsWith('.exe') && !a.name.toLowerCase().includes('uninstaller')
+      );
+
+      if (match && match.browser_download_url) {
+        assetName = match.name;
+        downloadUrl = match.browser_download_url;
+      } else {
+        downloadUrl = `https://github.com/mvyevenes3-commits/DiffCore/releases/download/${targetVersion}/DiffCore.Setup.${targetVersion}.exe`;
+      }
+    } else if (platform === 'linux') {
+      // Linux: ejecutable portable AppImage (o paquete .deb si no hay AppImage)
+      assetName = `DiffCore-${targetVersion}.AppImage`;
+      const match = assets.find(a => a.name.endsWith('.AppImage')) ||
+                    assets.find(a => a.name.endsWith('.deb'));
+
+      if (match && match.browser_download_url) {
+        assetName = match.name;
+        downloadUrl = match.browser_download_url;
+      } else {
+        downloadUrl = `https://github.com/mvyevenes3-commits/DiffCore/releases/download/${targetVersion}/${assetName}`;
+      }
+    } else {
+      throw new Error(`Plataforma operativa no soportada para auto-actualización: ${platform}`);
     }
 
-    const dmgName = `DiffCore-${targetVersion}-${arch}.dmg`;
-    const tempDmgPath = path.join('/tmp', dmgName);
+    const tempFilePath = path.join(os.tmpdir(), assetName);
 
     mainWindow.webContents.send('updater:progress', {
       status: 'downloading',
@@ -218,13 +256,13 @@ async function startUpdate(mainWindow, force = false) {
       targetVersion
     });
 
-    await downloadFile(downloadUrl, tempDmgPath, (progress) => {
+    await downloadFile(downloadUrl, tempFilePath, (progress) => {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('updater:progress', { ...progress, targetVersion });
       }
     });
 
-    // Notify that download is complete and installation is beginning
+    // Notificar que la descarga terminó y comienza la instalación en segundo plano
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('updater:progress', {
         status: 'installing',
@@ -233,10 +271,12 @@ async function startUpdate(mainWindow, force = false) {
       });
     }
 
-    // Detached background bash script: mounts DMG, replaces /Applications/DiffCore.app, and relaunches
-    const helperScript = `
+    // Ejecución del script de reemplazo en segundo plano desacoplado según el SO
+    if (platform === 'darwin') {
+      // macOS: montar DMG silenciosamente, reemplazar en /Applications y relanzar
+      const helperScript = `
 sleep 1.2
-TMP_DMG="${tempDmgPath}"
+TMP_DMG="${tempFilePath}"
 MOUNT_DIR="/tmp/diffcore-mount-$$"
 mkdir -p "$MOUNT_DIR"
 if hdiutil attach "$TMP_DMG" -mountpoint "$MOUNT_DIR" -nobrowse -quiet; then
@@ -248,17 +288,71 @@ if hdiutil attach "$TMP_DMG" -mountpoint "$MOUNT_DIR" -nobrowse -quiet; then
   open /Applications/DiffCore.app
 fi
 `;
+      const child = spawn('/bin/bash', ['-c', helperScript], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
 
-    const child = spawn('/bin/bash', ['-c', helperScript], {
-      detached: true,
-      stdio: 'ignore'
-    });
-    child.unref();
+      setTimeout(() => {
+        app.quit();
+      }, 800);
 
-    // Give renderer 800ms to show the final message, then quit DiffCore cleanly
-    setTimeout(() => {
-      app.quit();
-    }, 800);
+    } else if (platform === 'win32') {
+      // Windows: instalador NSIS ejecutado en modo silencioso (/S) mediante batch desacoplado
+      const batchScriptPath = path.join(os.tmpdir(), `diffcore-update-${Date.now()}.bat`);
+      const batchContent = `@echo off
+timeout /t 2 /nobreak >nul
+start "" "${tempFilePath}" /S
+del "%~f0"
+`;
+      fs.writeFileSync(batchScriptPath, batchContent);
+
+      const child = spawn('cmd.exe', ['/c', batchScriptPath], {
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true
+      });
+      child.unref();
+
+      setTimeout(() => {
+        app.quit();
+      }, 800);
+
+    } else if (platform === 'linux') {
+      // Linux: AppImage ejecutable reemplaza la ruta activa y relanza
+      try {
+        fs.chmodSync(tempFilePath, 0o755);
+      } catch {}
+
+      const currentAppImage = process.env.APPIMAGE;
+      let helperScript = '';
+
+      if (currentAppImage) {
+        helperScript = `
+sleep 1.5
+cp "${tempFilePath}" "${currentAppImage}"
+chmod +x "${currentAppImage}"
+rm -f "${tempFilePath}"
+"${currentAppImage}" &
+`;
+      } else {
+        helperScript = `
+sleep 1.5
+"${tempFilePath}" &
+`;
+      }
+
+      const child = spawn('/bin/bash', ['-c', helperScript], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
+
+      setTimeout(() => {
+        app.quit();
+      }, 800);
+    }
 
     return { success: true };
   } catch (err) {
