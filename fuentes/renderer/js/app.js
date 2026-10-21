@@ -511,6 +511,32 @@ function setupMenuListeners() {
     });
   }
 
+  if (window.api && typeof window.api.onUndo === 'function') {
+    window.api.onUndo(() => {
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (activeTag === 'input' || activeTag === 'textarea') {
+        document.execCommand('undo');
+        return;
+      }
+      if (appState.activeView === 'text') {
+        undoTextChange();
+      }
+    });
+  }
+
+  if (window.api && typeof window.api.onRedo === 'function') {
+    window.api.onRedo(() => {
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (activeTag === 'input' || activeTag === 'textarea') {
+        document.execCommand('redo');
+        return;
+      }
+      if (appState.activeView === 'text') {
+        redoTextChange();
+      }
+    });
+  }
+
   initUpdaterListeners();
 
   // Global shortcuts (Settings, Help, Escape)
@@ -616,6 +642,18 @@ function setupUniversalInputClipboardShortcuts() {
           }
           copyCurrentSelectionOrDocument();
           event.preventDefault();
+          return;
+        } else if (key === 'z') {
+          event.preventDefault();
+          if (event.shiftKey) {
+            redoTextChange();
+          } else {
+            undoTextChange();
+          }
+          return;
+        } else if (key === 'y') {
+          event.preventDefault();
+          redoTextChange();
           return;
         }
       }
@@ -10587,12 +10625,13 @@ function handleTextLineInput(target, side, rowIndex) {
   const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
   if (!diffResult || !diffResult.rows || !diffResult.rows[rowIndex]) return;
 
-  // Snapshot PREVIOUS state before the first modification in this sequence
-  if (!activeInlineEdit || activeInlineEdit.rowIndex !== rowIndex || activeInlineEdit.side !== side) {
+  // Snapshot PREVIOUS clean state before the first modification in this sequence
+  if (!activeInlineEdit || activeInlineEdit.rowIndex !== rowIndex || activeInlineEdit.side !== side || !activeInlineEdit.hasSnapshot) {
     pushTextHistoryState(`Editar línea ${rowIndex + 1}`);
     activeInlineEdit = {
       rowIndex,
       side,
+      hasSnapshot: true,
       lastSnapshotTime: Date.now()
     };
   } else if (Date.now() - activeInlineEdit.lastSnapshotTime > 2000) {
@@ -10761,7 +10800,7 @@ function handleTextLineKeydown(e, target, side, rowIndex) {
         nextTarget.focus();
         setCaretPosition(nextTarget, 0);
         activeInlineTarget = nextTarget;
-        activeInlineEdit = { rowIndex: rowIndex + 1, side, lastSnapshotTime: Date.now() };
+        activeInlineEdit = { rowIndex: rowIndex + 1, side, hasSnapshot: false, lastSnapshotTime: 0 };
       }
     }
   } else if (e.key === 'ArrowDown') {
@@ -10777,7 +10816,7 @@ function handleTextLineKeydown(e, target, side, rowIndex) {
         nextTarget.focus();
         setCaretPosition(nextTarget, offset);
         activeInlineTarget = nextTarget;
-        activeInlineEdit = { rowIndex: rowIndex + 1, side, lastSnapshotTime: Date.now() };
+        activeInlineEdit = { rowIndex: rowIndex + 1, side, hasSnapshot: false, lastSnapshotTime: 0 };
         e.preventDefault();
       }
     }
@@ -10794,7 +10833,7 @@ function handleTextLineKeydown(e, target, side, rowIndex) {
         prevTarget.focus();
         setCaretPosition(prevTarget, offset);
         activeInlineTarget = prevTarget;
-        activeInlineEdit = { rowIndex: rowIndex - 1, side, lastSnapshotTime: Date.now() };
+        activeInlineEdit = { rowIndex: rowIndex - 1, side, hasSnapshot: false, lastSnapshotTime: 0 };
         e.preventDefault();
       }
     }
@@ -10803,7 +10842,11 @@ function handleTextLineKeydown(e, target, side, rowIndex) {
     saveTextFile(side);
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
     e.preventDefault();
-    undoTextChange();
+    if (e.shiftKey) {
+      redoTextChange();
+    } else {
+      undoTextChange();
+    }
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
     e.preventDefault();
     redoTextChange();
@@ -11088,7 +11131,7 @@ function setupTextInlineEditing() {
 
     clickedContent.setAttribute('contenteditable', 'plaintext-only');
     activeInlineTarget = clickedContent;
-    activeInlineEdit = { rowIndex, side, lastSnapshotTime: Date.now() };
+    activeInlineEdit = { rowIndex, side, hasSnapshot: false, lastSnapshotTime: 0 };
     clickedContent.focus();
 
     if (document.caretRangeFromPoint) {
@@ -11223,9 +11266,14 @@ function updateSaveButtonStatusAfterHistory() {
   }
 }
 
+let lastUndoTime = 0;
+let lastRedoTime = 0;
+
 async function undoTextChange() {
   if (appState.activeView !== 'text') return;
-  activeInlineEdit = null;
+  if (Date.now() - lastUndoTime < 150) return;
+  lastUndoTime = Date.now();
+
   clearTimeout(textEditCommitTimer);
 
   if (!appState.textHistory || appState.textHistory.undoStack.length === 0) {
@@ -11233,8 +11281,12 @@ async function undoTextChange() {
     return;
   }
 
-  const focusedRow = document.activeElement?.getAttribute ? document.activeElement.getAttribute('data-row') : null;
-  const focusedSide = document.activeElement?.getAttribute ? document.activeElement.getAttribute('data-side') : null;
+  const activeContent = document.activeElement?.closest ? document.activeElement.closest('.text-line-content') : null;
+  const focusedRow = activeContent ? activeContent.getAttribute('data-row') : null;
+  const focusedSide = activeContent ? activeContent.getAttribute('data-side') : null;
+
+  activeInlineEdit = null;
+  activeInlineTarget = null;
 
   const prevState = appState.textHistory.undoStack.pop();
   appState.textHistory.redoStack.push({
@@ -11259,8 +11311,18 @@ async function undoTextChange() {
   if (focusedRow !== null && focusedSide !== null) {
     const newEl = document.querySelector(`.text-line-content[data-row="${focusedRow}"][data-side="${focusedSide}"]`);
     if (newEl) {
+      newEl.setAttribute('contenteditable', 'plaintext-only');
+      activeInlineTarget = newEl;
+      activeInlineEdit = {
+        rowIndex: parseInt(focusedRow, 10),
+        side: focusedSide,
+        hasSnapshot: false,
+        lastSnapshotTime: 0
+      };
       newEl.focus();
-      setCaretPosition(newEl, newEl.innerText.length);
+      try {
+        setCaretPosition(newEl, newEl.innerText.length);
+      } catch (_) {}
     }
   }
 
@@ -11270,7 +11332,9 @@ async function undoTextChange() {
 
 async function redoTextChange() {
   if (appState.activeView !== 'text') return;
-  activeInlineEdit = null;
+  if (Date.now() - lastRedoTime < 150) return;
+  lastRedoTime = Date.now();
+
   clearTimeout(textEditCommitTimer);
 
   if (!appState.textHistory || appState.textHistory.redoStack.length === 0) {
@@ -11278,8 +11342,12 @@ async function redoTextChange() {
     return;
   }
 
-  const focusedRow = document.activeElement?.getAttribute ? document.activeElement.getAttribute('data-row') : null;
-  const focusedSide = document.activeElement?.getAttribute ? document.activeElement.getAttribute('data-side') : null;
+  const activeContent = document.activeElement?.closest ? document.activeElement.closest('.text-line-content') : null;
+  const focusedRow = activeContent ? activeContent.getAttribute('data-row') : null;
+  const focusedSide = activeContent ? activeContent.getAttribute('data-side') : null;
+
+  activeInlineEdit = null;
+  activeInlineTarget = null;
 
   const nextState = appState.textHistory.redoStack.pop();
   appState.textHistory.undoStack.push({
@@ -11304,8 +11372,18 @@ async function redoTextChange() {
   if (focusedRow !== null && focusedSide !== null) {
     const newEl = document.querySelector(`.text-line-content[data-row="${focusedRow}"][data-side="${focusedSide}"]`);
     if (newEl) {
+      newEl.setAttribute('contenteditable', 'plaintext-only');
+      activeInlineTarget = newEl;
+      activeInlineEdit = {
+        rowIndex: parseInt(focusedRow, 10),
+        side: focusedSide,
+        hasSnapshot: false,
+        lastSnapshotTime: 0
+      };
       newEl.focus();
-      setCaretPosition(newEl, newEl.innerText.length);
+      try {
+        setCaretPosition(newEl, newEl.innerText.length);
+      } catch (_) {}
     }
   }
 

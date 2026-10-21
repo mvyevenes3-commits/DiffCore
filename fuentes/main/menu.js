@@ -321,8 +321,24 @@ function buildMenuTemplate(lang, mainWindow) {
     template.push({
       label: t.edit,
       submenu: [
-        { label: t.undo, role: 'undo' },
-        { label: t.redo, role: 'redo' },
+        {
+          label: t.undo,
+          accelerator: 'CmdOrCtrl+Z',
+          click: (_item, focusedWindow) => {
+            if (focusedWindow && !focusedWindow.isDestroyed()) {
+              focusedWindow.webContents.send('menu:undo');
+            }
+          }
+        },
+        {
+          label: t.redo,
+          accelerator: process.platform === 'darwin' ? 'CmdOrCtrl+Shift+Z' : 'CmdOrCtrl+Y',
+          click: (_item, focusedWindow) => {
+            if (focusedWindow && !focusedWindow.isDestroyed()) {
+              focusedWindow.webContents.send('menu:redo');
+            }
+          }
+        },
         { type: 'separator' },
         { label: t.cut, role: 'cut' },
         { label: t.copy, role: 'copy' },

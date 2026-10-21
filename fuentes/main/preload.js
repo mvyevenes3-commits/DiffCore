@@ -155,5 +155,17 @@ contextBridge.exposeInMainWorld('api', {
     const handler = () => callback();
     ipcRenderer.on('menu:copyEntireDocument', handler);
     return () => ipcRenderer.removeListener('menu:copyEntireDocument', handler);
+  },
+
+  onUndo: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:undo', handler);
+    return () => ipcRenderer.removeListener('menu:undo', handler);
+  },
+
+  onRedo: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:redo', handler);
+    return () => ipcRenderer.removeListener('menu:redo', handler);
   }
 });
