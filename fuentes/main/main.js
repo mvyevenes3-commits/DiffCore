@@ -63,6 +63,9 @@ function createWindow() {
     }
   });
 
+  // Always start maximized on launch
+  mainWindow.maximize();
+
   if (appIcon && process.platform !== 'darwin') {
     mainWindow.setIcon(appIcon);
   }
