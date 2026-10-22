@@ -1413,20 +1413,20 @@ function renderEmptyFolderCompare(sessionName = 'New Folder Compare') {
   const rightBody = document.getElementById('rightTableBody');
   if (leftBody) {
     leftBody.innerHTML = `
-      <tr>
-        <td colspan="4" style="text-align: center; padding: 80px 20px; color: #666; font-family: var(--font-sans); cursor: pointer;" onclick="browseFolder('left')">
-          <div style="font-size: 40px; margin-bottom: 8px; opacity: 0.6;">📁</div>
-          <div style="font-size: 13px; font-weight: 500;">${dropL}</div>
+      <tr class="folder-empty-dropzone-row">
+        <td colspan="4" onclick="browseFolder('left')">
+          <div class="folder-dropzone-icon">📁</div>
+          <div class="folder-dropzone-text">${dropL}</div>
         </td>
       </tr>
     `;
   }
   if (rightBody) {
     rightBody.innerHTML = `
-      <tr>
-        <td colspan="4" style="text-align: center; padding: 80px 20px; color: #666; font-family: var(--font-sans); cursor: pointer;" onclick="browseFolder('right')">
-          <div style="font-size: 40px; margin-bottom: 8px; opacity: 0.6;">📁</div>
-          <div style="font-size: 13px; font-weight: 500;">${dropR}</div>
+      <tr class="folder-empty-dropzone-row">
+        <td colspan="4" onclick="browseFolder('right')">
+          <div class="folder-dropzone-icon">📁</div>
+          <div class="folder-dropzone-text">${dropR}</div>
         </td>
       </tr>
     `;
@@ -2741,32 +2741,39 @@ function escapeJsPath(p) {
 }
 
 // --- BROWSE FOLDERS ---
+let isBrowsingFolder = false;
 async function browseFolder(side) {
-  const currentPath = (side === 'left' ? 
-    document.getElementById('leftPathInput')?.value : 
-    document.getElementById('rightPathInput')?.value) || '';
-  const otherPath = (side === 'left' ?
-    document.getElementById('rightPathInput')?.value :
-    document.getElementById('leftPathInput')?.value) || '';
-  const hintPath = currentPath || otherPath || appState.leftPath || appState.rightPath || '';
+  if (isBrowsingFolder) return;
+  isBrowsingFolder = true;
+  try {
+    const currentPath = (side === 'left' ? 
+      document.getElementById('leftPathInput')?.value : 
+      document.getElementById('rightPathInput')?.value) || '';
+    const otherPath = (side === 'left' ?
+      document.getElementById('rightPathInput')?.value :
+      document.getElementById('leftPathInput')?.value) || '';
+    const hintPath = currentPath || otherPath || appState.leftPath || appState.rightPath || '';
 
-  const selected = await showQuickPicker({
-    mode: 'folder',
-    defaultPath: hintPath,
-    title: side === 'left' ? 'Examinar Carpeta Izquierda' : 'Examinar Carpeta Derecha'
-  });
+    const selected = await showQuickPicker({
+      mode: 'folder',
+      defaultPath: hintPath,
+      title: side === 'left' ? 'Examinar Carpeta Izquierda' : 'Examinar Carpeta Derecha'
+    });
 
-  if (selected) {
-    if (side === 'left') {
-      const el = document.getElementById('leftPathInput');
-      if (el) el.value = selected;
-      appState.leftPath = selected;
-    } else {
-      const el = document.getElementById('rightPathInput');
-      if (el) el.value = selected;
-      appState.rightPath = selected;
+    if (selected) {
+      if (side === 'left') {
+        const el = document.getElementById('leftPathInput');
+        if (el) el.value = selected;
+        appState.leftPath = selected;
+      } else {
+        const el = document.getElementById('rightPathInput');
+        if (el) el.value = selected;
+        appState.rightPath = selected;
+      }
+      runFolderComparison();
     }
-    runFolderComparison();
+  } finally {
+    isBrowsingFolder = false;
   }
 }
 
@@ -3675,8 +3682,13 @@ function renderVisibleWindow(force = false) {
   const items = appState.filteredItems;
   const totalItems = items.length;
 
-  const scrollTop = leftPane.scrollTop;
-  const viewportHeight = leftPane.clientHeight || 600;
+  const isFolderRightOnly = !appState.leftPath && !!appState.rightPath;
+  const isFolderLeftOnly = !!appState.leftPath && !appState.rightPath;
+  const bothSidesLoaded = !!(appState.leftPath && appState.rightPath);
+
+  const scrollSource = isFolderRightOnly ? rightPane : leftPane;
+  const scrollTop = scrollSource.scrollTop;
+  const viewportHeight = scrollSource.clientHeight || 600;
 
   const firstVis = Math.floor(scrollTop / ROW_HEIGHT);
   const lastVis = Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT);
@@ -3713,8 +3725,12 @@ function renderVisibleWindow(force = false) {
 
   // Top spacer row to maintain exact native scroll position
   if (topHeight > 0) {
-    leftRowsHtml += `<tr class="virtual-spacer" style="height:${topHeight}px;"><td colspan="4" style="height:${topHeight}px;"></td></tr>`;
-    rightRowsHtml += `<tr class="virtual-spacer" style="height:${topHeight}px;"><td colspan="4" style="height:${topHeight}px;"></td></tr>`;
+    if (bothSidesLoaded || isFolderLeftOnly) {
+      leftRowsHtml += `<tr class="virtual-spacer" style="height:${topHeight}px;"><td colspan="4" style="height:${topHeight}px;"></td></tr>`;
+    }
+    if (bothSidesLoaded || isFolderRightOnly) {
+      rightRowsHtml += `<tr class="virtual-spacer" style="height:${topHeight}px;"><td colspan="4" style="height:${topHeight}px;"></td></tr>`;
+    }
   }
 
   // Render ONLY visible rows (approx. 40 to 60 rows)
@@ -3723,7 +3739,6 @@ function renderVisibleWindow(force = false) {
     const isLeftSelected = appState.selectedLeftIndices ? appState.selectedLeftIndices.has(index) : false;
     const isRightSelected = appState.selectedRightIndices ? appState.selectedRightIndices.has(index) : false;
     const isDir = item.isDirectory;
-    const bothSidesLoaded = !!(appState.leftPath && appState.rightPath);
     const isDiff = bothSidesLoaded && (item.status === 'different');
     const isOrphanLeft = bothSidesLoaded && (item.status === 'orphan_left');
     const isOrphanRight = bothSidesLoaded && (item.status === 'orphan_right');
@@ -3760,72 +3775,97 @@ function renderVisibleWindow(force = false) {
     const leftSelectedClass = isLeftSelected ? 'selected' : '';
     const rightSelectedClass = isRightSelected ? 'selected' : '';
 
-    // LEFT ROW
-    if (item.hasLeft) {
-      const leftSizeText = isDir ? formatTreeSize(item.leftSize) : (item.left ? formatTreeSize(item.left.size) : '');
-      const leftDateText = isDir ? formatTreeDate(item.leftMtime) : (item.left ? formatTreeDate(item.left.modified) : '');
-      const leftLabelClass = isOrphanLeft ? 'text-orphan' : '';
+    // LEFT ROW (only if left side loaded)
+    if (bothSidesLoaded || isFolderLeftOnly) {
+      if (item.hasLeft) {
+        const leftSizeText = isDir ? formatTreeSize(item.leftSize) : (item.left ? formatTreeSize(item.left.size) : '');
+        const leftDateText = isDir ? formatTreeDate(item.leftMtime) : (item.left ? formatTreeDate(item.left.modified) : '');
+        const leftLabelClass = isOrphanLeft ? 'text-orphan' : '';
 
-      leftRowsHtml += `
-        <tr class="diff-row ${zebraClass} ${leftSelectedClass}" data-index="${index}">
-          <td>
-            <div class="tree-cell">
-              ${guidesHtml}
-              ${toggleHtml}
-              ${iconHtml}
-              <span class="tree-label ${leftLabelClass}">${escapeHtml(item.name)}</span>
-            </div>
-          </td>
-          <td style="text-align: right; color: ${isDir ? '#888' : 'inherit'};">${leftSizeText}</td>
-          <td style="color: ${isDir ? '#888' : 'inherit'};">${leftDateText}</td>
-          <td class="diff-marker-cell">${diffMarkerBox}</td>
-        </tr>`;
-    } else {
-      leftRowsHtml += `
-        <tr class="diff-row empty-ghost ${zebraClass} ${leftSelectedClass}" data-index="${index}">
-          <td></td><td></td><td></td><td class="diff-marker-cell"></td>
-        </tr>`;
+        leftRowsHtml += `
+          <tr class="diff-row ${zebraClass} ${leftSelectedClass}" data-index="${index}">
+            <td>
+              <div class="tree-cell">
+                ${guidesHtml}
+                ${toggleHtml}
+                ${iconHtml}
+                <span class="tree-label ${leftLabelClass}">${escapeHtml(item.name)}</span>
+              </div>
+            </td>
+            <td style="text-align: right; color: ${isDir ? '#888' : 'inherit'};">${leftSizeText}</td>
+            <td style="color: ${isDir ? '#888' : 'inherit'};">${leftDateText}</td>
+            <td class="diff-marker-cell">${diffMarkerBox}</td>
+          </tr>`;
+      } else {
+        leftRowsHtml += `
+          <tr class="diff-row empty-ghost ${zebraClass} ${leftSelectedClass}" data-index="${index}">
+            <td></td><td></td><td></td><td class="diff-marker-cell"></td>
+          </tr>`;
+      }
     }
 
-    // RIGHT ROW
-    if (item.hasRight) {
-      const rightSizeText = isDir ? formatTreeSize(item.rightSize) : (item.right ? formatTreeSize(item.right.size) : '');
-      const rightDateText = isDir ? formatTreeDate(item.rightMtime) : (item.right ? formatTreeDate(item.right.modified) : '');
-      const rightLabelClass = isDiff ? 'text-diff' : (isOrphanRight ? 'text-orphan' : '');
-      const rightMetaClass = isDiff ? 'text-diff' : '';
+    // RIGHT ROW (only if right side loaded)
+    if (bothSidesLoaded || isFolderRightOnly) {
+      if (item.hasRight) {
+        const rightSizeText = isDir ? formatTreeSize(item.rightSize) : (item.right ? formatTreeSize(item.right.size) : '');
+        const rightDateText = isDir ? formatTreeDate(item.rightMtime) : (item.right ? formatTreeDate(item.right.modified) : '');
+        const rightLabelClass = isDiff ? 'text-diff' : (isOrphanRight ? 'text-orphan' : '');
+        const rightMetaClass = isDiff ? 'text-diff' : '';
 
-      rightRowsHtml += `
-        <tr class="diff-row ${zebraClass} ${rightSelectedClass}" data-index="${index}">
-          <td>
-            <div class="tree-cell">
-              ${guidesHtml}
-              ${toggleHtml}
-              ${iconHtml}
-              <span class="tree-label ${rightLabelClass}">${escapeHtml(item.name)}</span>
-            </div>
-          </td>
-          <td style="text-align: right;" class="${rightMetaClass}">${rightSizeText}</td>
-          <td class="${rightMetaClass}">${rightDateText}</td>
-          <td class="diff-marker-cell">${diffMarkerBox}</td>
-        </tr>`;
-    } else {
-      rightRowsHtml += `
-        <tr class="diff-row empty-ghost ${zebraClass} ${rightSelectedClass}" data-index="${index}">
-          <td></td><td></td><td></td><td class="diff-marker-cell"></td>
-        </tr>`;
+        rightRowsHtml += `
+          <tr class="diff-row ${zebraClass} ${rightSelectedClass}" data-index="${index}">
+            <td>
+              <div class="tree-cell">
+                ${guidesHtml}
+                ${toggleHtml}
+                ${iconHtml}
+                <span class="tree-label ${rightLabelClass}">${escapeHtml(item.name)}</span>
+              </div>
+            </td>
+            <td style="text-align: right;" class="${rightMetaClass}">${rightSizeText}</td>
+            <td class="${rightMetaClass}">${rightDateText}</td>
+            <td class="diff-marker-cell">${diffMarkerBox}</td>
+          </tr>`;
+      } else {
+        rightRowsHtml += `
+          <tr class="diff-row empty-ghost ${zebraClass} ${rightSelectedClass}" data-index="${index}">
+            <td></td><td></td><td></td><td class="diff-marker-cell"></td>
+          </tr>`;
+      }
     }
   }
 
   // Bottom spacer
   if (bottomHeight > 0) {
-    leftRowsHtml += `<tr class="virtual-spacer" style="height:${bottomHeight}px;"><td colspan="4" style="height:${bottomHeight}px;"></td></tr>`;
-    rightRowsHtml += `<tr class="virtual-spacer" style="height:${bottomHeight}px;"><td colspan="4" style="height:${bottomHeight}px;"></td></tr>`;
+    if (bothSidesLoaded || isFolderLeftOnly) {
+      leftRowsHtml += `<tr class="virtual-spacer" style="height:${bottomHeight}px;"><td colspan="4" style="height:${bottomHeight}px;"></td></tr>`;
+    }
+    if (bothSidesLoaded || isFolderRightOnly) {
+      rightRowsHtml += `<tr class="virtual-spacer" style="height:${bottomHeight}px;"><td colspan="4" style="height:${bottomHeight}px;"></td></tr>`;
+    }
   }
 
-  // Only show drop targets if BOTH sides are completely empty (no comparison loaded)
-  if (!appState.leftPath && !appState.rightPath) {
-    leftRowsHtml = `<tr><td colspan="4" style="text-align: center; padding: 80px 20px; color: #666; font-family: var(--font-sans); cursor: pointer;" onclick="browseFolder('left')"><div style="font-size: 40px; margin-bottom: 8px; opacity: 0.6;">📁</div><div style="font-size: 13px; font-weight: 500;">Drop left folder here, or click 📁▾ to browse</div></td></tr>`;
-    rightRowsHtml = `<tr><td colspan="4" style="text-align: center; padding: 80px 20px; color: #666; font-family: var(--font-sans); cursor: pointer;" onclick="browseFolder('right')"><div style="font-size: 40px; margin-bottom: 8px; opacity: 0.6;">📁</div><div style="font-size: 13px; font-weight: 500;">Drop right folder here, or click 📁▾ to browse</div></td></tr>`;
+  // Show drop targets for unloaded sides
+  const dropL = window.i18n ? window.i18n.t('folder.dropzone_left') : 'Drop left folder here, or click 📁▾ to browse';
+  const dropR = window.i18n ? window.i18n.t('folder.dropzone_right') : 'Drop right folder here, or click 📁▾ to browse';
+
+  if (!appState.leftPath) {
+    leftRowsHtml = `
+      <tr class="folder-empty-dropzone-row">
+        <td colspan="4" onclick="browseFolder('left')">
+          <div class="folder-dropzone-icon">📁</div>
+          <div class="folder-dropzone-text">${dropL}</div>
+        </td>
+      </tr>`;
+  }
+  if (!appState.rightPath) {
+    rightRowsHtml = `
+      <tr class="folder-empty-dropzone-row">
+        <td colspan="4" onclick="browseFolder('right')">
+          <div class="folder-dropzone-icon">📁</div>
+          <div class="folder-dropzone-text">${dropR}</div>
+        </td>
+      </tr>`;
   }
 
   const leftTbody = document.getElementById('leftTableBody');
@@ -6093,18 +6133,20 @@ function renderActiveTableSheet() {
 
   const cL = document.getElementById('tblLeftContent');
   const cR = document.getElementById('tblRightContent');
+  const dropTableL = window.i18n ? window.i18n.t('tableview.dropzone_left') : 'Drop Excel or CSV/TSV table here, or click 📁▾';
+  const dropTableR = window.i18n ? window.i18n.t('tableview.dropzone_right') : 'Drop Excel or CSV/TSV table here, or click 📁▾';
   if (cL) {
     if (tableCompareState.leftPath) {
       cL.innerHTML = htmlL;
     } else {
-      cL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTableFile('left')"><div class="dropzone-icon">📊</div><div>Drop Excel or CSV/TSV table here, or click 📁▾</div></div>`;
+      cL.innerHTML = `<div class="text-empty-dropzone" onclick="browseTableFile('left')"><div class="dropzone-icon">📊</div><div>${dropTableL}</div></div>`;
     }
   }
   if (cR) {
     if (tableCompareState.rightPath) {
       cR.innerHTML = htmlR;
     } else {
-      cR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTableFile('right')"><div class="dropzone-icon">📊</div><div>Drop Excel or CSV/TSV table here, or click 📁▾</div></div>`;
+      cR.innerHTML = `<div class="text-empty-dropzone" onclick="browseTableFile('right')"><div class="dropzone-icon">📊</div><div>${dropTableR}</div></div>`;
     }
   }
 
@@ -7171,8 +7213,11 @@ function createSyncVScrollbar(options) {
   function update() {
     if (!leftScroll || !rightScroll) return;
     const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
-    const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
-    const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+    const isFolder = (typeof appState !== 'undefined' && appState.activeView === 'folder');
+    const isFolderRightOnly = isFolder && !appState.leftPath && !!appState.rightPath;
+    const isFolderLeftOnly = isFolder && !!appState.leftPath && !appState.rightPath;
+    const isRightOnly = (diffResult && diffResult.isSingleSide === 'right') || isFolderRightOnly;
+    const isLeftOnly = (diffResult && diffResult.isSingleSide === 'left') || isFolderLeftOnly;
     const activeScroll = isRightOnly ? rightScroll : leftScroll;
 
     const scrollH = Math.max(leftScroll.scrollHeight, rightScroll.scrollHeight);
@@ -7211,8 +7256,11 @@ function createSyncVScrollbar(options) {
   function setScrollTop(newTop, skipOnScroll = false) {
     if (!leftScroll || !rightScroll) return;
     const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
-    const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
-    const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
+    const isFolder = (typeof appState !== 'undefined' && appState.activeView === 'folder');
+    const isFolderRightOnly = isFolder && !appState.leftPath && !!appState.rightPath;
+    const isFolderLeftOnly = isFolder && !!appState.leftPath && !appState.rightPath;
+    const isRightOnly = (diffResult && diffResult.isSingleSide === 'right') || isFolderRightOnly;
+    const isLeftOnly = (diffResult && diffResult.isSingleSide === 'left') || isFolderLeftOnly;
     const activeScroll = isRightOnly ? rightScroll : leftScroll;
 
     const scrollH = Math.max(leftScroll.scrollHeight, rightScroll.scrollHeight);
@@ -7360,17 +7408,29 @@ function setupSyncScroll() {
         folderScrollDriver = null;
       }, 80);
 
+      const isFolderRightOnly = !appState.leftPath && !!appState.rightPath;
+      const isFolderLeftOnly = !!appState.leftPath && !appState.rightPath;
+      const scrollSource = isFolderRightOnly ? rightPane : leftPane;
+
       const maxScroll = Math.max(
         0,
-        Math.max(leftPane.scrollHeight, rightPane.scrollHeight) - leftPane.clientHeight
+        Math.max(leftPane.scrollHeight, rightPane.scrollHeight) - scrollSource.clientHeight
       );
-      const newTop = Math.max(0, Math.min(maxScroll, leftPane.scrollTop + e.deltaY));
-      const newLeft = Math.max(0, leftPane.scrollLeft + e.deltaX);
+      const newTop = Math.max(0, Math.min(maxScroll, scrollSource.scrollTop + e.deltaY));
+      const newLeft = Math.max(0, scrollSource.scrollLeft + e.deltaX);
 
-      leftPane.scrollTop = newTop;
-      rightPane.scrollTop = newTop;
-      leftPane.scrollLeft = newLeft;
-      rightPane.scrollLeft = newLeft;
+      if (isFolderRightOnly) {
+        rightPane.scrollTop = newTop;
+        rightPane.scrollLeft = newLeft;
+      } else if (isFolderLeftOnly) {
+        leftPane.scrollTop = newTop;
+        leftPane.scrollLeft = newLeft;
+      } else {
+        leftPane.scrollTop = newTop;
+        rightPane.scrollTop = newTop;
+        leftPane.scrollLeft = newLeft;
+        rightPane.scrollLeft = newLeft;
+      }
 
       renderVisibleWindow();
       if (folderSyncScrollbar) folderSyncScrollbar.update();
@@ -7383,6 +7443,13 @@ function setupSyncScroll() {
       return;
     }
     if (isSyncingFolder && activeFolderScrollSource !== source) return;
+
+    // In single-side mode, do not sync scroll to/from empty side
+    if (!appState.leftPath || !appState.rightPath) {
+      renderVisibleWindow();
+      if (folderSyncScrollbar) folderSyncScrollbar.update();
+      return;
+    }
 
     isSyncingFolder = true;
     activeFolderScrollSource = source;
@@ -7461,6 +7528,19 @@ function setupTableEventDelegation() {
     // Delegated Context Menu Handler
     tbody.addEventListener('contextmenu', (event) => {
       handleTableContextMenu(event, side);
+    });
+  });
+
+  // Delegated Pane Click for Empty Folder Dropzone
+  ['leftPaneScroll', 'rightPaneScroll'].forEach(paneId => {
+    const pane = document.getElementById(paneId);
+    if (!pane) return;
+    const side = (paneId === 'leftPaneScroll') ? 'left' : 'right';
+    pane.addEventListener('click', (event) => {
+      const isLoaded = (side === 'left') ? !!appState.leftPath : !!appState.rightPath;
+      if (!isLoaded) {
+        browseFolder(side);
+      }
     });
   });
 }
@@ -8318,17 +8398,24 @@ function renderSingleSideText(loadedSide) {
   resetTextCompareScroll();
 }
 
+let isBrowsingTextFile = false;
 async function browseTextFile(side) {
-  const currentPath = side === 'left' ? appState.currentTextFile.leftFullPath : appState.currentTextFile.rightFullPath;
-  const otherPath = side === 'left' ? appState.currentTextFile.rightFullPath : appState.currentTextFile.leftFullPath;
-  const hintPath = currentPath || otherPath || appState.leftPath || appState.rightPath || '';
-  const selected = await showQuickPicker({
-    mode: 'file',
-    defaultPath: hintPath,
-    title: side === 'left' ? 'Examinar Archivo de Texto Izquierdo' : 'Examinar Archivo de Texto Derecho'
-  });
-  if (!selected) return;
-  await loadTextFileForSide(side, selected);
+  if (isBrowsingTextFile) return;
+  isBrowsingTextFile = true;
+  try {
+    const currentPath = side === 'left' ? appState.currentTextFile.leftFullPath : appState.currentTextFile.rightFullPath;
+    const otherPath = side === 'left' ? appState.currentTextFile.rightFullPath : appState.currentTextFile.leftFullPath;
+    const hintPath = currentPath || otherPath || appState.leftPath || appState.rightPath || '';
+    const selected = await showQuickPicker({
+      mode: 'file',
+      defaultPath: hintPath,
+      title: side === 'left' ? 'Examinar Archivo de Texto Izquierdo' : 'Examinar Archivo de Texto Derecho'
+    });
+    if (!selected) return;
+    await loadTextFileForSide(side, selected);
+  } finally {
+    isBrowsingTextFile = false;
+  }
 }
 
 async function loadTextFileForSide(side, filePath) {

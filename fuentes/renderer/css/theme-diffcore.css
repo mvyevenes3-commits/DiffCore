@@ -998,6 +998,43 @@ body.theme-light .diff-row.selected td {
   color: #1a1a1a !important;
 }
 
+/* Folder Compare Empty Dropzone */
+.folder-empty-dropzone-row td {
+  text-align: center;
+  padding: 100px 20px !important;
+  color: #888 !important;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  user-select: none;
+  background: transparent !important;
+  transition: all 0.2s ease;
+  height: auto !important;
+  min-height: 200px !important;
+  max-height: none !important;
+}
+
+.folder-empty-dropzone-row:hover td {
+  color: #388bfd !important;
+  background: rgba(56, 139, 253, 0.04) !important;
+}
+
+.folder-empty-dropzone-row .folder-dropzone-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+  opacity: 0.65;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.folder-empty-dropzone-row:hover .folder-dropzone-icon {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.folder-empty-dropzone-row .folder-dropzone-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
 /* High-Performance Virtual Scrolling Spacers */
 .virtual-spacer,
 .virtual-spacer td {
