@@ -329,6 +329,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupFolderKeyboardNavigation();
   setupTextKeyboardNavigation();
   setupWindowClickHandlers();
+  setupTabMiddleClickClose();
   setupUniversalInputClipboardShortcuts();
   setupFileWatcherListeners();
   initFooterTelemetry();
@@ -616,6 +617,86 @@ function setupWindowClickHandlers() {
       closeRecentFoldersDropdown('right');
     }
   });
+}
+
+// --- MIDDLE-CLICK TAB CLOSING (LIKE MODERN WEB BROWSERS / VS CODE) ---
+function setupTabMiddleClickClose() {
+  const tabsList = document.getElementById('appTabsList');
+  if (!tabsList) return;
+
+  // Prevent default middle-click scroll (autoscroll) / paste behavior on tabs
+  tabsList.addEventListener('mousedown', (e) => {
+    if (e.button === 1) {
+      const tabBtn = e.target.closest('.tab-btn');
+      if (tabBtn) {
+        e.preventDefault();
+      }
+    }
+  });
+
+  // Handle middle-click on any tab
+  tabsList.addEventListener('auxclick', (e) => {
+    if (e.button === 1) {
+      const tabBtn = e.target.closest('.tab-btn');
+      if (!tabBtn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      handleTabMiddleClickClose(tabBtn, e);
+    }
+  });
+}
+
+function handleTabMiddleClickClose(tabBtn, event) {
+  if (!tabBtn) return;
+
+  // 1. Dynamic Text Session Tabs
+  if (tabBtn.classList.contains('text-session-tab') || tabBtn.dataset.sessionId) {
+    const sessionId = tabBtn.dataset.sessionId || tabBtn.id.replace('tabText-', '');
+    if (sessionId && typeof closeSpecificTextTab === 'function') {
+      closeSpecificTextTab(sessionId, event);
+      return;
+    }
+  }
+
+  // 2. Named Tabs by ID
+  switch (tabBtn.id) {
+    case 'tabFolderBtn':
+      if (typeof closeFolderTab === 'function') closeFolderTab(event);
+      return;
+    case 'tabFolderSyncBtn':
+      if (typeof closeFolderSyncTab === 'function') closeFolderSyncTab(event);
+      return;
+    case 'tabFolderMergeBtn':
+      if (typeof closeFolderMergeTab === 'function') closeFolderMergeTab(event);
+      return;
+    case 'tabTextBtn':
+      if (typeof closeTextTab === 'function') closeTextTab(event);
+      return;
+    case 'tabTextMergeBtn':
+      if (typeof closeTextMergeTab === 'function') closeTextMergeTab(event);
+      return;
+    case 'tabTextEditBtn':
+      if (typeof closeTextEditTab === 'function') closeTextEditTab(event);
+      return;
+    case 'tabHexBtn':
+      if (typeof closeHexTab === 'function') closeHexTab(event);
+      return;
+    case 'tabPictureBtn':
+      if (typeof closePictureTab === 'function') closePictureTab(event);
+      return;
+    case 'tabTableBtn':
+      if (typeof closeTableTab === 'function') closeTableTab(event);
+      return;
+    case 'tabMediaBtn':
+      if (typeof closeMediaTab === 'function') closeMediaTab(event);
+      return;
+  }
+
+  // 3. Fallback: Trigger internal .tab-close button if present
+  const closeBtn = tabBtn.querySelector('.tab-close');
+  if (closeBtn) {
+    closeBtn.click();
+  }
 }
 
 // --- UNIVERSAL INPUT CLIPBOARD & EDITING SHORTCUTS (macOS & Cross-Platform) ---
@@ -7934,8 +8015,21 @@ function renderDynamicTextTabs() {
     const btn = document.createElement('button');
     btn.className = `tab-btn text-session-tab ${isActive ? 'active' : ''}`;
     btn.id = `tabText-${session.id}`;
+    btn.dataset.sessionId = session.id;
     btn.title = fullTitle;
     btn.onclick = () => switchToTextSession(session.id);
+    btn.onauxclick = (e) => {
+      if (e.button === 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeSpecificTextTab(session.id, e);
+      }
+    };
+    btn.onmousedown = (e) => {
+      if (e.button === 1) {
+        e.preventDefault();
+      }
+    };
 
     const iconSpan = document.createElement('span');
     iconSpan.className = 'tab-icon';
