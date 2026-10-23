@@ -552,7 +552,7 @@
       </div>
 
       <!-- Center Divider -->
-      <div class="path-center-divider"></div>
+      <div class="path-center-divider" id="folderPathCenterDivider"></div>
 
       <!-- Right Path -->
       <div class="path-box" id="rightPathBox" onclick="focusPathInput('right', event)">
@@ -591,7 +591,7 @@
       </div>
 
       <!-- Center Sizing/Divider Bar -->
-      <div class="center-divider"></div>
+      <div class="center-divider" id="folderCenterDivider"></div>
 
       <!-- Right Table View -->
       <div class="dual-pane-wrapper" id="folderRightPaneWrapper">
@@ -783,8 +783,8 @@
         </div>
       </div>
 
-      <!-- Center Action Gutter (DiffCore Yellow Arrows) -->
-      <div class="text-center-gutter-wrapper">
+      <!-- Center Action Gutter (DiffCore Yellow Arrows & Splitter) -->
+      <div class="text-center-gutter-wrapper" id="textCenterGutterWrapper">
         <div class="text-center-gutter-header"></div>
         <div class="text-center-gutter-scroll" id="textGutterScroll">
           <div id="textCenterGutter"></div>
@@ -863,7 +863,7 @@
         </div>
       </div>
 
-      <div class="text-center-gutter-wrapper" style="width: 24px;"></div>
+      <div class="text-center-gutter-wrapper" id="hexCenterGutterWrapper" style="width: 24px;"></div>
 
       <div class="text-pane-wrapper" id="hexRightPaneWrapper">
         <div class="text-address-bar">
@@ -1109,7 +1109,7 @@
         </div>
       </div>
 
-      <div class="text-center-gutter-wrapper" style="width: 24px;"></div>
+      <div class="text-center-gutter-wrapper" id="tblCenterGutterWrapper" style="width: 24px;"></div>
 
       <div class="text-pane-wrapper" id="tblRightPaneWrapper">
         <div class="text-address-bar">

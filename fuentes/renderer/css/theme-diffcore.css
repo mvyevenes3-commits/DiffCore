@@ -871,10 +871,27 @@ body.theme-light .path-history-item.selected {
 }
 
 .path-center-divider {
-  width: 2px;
+  width: 4px;
   height: 20px;
   background: #333333;
   flex-shrink: 0;
+  cursor: col-resize;
+  position: relative;
+  z-index: 10;
+  transition: background 0.15s ease;
+}
+.path-center-divider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  right: -4px;
+  cursor: col-resize;
+}
+.path-center-divider:hover,
+.path-center-divider.is-dragging {
+  background: #388bfd !important;
 }
 
 /* FOLDER COMPARE DUAL TREE TABLE (DiffCore Matching Image 1) */
@@ -890,7 +907,7 @@ body.theme-light .path-history-item.selected {
 }
 
 .dual-pane-wrapper {
-  flex: 1 !important;
+  flex: 1;
   display: flex !important;
   flex-direction: row !important;
   min-width: 0 !important;
@@ -911,9 +928,44 @@ body.theme-light .path-history-item.selected {
 }
 
 .center-divider {
-  width: 2px;
-  background: #2d2d2d;
+  width: 4px;
+  background: #2e323b;
   flex-shrink: 0;
+  cursor: col-resize;
+  position: relative;
+  z-index: 10;
+  transition: background 0.15s ease;
+}
+.center-divider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  right: -4px;
+  cursor: col-resize;
+}
+.center-divider:hover,
+.center-divider.is-dragging {
+  background: #388bfd !important;
+}
+
+body.theme-light .center-divider,
+body.theme-light .path-center-divider {
+  background: #d0d7de;
+}
+
+body.theme-light .center-divider:hover,
+body.theme-light .center-divider.is-dragging,
+body.theme-light .path-center-divider:hover,
+body.theme-light .path-center-divider.is-dragging {
+  background: #0969da !important;
+}
+
+body.theme-light .text-center-gutter-wrapper.is-dragging {
+  border-left-color: #0969da !important;
+  border-right-color: #0969da !important;
+  background: #e6f0fd !important;
 }
 
 .diff-table {
@@ -2972,17 +3024,46 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   border-right: 1px solid #2e323b;
   flex-shrink: 0;
   user-select: none;
+  cursor: col-resize;
+  position: relative;
+  z-index: 5;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.text-center-gutter-wrapper:hover {
+  border-left-color: #388bfd !important;
+  border-right-color: #388bfd !important;
+}
+.text-center-gutter-wrapper.is-dragging {
+  border-left-color: #388bfd !important;
+  border-right-color: #388bfd !important;
+  background: #232730 !important;
 }
 .text-center-gutter-header {
   height: 29px;
   background: #25282e;
   border-bottom: 1px solid #333842;
+  cursor: col-resize;
 }
 .text-center-gutter-scroll {
   flex: 1;
   overflow: hidden;
   position: relative;
   overflow-anchor: none !important;
+  cursor: col-resize;
+}
+#textCenterGutter {
+  cursor: col-resize;
+}
+.diff-arrow-btn {
+  cursor: pointer !important;
+}
+
+/* Global body cursor during active dragging */
+body.resizing-col,
+body.resizing-col * {
+  cursor: col-resize !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 #textCenterGutter {
   position: relative;

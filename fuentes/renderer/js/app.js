@@ -330,6 +330,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupTextKeyboardNavigation();
   setupWindowClickHandlers();
   setupTabMiddleClickClose();
+  setupSplitterResizers();
   setupUniversalInputClipboardShortcuts();
   setupFileWatcherListeners();
   initFooterTelemetry();
@@ -697,6 +698,239 @@ function handleTabMiddleClickClose(tabBtn, event) {
   if (closeBtn) {
     closeBtn.click();
   }
+}
+
+// --- DUAL-PANE CENTER SPLITTER RESIZING (BEYOND COMPARE STYLE) ---
+function setupSplitterResizers() {
+  function createSplitter(cfg) {
+    const container = typeof cfg.container === 'string' ? document.querySelector(cfg.container) : cfg.container;
+    const leftPane = typeof cfg.leftPane === 'string' ? document.querySelector(cfg.leftPane) : cfg.leftPane;
+    const rightPane = typeof cfg.rightPane === 'string' ? document.querySelector(cfg.rightPane) : cfg.rightPane;
+    const divider = typeof cfg.divider === 'string' ? document.querySelector(cfg.divider) : cfg.divider;
+
+    if (!container || !leftPane || !rightPane || !divider) return;
+
+    const storageKey = cfg.storageKey;
+    const minRatio = cfg.minRatio || 0.15;
+    const maxRatio = cfg.maxRatio || 0.85;
+    const minPixel = cfg.minPixel || 100;
+    const syncPanes = cfg.syncPanes || [];
+    const onResize = cfg.onResize;
+
+    const allDividers = [divider];
+    syncPanes.forEach(s => {
+      const d = typeof s.divider === 'string' ? document.querySelector(s.divider) : s.divider;
+      if (d && !allDividers.includes(d)) allDividers.push(d);
+    });
+
+    function applyRatio(ratio) {
+      const leftRatio = Math.max(minRatio, Math.min(maxRatio, ratio));
+      const rightRatio = 1 - leftRatio;
+
+      leftPane.style.setProperty('flex', `${leftRatio} 1 0px`, 'important');
+      rightPane.style.setProperty('flex', `${rightRatio} 1 0px`, 'important');
+
+      syncPanes.forEach(s => {
+        const l = typeof s.left === 'string' ? document.querySelector(s.left) : s.left;
+        const r = typeof s.right === 'string' ? document.querySelector(s.right) : s.right;
+        if (l) l.style.setProperty('flex', `${leftRatio} 1 0px`, 'important');
+        if (r) r.style.setProperty('flex', `${rightRatio} 1 0px`, 'important');
+      });
+    }
+
+    // Load initial persisted ratio if available
+    if (storageKey) {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved !== null) {
+          const val = parseFloat(saved);
+          if (!isNaN(val) && val >= minRatio && val <= maxRatio) {
+            applyRatio(val);
+          }
+        }
+      } catch (err) {}
+    }
+
+    let isDragging = false;
+    let activeContainer = container;
+    let pendingRatio = null;
+    let rafId = null;
+
+    function startDrag(e, targetContainer) {
+      if (e.button !== 0) return;
+      const currentContainer = targetContainer || container;
+      if (currentContainer && currentContainer.classList.contains('over-under-layout')) return;
+      if (e.target.closest('.diff-arrow-btn') || e.target.closest('button') || e.target.closest('input')) return;
+
+      e.preventDefault();
+      isDragging = true;
+      activeContainer = currentContainer || container;
+
+      allDividers.forEach(d => d.classList.add('is-dragging'));
+      document.body.classList.add('resizing-col');
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+
+    function onMouseMove(e) {
+      if (!isDragging) return;
+      const rect = activeContainer.getBoundingClientRect();
+      if (rect.width <= 0) return;
+
+      const dividerW = divider.offsetWidth || 4;
+      const availableW = rect.width - dividerW;
+      if (availableW <= 0) return;
+
+      const mouseX = e.clientX - rect.left - (dividerW / 2);
+      let ratio = mouseX / availableW;
+
+      const effectiveMin = Math.max(minRatio, minPixel / availableW);
+      const effectiveMax = Math.min(maxRatio, 1 - (minPixel / availableW));
+      ratio = Math.max(effectiveMin, Math.min(effectiveMax, ratio));
+
+      pendingRatio = ratio;
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          if (pendingRatio !== null) {
+            applyRatio(pendingRatio);
+            if (typeof onResize === 'function') onResize(pendingRatio);
+          }
+          rafId = null;
+        });
+      }
+    }
+
+    function onMouseUp(e) {
+      if (!isDragging) return;
+      isDragging = false;
+
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+
+      allDividers.forEach(d => d.classList.remove('is-dragging'));
+      document.body.classList.remove('resizing-col');
+
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+
+      const rect = activeContainer.getBoundingClientRect();
+      const dividerW = divider.offsetWidth || 4;
+      const availableW = rect.width - dividerW;
+      if (availableW > 0) {
+        const mouseX = e.clientX - rect.left - (dividerW / 2);
+        let ratio = mouseX / availableW;
+        const effectiveMin = Math.max(minRatio, minPixel / availableW);
+        const effectiveMax = Math.min(maxRatio, 1 - (minPixel / availableW));
+        ratio = Math.max(effectiveMin, Math.min(effectiveMax, ratio));
+
+        applyRatio(ratio);
+
+        if (storageKey) {
+          try {
+            localStorage.setItem(storageKey, ratio.toFixed(4));
+          } catch (err) {}
+        }
+      }
+
+      if (typeof onResize === 'function') onResize();
+    }
+
+    function onDblClick(e) {
+      if (e.target.closest('.diff-arrow-btn') || e.target.closest('button') || e.target.closest('input')) return;
+      e.preventDefault();
+      applyRatio(0.5);
+      if (storageKey) {
+        try {
+          localStorage.setItem(storageKey, '0.5');
+        } catch (err) {}
+      }
+      if (typeof onResize === 'function') onResize(0.5);
+    }
+
+    divider.addEventListener('mousedown', (e) => startDrag(e, container));
+    divider.addEventListener('dblclick', onDblClick);
+
+    syncPanes.forEach(s => {
+      const d = typeof s.divider === 'string' ? document.querySelector(s.divider) : s.divider;
+      const c = typeof s.container === 'string' ? document.querySelector(s.container) : s.container;
+      if (d) {
+        d.addEventListener('mousedown', (e) => startDrag(e, c || container));
+        d.addEventListener('dblclick', onDblClick);
+      }
+    });
+  }
+
+  // 1. TEXT COMPARE
+  createSplitter({
+    container: '#textView .text-compare-panes',
+    leftPane: '#textLeftPaneWrapper',
+    rightPane: '#textRightPaneWrapper',
+    divider: '#textCenterGutterWrapper',
+    storageKey: 'diffcore_split_text',
+    onResize: () => {
+      if (typeof syncHorizontalScrollWidths === 'function') syncHorizontalScrollWidths();
+      if (typeof renderVisibleTextWindow === 'function') renderVisibleTextWindow();
+    }
+  });
+
+  // 2. FOLDER COMPARE (Syncs Tree Table and Address Bar)
+  createSplitter({
+    container: '#folderDualContainer',
+    leftPane: '#folderLeftPaneWrapper',
+    rightPane: '#folderRightPaneWrapper',
+    divider: '#folderCenterDivider',
+    storageKey: 'diffcore_split_folder',
+    syncPanes: [
+      {
+        container: '#folderView .path-selectors-bar',
+        left: '#leftPathBox',
+        right: '#rightPathBox',
+        divider: '#folderPathCenterDivider'
+      }
+    ],
+    onResize: () => {
+      if (typeof renderVisibleWindow === 'function') {
+        if (typeof virtualScrollState !== 'undefined') {
+          virtualScrollState.lastRenderedStart = -1;
+          virtualScrollState.lastRenderedEnd = -1;
+        }
+        renderVisibleWindow(true);
+      }
+      if (typeof folderSyncScrollbar !== 'undefined' && folderSyncScrollbar) {
+        folderSyncScrollbar.update();
+      }
+    }
+  });
+
+  // 3. HEX COMPARE
+  createSplitter({
+    container: '#hexView .text-compare-panes',
+    leftPane: '#hexLeftPaneWrapper',
+    rightPane: '#hexRightPaneWrapper',
+    divider: '#hexCenterGutterWrapper',
+    storageKey: 'diffcore_split_hex'
+  });
+
+  // 4. PICTURE COMPARE
+  createSplitter({
+    container: '#pictureContainerPanes',
+    leftPane: '#picLeftPaneWrapper',
+    rightPane: '#picRightPaneWrapper',
+    divider: '#picCenterGutter',
+    storageKey: 'diffcore_split_pic'
+  });
+
+  // 5. TABLE COMPARE
+  createSplitter({
+    container: '#tblView .text-compare-panes',
+    leftPane: '#tblLeftPaneWrapper',
+    rightPane: '#tblRightPaneWrapper',
+    divider: '#tblCenterGutterWrapper',
+    storageKey: 'diffcore_split_tbl'
+  });
 }
 
 // --- UNIVERSAL INPUT CLIPBOARD & EDITING SHORTCUTS (macOS & Cross-Platform) ---
