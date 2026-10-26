@@ -5016,6 +5016,8 @@ async function performQuickCompare(item) {
       const updated = res.updatedItems[0];
       if (updated.status === 'same' || updated.status === 'identical') {
         item.status = 'identical';
+        const raw = appState.comparisonItems.find(x => x.relativePath === item.relativePath);
+        if (raw) raw.status = 'identical';
         if (appState.deepCompareCache) {
           appState.deepCompareCache.set(item.relativePath, {
             status: 'identical',
@@ -5029,6 +5031,8 @@ async function performQuickCompare(item) {
         refreshTreeAfterLocalOperation();
       } else {
         item.status = 'different';
+        const raw = appState.comparisonItems.find(x => x.relativePath === item.relativePath);
+        if (raw) raw.status = 'different';
         showToast(`Quick Compare: CRC Mismatch - Files are different`, 'warning');
         refreshTreeAfterLocalOperation();
       }
@@ -5044,41 +5048,93 @@ async function performQuickCompare(item) {
 function updateItemAfterCopy(it, clickedSide) {
   if (!it) return;
   const destBase = (clickedSide === 'left') ? appState.rightPath : appState.leftPath;
+  const rawItem = appState.comparisonItems.find(raw => raw.relativePath === it.relativePath);
 
-  if (clickedSide === 'left' && it.left) {
-    it.right = {
-      name: it.left.name,
-      size: it.left.size,
-      modified: it.left.modified,
-      mode: it.left.mode,
-      uid: it.left.uid,
-      gid: it.left.gid,
+  let newSideInfo = null;
+  if (clickedSide === 'left' && (it.left || (rawItem && rawItem.left))) {
+    const src = it.left || rawItem.left;
+    newSideInfo = {
+      name: src.name,
+      size: src.size,
+      modified: src.modified,
+      mode: src.mode,
+      uid: src.uid,
+      gid: src.gid,
       fullPath: `${destBase}/${it.relativePath}`
     };
+    if (rawItem) {
+      rawItem.right = newSideInfo;
+      rawItem.status = 'identical';
+    }
+    it.right = newSideInfo;
     it.hasRight = true;
     it.status = 'identical';
-  } else if (clickedSide === 'right' && it.right) {
-    it.left = {
-      name: it.right.name,
-      size: it.right.size,
-      modified: it.right.modified,
-      mode: it.right.mode,
-      uid: it.right.uid,
-      gid: it.right.gid,
+  } else if (clickedSide === 'right' && (it.right || (rawItem && rawItem.right))) {
+    const src = it.right || rawItem.right;
+    newSideInfo = {
+      name: src.name,
+      size: src.size,
+      modified: src.modified,
+      mode: src.mode,
+      uid: src.uid,
+      gid: src.gid,
       fullPath: `${destBase}/${it.relativePath}`
     };
+    if (rawItem) {
+      rawItem.left = newSideInfo;
+      rawItem.status = 'identical';
+    }
+    it.left = newSideInfo;
     it.hasLeft = true;
     it.status = 'identical';
+  }
+
+  if (!rawItem && newSideInfo) {
+    appState.comparisonItems.push({
+      relativePath: it.relativePath,
+      name: it.name,
+      isDirectory: !!it.isDirectory,
+      status: 'identical',
+      left: clickedSide === 'right' ? newSideInfo : it.left,
+      right: clickedSide === 'left' ? newSideInfo : it.right
+    });
   }
 
   if (appState.deepCompareCache) {
     appState.deepCompareCache.set(it.relativePath, {
       status: 'identical',
-      leftSize: it.left ? it.left.size : null,
-      rightSize: it.right ? it.right.size : null,
-      leftModified: it.left ? it.left.modified : null,
-      rightModified: it.right ? it.right.modified : null
+      leftSize: it.left ? it.left.size : (rawItem && rawItem.left ? rawItem.left.size : null),
+      rightSize: it.right ? it.right.size : (rawItem && rawItem.right ? rawItem.right.size : null),
+      leftModified: it.left ? it.left.modified : (rawItem && rawItem.left ? rawItem.left.modified : null),
+      rightModified: it.right ? it.right.modified : (rawItem && rawItem.right ? rawItem.right.modified : null)
     });
+  }
+
+  // Ensure parent directories in comparisonItems also have destSide populated
+  const parts = it.relativePath.split(/[\/\\]+/).filter(Boolean);
+  let acc = '';
+  for (let i = 0; i < parts.length - 1; i++) {
+    acc = acc ? `${acc}/${parts[i]}` : parts[i];
+    const parentRaw = appState.comparisonItems.find(x => x.relativePath === acc);
+    if (parentRaw) {
+      if (clickedSide === 'left' && !parentRaw.right) {
+        parentRaw.right = {
+          name: parts[i],
+          size: 0,
+          modified: new Date().toISOString(),
+          fullPath: `${destBase}/${acc}`
+        };
+        parentRaw.status = parentRaw.left ? 'identical' : 'orphan_right';
+      } else if (clickedSide === 'right' && !parentRaw.left) {
+        parentRaw.left = {
+          name: parts[i],
+          size: 0,
+          modified: new Date().toISOString(),
+          fullPath: `${destBase}/${acc}`
+        };
+        parentRaw.status = parentRaw.right ? 'identical' : 'orphan_left';
+      }
+    }
   }
 
   if (it.isDirectory) {
@@ -5095,7 +5151,6 @@ function updateItemAfterCopy(it, clickedSide) {
             gid: child.left.gid,
             fullPath: `${destBase}/${child.relativePath}`
           };
-          child.hasRight = true;
           child.status = 'identical';
         } else if (clickedSide === 'right' && child.right) {
           child.left = {
@@ -5107,7 +5162,6 @@ function updateItemAfterCopy(it, clickedSide) {
             gid: child.right.gid,
             fullPath: `${destBase}/${child.relativePath}`
           };
-          child.hasLeft = true;
           child.status = 'identical';
         }
         if (appState.deepCompareCache) {
@@ -5127,31 +5181,47 @@ function updateItemAfterCopy(it, clickedSide) {
 function updateItemAfterMove(it, clickedSide) {
   if (!it) return;
   const destBase = (clickedSide === 'left') ? appState.rightPath : appState.leftPath;
+  const rawItem = appState.comparisonItems.find(raw => raw.relativePath === it.relativePath);
 
-  if (clickedSide === 'left' && it.left) {
-    it.right = {
-      name: it.left.name,
-      size: it.left.size,
-      modified: it.left.modified,
-      mode: it.left.mode,
-      uid: it.left.uid,
-      gid: it.left.gid,
+  let newSideInfo = null;
+  if (clickedSide === 'left' && (it.left || (rawItem && rawItem.left))) {
+    const src = it.left || rawItem.left;
+    newSideInfo = {
+      name: src.name,
+      size: src.size,
+      modified: src.modified,
+      mode: src.mode,
+      uid: src.uid,
+      gid: src.gid,
       fullPath: `${destBase}/${it.relativePath}`
     };
+    if (rawItem) {
+      rawItem.right = newSideInfo;
+      rawItem.left = null;
+      rawItem.status = 'orphan_right';
+    }
+    it.right = newSideInfo;
     it.hasRight = true;
     it.left = null;
     it.hasLeft = false;
     it.status = 'orphan_right';
-  } else if (clickedSide === 'right' && it.right) {
-    it.left = {
-      name: it.right.name,
-      size: it.right.size,
-      modified: it.right.modified,
-      mode: it.right.mode,
-      uid: it.right.uid,
-      gid: it.right.gid,
+  } else if (clickedSide === 'right' && (it.right || (rawItem && rawItem.right))) {
+    const src = it.right || rawItem.right;
+    newSideInfo = {
+      name: src.name,
+      size: src.size,
+      modified: src.modified,
+      mode: src.mode,
+      uid: src.uid,
+      gid: src.gid,
       fullPath: `${destBase}/${it.relativePath}`
     };
+    if (rawItem) {
+      rawItem.left = newSideInfo;
+      rawItem.right = null;
+      rawItem.status = 'orphan_left';
+    }
+    it.left = newSideInfo;
     it.hasLeft = true;
     it.right = null;
     it.hasRight = false;
@@ -5160,6 +5230,33 @@ function updateItemAfterMove(it, clickedSide) {
 
   if (appState.deepCompareCache) {
     appState.deepCompareCache.delete(it.relativePath);
+  }
+
+  // Ensure parent directories in comparisonItems also have destSide populated
+  const parts = it.relativePath.split(/[\/\\]+/).filter(Boolean);
+  let acc = '';
+  for (let i = 0; i < parts.length - 1; i++) {
+    acc = acc ? `${acc}/${parts[i]}` : parts[i];
+    const parentRaw = appState.comparisonItems.find(x => x.relativePath === acc);
+    if (parentRaw) {
+      if (clickedSide === 'left' && !parentRaw.right) {
+        parentRaw.right = {
+          name: parts[i],
+          size: 0,
+          modified: new Date().toISOString(),
+          fullPath: `${destBase}/${acc}`
+        };
+        parentRaw.status = parentRaw.left ? 'identical' : 'orphan_right';
+      } else if (clickedSide === 'right' && !parentRaw.left) {
+        parentRaw.left = {
+          name: parts[i],
+          size: 0,
+          modified: new Date().toISOString(),
+          fullPath: `${destBase}/${acc}`
+        };
+        parentRaw.status = parentRaw.right ? 'identical' : 'orphan_left';
+      }
+    }
   }
 
   if (it.isDirectory) {
@@ -5176,9 +5273,7 @@ function updateItemAfterMove(it, clickedSide) {
             gid: child.left.gid,
             fullPath: `${destBase}/${child.relativePath}`
           };
-          child.hasRight = true;
           child.left = null;
-          child.hasLeft = false;
           child.status = 'orphan_right';
         } else if (clickedSide === 'right' && child.right) {
           child.left = {
@@ -5190,9 +5285,7 @@ function updateItemAfterMove(it, clickedSide) {
             gid: child.right.gid,
             fullPath: `${destBase}/${child.relativePath}`
           };
-          child.hasLeft = true;
           child.right = null;
-          child.hasRight = false;
           child.status = 'orphan_left';
         }
         if (appState.deepCompareCache) {
@@ -5205,15 +5298,30 @@ function updateItemAfterMove(it, clickedSide) {
 
 function updateItemAfterDelete(it, clickedSide) {
   if (!it) return;
+  const rawItem = appState.comparisonItems.find(raw => raw.relativePath === it.relativePath);
+
   if (clickedSide === 'left') {
+    if (rawItem) {
+      rawItem.left = null;
+      rawItem.status = rawItem.right ? 'orphan_right' : 'deleted';
+    }
     it.left = null;
     it.hasLeft = false;
     it.status = it.right ? 'orphan_right' : 'deleted';
   } else if (clickedSide === 'right') {
+    if (rawItem) {
+      rawItem.right = null;
+      rawItem.status = rawItem.left ? 'orphan_left' : 'deleted';
+    }
     it.right = null;
     it.hasRight = false;
     it.status = it.left ? 'orphan_left' : 'deleted';
   } else {
+    if (rawItem) {
+      rawItem.left = null;
+      rawItem.right = null;
+      rawItem.status = 'deleted';
+    }
     it.left = null;
     it.right = null;
     it.hasLeft = false;
@@ -5231,17 +5339,13 @@ function updateItemAfterDelete(it, clickedSide) {
       if (child.relativePath && child.relativePath.startsWith(prefix)) {
         if (clickedSide === 'left') {
           child.left = null;
-          child.hasLeft = false;
           child.status = child.right ? 'orphan_right' : 'deleted';
         } else if (clickedSide === 'right') {
           child.right = null;
-          child.hasRight = false;
           child.status = child.left ? 'orphan_left' : 'deleted';
         } else {
           child.left = null;
           child.right = null;
-          child.hasLeft = false;
-          child.hasRight = false;
           child.status = 'deleted';
         }
         if (appState.deepCompareCache) {
@@ -5253,7 +5357,7 @@ function updateItemAfterDelete(it, clickedSide) {
 }
 
 function refreshTreeAfterLocalOperation() {
-  appState.comparisonItems = appState.comparisonItems.filter(it => it.status !== 'deleted' && (it.hasLeft || it.hasRight));
+  appState.comparisonItems = appState.comparisonItems.filter(it => it.status !== 'deleted' && (it.left || it.right));
 
   const leftPane = document.getElementById('leftPaneScroll');
   const rightPane = document.getElementById('rightPaneScroll');
@@ -5294,8 +5398,9 @@ async function copyItemToSide(item, clickedSide) {
 
   let successCount = 0;
   for (const it of targetItems) {
-    const srcPath = (clickedSide === 'left' && it.left) ? it.left.fullPath :
-                    (clickedSide === 'right' && it.right) ? it.right.fullPath : null;
+    const srcPath = (clickedSide === 'left')
+      ? ((it.left && it.left.fullPath) || (appState.leftPath ? `${appState.leftPath}/${it.relativePath}` : null))
+      : ((it.right && it.right.fullPath) || (appState.rightPath ? `${appState.rightPath}/${it.relativePath}` : null));
     if (!srcPath) continue;
     const destPath = `${destBase}/${it.relativePath}`;
     appendLog(`Copying to ${sideName}: ${it.relativePath}`);
@@ -5337,8 +5442,9 @@ async function moveItemToSide(item, clickedSide) {
   if (confirm(confirmMsg)) {
     let successCount = 0;
     for (const it of targetItems) {
-      const srcPath = (clickedSide === 'left' && it.left) ? it.left.fullPath :
-                      (clickedSide === 'right' && it.right) ? it.right.fullPath : null;
+      const srcPath = (clickedSide === 'left')
+        ? ((it.left && it.left.fullPath) || (appState.leftPath ? `${appState.leftPath}/${it.relativePath}` : null))
+        : ((it.right && it.right.fullPath) || (appState.rightPath ? `${appState.rightPath}/${it.relativePath}` : null));
       if (!srcPath) continue;
       const destPath = `${destBase}/${it.relativePath}`;
       appendLog(`Moving to ${sideName}: ${it.relativePath}`);
@@ -5389,7 +5495,7 @@ async function moveItemToFolder(item, clickedSide) {
     const res = await window.api.moveItem(srcPath, destPath);
     if (res.success) {
       showToast(`Moved to ${targetDir}`, 'success');
-      runFolderComparison();
+      runFolderComparison(true);
     } else {
       showToast(`Move failed: ${res.error}`, 'error');
     }
@@ -5417,13 +5523,15 @@ async function deleteContextItem(item, clickedSide) {
 
   if (confirm(confirmMsg)) {
     for (const it of targetItems) {
-      if (clickedSide === 'left' && it.left) {
-        await window.api.deleteItem(it.left.fullPath);
-      } else if (clickedSide === 'right' && it.right) {
-        await window.api.deleteItem(it.right.fullPath);
+      const leftPath = (it.left && it.left.fullPath) || (appState.leftPath ? `${appState.leftPath}/${it.relativePath}` : null);
+      const rightPath = (it.right && it.right.fullPath) || (appState.rightPath ? `${appState.rightPath}/${it.relativePath}` : null);
+      if (clickedSide === 'left' && leftPath) {
+        await window.api.deleteItem(leftPath);
+      } else if (clickedSide === 'right' && rightPath) {
+        await window.api.deleteItem(rightPath);
       } else {
-        if (it.left) await window.api.deleteItem(it.left.fullPath);
-        if (it.right) await window.api.deleteItem(it.right.fullPath);
+        if (leftPath) await window.api.deleteItem(leftPath);
+        if (rightPath) await window.api.deleteItem(rightPath);
       }
       updateItemAfterDelete(it, clickedSide);
     }
