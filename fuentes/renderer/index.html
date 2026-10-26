@@ -737,13 +737,11 @@
 
       <div class="toolbar-separator"></div>
 
-      <!-- Difference status badge & Save buttons -->
+      <!-- Difference status badge -->
       <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
         <span id="textDiffBadge" style="background: rgba(255, 255, 255, 0.08); color: #aaa; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">
           Drag files into panels or click 📁 to browse
         </span>
-        <button class="btn-primary" id="btnSaveLeft" data-i18n="toolbar.save_left" onclick="saveTextFile('left')">💾 Save Left</button>
-        <button class="btn-primary" id="btnSaveRight" data-i18n="toolbar.save_right" onclick="saveTextFile('right')">💾 Save Right</button>
       </div>
     </header>
 
@@ -755,6 +753,9 @@
             <input type="text" id="textLeftPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'left')" onblur="handlePathInputBlur('left')" spellcheck="false">
             <button class="text-address-btn" id="btnCopyEntireLeft" title="Copiar documento izquierdo completo al portapapeles" onclick="copyEntireDocument('left')">📋</button>
             <button class="text-address-btn" title="Browse for Left File" onclick="browseTextFile('left')">📁▾</button>
+            <button class="text-address-btn text-address-save-btn" id="btnSaveLeft" title="Guardar archivo izquierdo (Ctrl+S / ⌘S)" onclick="saveTextFile('left')" disabled>
+              <span class="dc-icon dc-icon-save dc-icon-sm"></span>▾
+            </button>
           </div>
           <div class="text-address-sub-row" id="textLeftSubRow">
             <span class="text-sub-item text-sub-date" id="textLeftDate"></span>
@@ -798,6 +799,9 @@
             <input type="text" id="textRightPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'right')" onblur="handlePathInputBlur('right')" spellcheck="false">
             <button class="text-address-btn" id="btnCopyEntireRight" title="Copiar documento derecho completo al portapapeles" onclick="copyEntireDocument('right')">📋</button>
             <button class="text-address-btn" title="Browse for Right File" onclick="browseTextFile('right')">📁▾</button>
+            <button class="text-address-btn text-address-save-btn" id="btnSaveRight" title="Guardar archivo derecho" onclick="saveTextFile('right')" disabled>
+              <span class="dc-icon dc-icon-save dc-icon-sm"></span>▾
+            </button>
           </div>
           <div class="text-address-sub-row" id="textRightSubRow">
             <span class="text-sub-item text-sub-date" id="textRightDate"></span>

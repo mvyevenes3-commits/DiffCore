@@ -2685,7 +2685,7 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   border-radius: 6px;
   padding: 4px 0;
   z-index: 10000;
-  min-width: 220px;
+  min-width: 250px;
   display: none;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 13px;
@@ -2694,7 +2694,7 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
 }
 
 .context-menu-item {
-  padding: 4px 16px;
+  padding: 4px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2728,6 +2728,15 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   gap: 8px;
 }
 
+.ctx-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .ctx-shortcut {
   font-size: 11px;
   color: #888888;
@@ -2755,7 +2764,7 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75), 0 0 1px rgba(255, 255, 255, 0.15);
   border-radius: 6px;
   padding: 4px 0;
-  min-width: 170px;
+  min-width: 190px;
   display: none;
   z-index: 10001;
 }
@@ -3226,6 +3235,55 @@ body.theme-light .text-left-gutter-scroll {
   background: #2c323d;
   color: #fff;
   border-color: #4a5263;
+}
+/* Beyond Compare style Save icon button on pane address bar */
+.text-address-btn.text-address-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 0 5px;
+  color: #888888;
+  opacity: 0.6;
+  border-color: #383e4a;
+  transition: all 0.15s ease;
+}
+.text-address-btn.text-address-save-btn .dc-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+.text-address-btn.text-address-save-btn:hover:not(:disabled) {
+  background: #2c323d;
+  color: #fff;
+  border-color: #4a5263;
+  opacity: 1;
+}
+.text-address-btn.text-address-save-btn:hover:not(:disabled) .dc-icon {
+  opacity: 1;
+}
+.text-address-btn.text-address-save-btn.dirty {
+  opacity: 1;
+  color: #38bdf8;
+  border-color: #0284c7;
+  background: rgba(2, 132, 199, 0.18);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+}
+.text-address-btn.text-address-save-btn.dirty .dc-icon {
+  opacity: 1;
+  filter: drop-shadow(0 0 2px #38bdf8);
+}
+.text-address-btn.text-address-save-btn.dirty:hover {
+  background: rgba(2, 132, 199, 0.3);
+  border-color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+.text-address-btn.text-address-save-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+  border-color: transparent;
+  background: transparent;
 }
 .text-address-sub-row {
   display: flex;

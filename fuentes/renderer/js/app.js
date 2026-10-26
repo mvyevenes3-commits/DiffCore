@@ -4569,171 +4569,134 @@ function handleTableContextMenu(event, side) {
   const menu = document.getElementById('folderContextMenu');
   if (!menu) return;
 
+  const isMac = (navigator.platform && navigator.platform.toUpperCase().indexOf('MAC') >= 0) || (navigator.userAgent && navigator.userAgent.includes('Mac'));
+  const cmdKey = isMac ? '⌘' : 'Ctrl+';
+  const copyShortcut = isLeft ? `${cmdKey}R` : `${cmdKey}L`;
+  const copyIcon = isLeft ? 'dc-icon-copy-right-yellow' : 'dc-icon-copy-left-yellow';
+  const moveIcon = isLeft ? 'dc-icon-move-right-red' : 'dc-icon-move-left-red';
+
+  const ctxItem = (action, iconClass, label, shortcut = '') => `
+    <div class="context-menu-item" onclick="contextAction('${action}')">
+      <div class="ctx-label">
+        <span class="ctx-icon ${iconClass}"></span>
+        <span>${label}</span>
+      </div>
+      ${shortcut ? `<span class="ctx-shortcut">${shortcut}</span>` : ''}
+    </div>
+  `;
+
   let menuHtml = '';
   if (item.isDirectory) {
-    // IMAGE 1: Authentic Folder Context Menu
+    // Authentic Folder Context Menu (Beyond Compare style)
     const folderStateLabel = item.isOpen ? t('ctx.close_folder', 'Close Folder') : t('ctx.open_folder', 'Open Folder');
     const folderStateAction = item.isOpen ? 'close_folder' : 'open_folder';
+    const folderStateIcon = item.isOpen ? 'dc-icon-folder' : 'dc-icon-open-folder';
+
     menuHtml = `
-      <div class="context-menu-item" onclick="contextAction('${folderStateAction}')">
-        <span>${folderStateLabel}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('open_subfolders')">
-        <span>${t('ctx.open_subfolders', 'Open Subfolders')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('close_subfolders')">
-        <span>${t('ctx.close_subfolders', 'Close Subfolders')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('set_base_folders')">
-        <span>${t('ctx.set_base_folders', 'Set as Base Folders')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('open_in_new_view')">
-        <span>${t('ctx.open_in_new_view', 'Open in New View')}</span>
-      </div>
+      ${ctxItem(folderStateAction, folderStateIcon, folderStateLabel, 'Space')}
+      ${ctxItem('open_subfolders', 'dc-icon-open-subfolders', t('ctx.open_subfolders', 'Open Subfolders'))}
+      ${ctxItem('close_subfolders', 'dc-icon-close-subfolders', t('ctx.close_subfolders', 'Close Subfolders'))}
+      ${ctxItem('set_base_folders', 'dc-icon-base-folder', t('ctx.set_base_folders', 'Set as Base Folders'))}
+      ${ctxItem('open_in_new_view', 'dc-icon-new-window', t('ctx.open_in_new_view', 'Open in New View'))}
       <div class="context-menu-item has-submenu">
-        <span>${t('ctx.open_with', 'Open With')}</span>
+        <div class="ctx-label">
+          <span class="ctx-icon dc-icon-app"></span>
+          <span>${t('ctx.open_with', 'Open With')}</span>
+        </div>
         <span class="ctx-arrow">›</span>
         <div class="context-submenu">
-          <div class="context-menu-item" onclick="contextAction('open_with_finder')"><span>${t('ctx.finder', 'Finder')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_terminal')"><span>${t('ctx.terminal', 'Terminal')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_default')"><span>${t('ctx.system_default', 'System Default')}</span></div>
+          ${ctxItem('open_with_finder', 'dc-icon-folder', isMac ? 'Finder' : 'Explorador')}
+          ${ctxItem('open_with_terminal', 'dc-icon-terminal', 'Terminal')}
+          ${ctxItem('open_with_default', 'dc-icon-app', t('ctx.system_default', 'System Default'))}
         </div>
       </div>
       <div class="context-menu-separator"></div>
-      <div class="context-menu-item" onclick="contextAction('compare_contents')">
-        <span>${t('ctx.compare_contents', 'Compare Contents...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('copy_to_side')">
-        <span>${copySideLabel}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('move_to_side')">
-        <span>${moveSideLabel}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('copy_to_folder')">
-        <span>${t('ctx.copy_to_folder', 'Copy to Folder...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('move_to_folder')">
-        <span>${t('ctx.move_to_folder', 'Move to Folder...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('delete')">
-        <span>${t('ctx.delete', 'Delete...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('rename')">
-        <span>${t('ctx.rename', 'Rename...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('attributes')">
-        <span>${t('ctx.attributes', 'Attributes...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('touch')">
-        <span>${t('ctx.touch', 'Touch...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('exclude')">
-        <span>${t('ctx.exclude', 'Exclude...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('new_folder')">
-        <span>${t('ctx.new_folder', 'New Folder...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('copy_filename')">
-        <span>${t('ctx.copy_filename', 'Copy Filename')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('ignored')">
-        <span>${t('ctx.ignored', 'Ignored')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('refresh_selection')">
-        <span>${t('ctx.refresh_selection', 'Refresh Selection')}</span>
-      </div>
+      ${ctxItem('compare_contents', 'dc-icon-specs', t('ctx.compare_contents', 'Compare Contents...'))}
+      ${ctxItem('copy_to_side', copyIcon, copySideLabel, copyShortcut)}
+      ${ctxItem('move_to_side', moveIcon, moveSideLabel)}
+      ${ctxItem('copy_to_folder', 'dc-icon-copy-folder', t('ctx.copy_to_folder', 'Copy to Folder...'))}
+      ${ctxItem('move_to_folder', 'dc-icon-move-folder', t('ctx.move_to_folder', 'Move to Folder...'))}
+      ${ctxItem('delete', 'dc-icon-delete-red', t('ctx.delete', 'Delete...'), 'Del')}
+      ${ctxItem('rename', 'dc-icon-rename', t('ctx.rename', 'Rename...'), 'F2')}
+      ${ctxItem('attributes', 'dc-icon-attributes', t('ctx.attributes', 'Attributes...'))}
+      ${ctxItem('touch', 'dc-icon-touch', t('ctx.touch', 'Touch...'))}
+      ${ctxItem('exclude', 'dc-icon-exclude', t('ctx.exclude', 'Exclude...'))}
+      ${ctxItem('new_folder', 'dc-icon-new-folder', t('ctx.new_folder', 'New Folder...'), 'Ins')}
+      ${ctxItem('copy_filename', 'dc-icon-clipboard', t('ctx.copy_filename', 'Copy Folder Name'))}
+      ${ctxItem('ignored', item.isIgnored ? 'dc-icon-ignored' : 'dc-icon-empty', t('ctx.ignored', 'Ignored'))}
+      ${ctxItem('refresh_selection', 'dc-icon-refresh', t('ctx.refresh_selection', 'Refresh Selection'), 'Shift+F5')}
+      ${ctxItem('file_compare_report', 'dc-icon-report', t('ctx.folder_compare_report', 'Folder Compare Report...'))}
       <div class="context-menu-separator"></div>
       <div class="context-menu-item has-submenu">
-        <span>${t('ctx.synchronize', 'Synchronize')}</span>
+        <div class="ctx-label">
+          <span class="ctx-icon dc-icon-sync"></span>
+          <span>${t('ctx.synchronize', 'Synchronize')}</span>
+        </div>
         <span class="ctx-arrow">›</span>
         <div class="context-submenu">
-          <div class="context-menu-item" onclick="contextAction('sync_update_right')"><span>${t('ctx.sync_update_right', 'Update Right')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_update_left')"><span>${t('ctx.sync_update_left', 'Update Left')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_mirror_right')"><span>${t('ctx.sync_mirror_right', 'Mirror Right')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_mirror_left')"><span>${t('ctx.sync_mirror_left', 'Mirror Left')}</span></div>
+          ${ctxItem('sync_update_right', 'dc-icon-copy-right-yellow', t('ctx.sync_update_right', 'Update Right'))}
+          ${ctxItem('sync_update_left', 'dc-icon-copy-left-yellow', t('ctx.sync_update_left', 'Update Left'))}
+          ${ctxItem('sync_mirror_right', 'dc-icon-swap', t('ctx.sync_mirror_right', 'Mirror Right'))}
+          ${ctxItem('sync_mirror_left', 'dc-icon-swap', t('ctx.sync_mirror_left', 'Mirror Left'))}
         </div>
       </div>
     `;
   } else {
-    // IMAGE 2: Authentic File Context Menu
+    // Authentic File Context Menu (Beyond Compare style)
     menuHtml = `
-      <div class="context-menu-item" onclick="contextAction('open')">
-        <span>${t('ctx.open', 'Open')}</span>
-      </div>
+      ${ctxItem('open', 'dc-icon-empty', t('ctx.open', 'Open'), 'Enter')}
       <div class="context-menu-item has-submenu">
-        <span>${t('ctx.open_with', 'Open With')}</span>
+        <div class="ctx-label">
+          <span class="ctx-icon dc-icon-empty"></span>
+          <span>${t('ctx.open_with', 'Open With')}</span>
+        </div>
         <span class="ctx-arrow">›</span>
         <div class="context-submenu">
-          <div class="context-menu-item" onclick="contextAction('open_with_finder')"><span>${t('ctx.finder', 'Finder')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_default')"><span>${t('ctx.system_default', 'System Default')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_hex')"><span>${t('ctx.hex_compare', 'Hex Compare')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('open_with_text')"><span>${t('ctx.text_compare', 'Text Compare')}</span></div>
+          ${ctxItem('open_with_default', 'dc-icon-app', t('ctx.associated_app', 'Associated Application'))}
+          ${ctxItem('open_with_text', 'dc-icon-edit', t('ctx.text_edit', 'Text Edit'))}
+          ${ctxItem('open_with_patch', 'dc-icon-text-patch', t('ctx.text_patch', 'Text Patch'))}
+          ${ctxItem('open_with_text_compare', 'dc-icon-file-text', t('ctx.text_compare', 'Text Compare'))}
+          ${ctxItem('open_with_merge', 'dc-icon-merge', t('ctx.text_merge', 'Text Merge'))}
+          ${ctxItem('open_with_hex', 'dc-icon-hex', t('ctx.hex_compare', 'Hex Compare'))}
+          ${ctxItem('open_with_media', 'dc-icon-music', t('ctx.media_compare', 'Media Compare'))}
+          ${ctxItem('open_with_picture', 'dc-icon-picture', t('ctx.picture_compare', 'Picture Compare'))}
+          ${ctxItem('open_with_table', 'dc-icon-table', t('ctx.table_compare', 'Table Compare'))}
+          <div class="context-menu-separator"></div>
+          ${ctxItem('open_with_finder', 'dc-icon-folder', isMac ? 'Finder' : 'Explorador')}
+          ${ctxItem('open_with_terminal', 'dc-icon-terminal', 'Terminal')}
         </div>
       </div>
-      <div class="context-menu-item" onclick="contextAction('quick_compare')">
-        <span>${t('ctx.quick_compare', 'Quick Compare')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('compare_to')">
-        <span>${t('ctx.compare_to', 'Compare To...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('align_with')">
-        <span>${t('ctx.align_with', 'Align With...')}</span>
-      </div>
+      ${ctxItem('quick_compare', 'dc-icon-lightning', t('ctx.quick_compare', 'Quick Compare'))}
+      ${ctxItem('compare_to', 'dc-icon-empty', t('ctx.compare_to', 'Compare To...'), 'F7')}
+      ${ctxItem('align_with', 'dc-icon-empty', t('ctx.align_with', 'Align With...'), 'F6')}
       <div class="context-menu-separator"></div>
-      <div class="context-menu-item" onclick="contextAction('compare_contents')">
-        <span>${t('ctx.compare_contents', 'Compare Contents...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('copy_to_side')">
-        <span>${copySideLabel}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('move_to_side')">
-        <span>${moveSideLabel}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('copy_to_folder')">
-        <span>${t('ctx.copy_to_folder', 'Copy to Folder...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('move_to_folder')">
-        <span>${t('ctx.move_to_folder', 'Move to Folder...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('delete')">
-        <span>${t('ctx.delete', 'Delete...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('rename')">
-        <span>${t('ctx.rename', 'Rename...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('attributes')">
-        <span>${t('ctx.attributes', 'Attributes...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('touch')">
-        <span>${t('ctx.touch', 'Touch...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('exclude')">
-        <span>${t('ctx.exclude', 'Exclude...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('new_folder')">
-        <span>${t('ctx.new_folder', 'New Folder...')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('copy_filename')">
-        <span>${t('ctx.copy_filename', 'Copy Filename')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('ignored')">
-        <span>${t('ctx.ignored', 'Ignored')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('refresh_selection')">
-        <span>${t('ctx.refresh_selection', 'Refresh Selection')}</span>
-      </div>
-      <div class="context-menu-item" onclick="contextAction('file_compare_report')">
-        <span>${t('ctx.file_compare_report', 'File Compare Report...')}</span>
-      </div>
+      ${ctxItem('compare_contents', 'dc-icon-specs', t('ctx.compare_contents', 'Compare Contents...'))}
+      ${ctxItem('copy_to_side', copyIcon, copySideLabel, copyShortcut)}
+      ${ctxItem('move_to_side', moveIcon, moveSideLabel)}
+      ${ctxItem('copy_to_folder', 'dc-icon-copy-folder', t('ctx.copy_to_folder', 'Copy to Folder...'))}
+      ${ctxItem('move_to_folder', 'dc-icon-move-folder', t('ctx.move_to_folder', 'Move to Folder...'))}
+      ${ctxItem('delete', 'dc-icon-delete-red', t('ctx.delete', 'Delete...'), 'Del')}
+      ${ctxItem('rename', 'dc-icon-rename', t('ctx.rename', 'Rename...'), 'F2')}
+      ${ctxItem('attributes', 'dc-icon-attributes', t('ctx.attributes', 'Attributes...'))}
+      ${ctxItem('touch', 'dc-icon-touch', t('ctx.touch', 'Touch...'))}
+      ${ctxItem('exclude', 'dc-icon-exclude', t('ctx.exclude', 'Exclude...'))}
+      ${ctxItem('new_folder', 'dc-icon-new-folder', t('ctx.new_folder', 'New Folder...'), 'Ins')}
+      ${ctxItem('copy_filename', 'dc-icon-clipboard', t('ctx.copy_filename', 'Copy Filename'))}
+      ${ctxItem('ignored', item.isIgnored ? 'dc-icon-ignored' : 'dc-icon-empty', t('ctx.ignored', 'Ignored'))}
+      ${ctxItem('refresh_selection', 'dc-icon-refresh', t('ctx.refresh_selection', 'Refresh Selection'), 'Shift+F5')}
+      ${ctxItem('file_compare_report', 'dc-icon-report', t('ctx.file_compare_report', 'File Compare Report...'))}
       <div class="context-menu-separator"></div>
       <div class="context-menu-item has-submenu">
-        <span>${t('ctx.synchronize', 'Synchronize')}</span>
+        <div class="ctx-label">
+          <span class="ctx-icon dc-icon-sync"></span>
+          <span>${t('ctx.synchronize', 'Synchronize')}</span>
+        </div>
         <span class="ctx-arrow">›</span>
         <div class="context-submenu">
-          <div class="context-menu-item" onclick="contextAction('sync_update_right')"><span>${t('ctx.sync_update_right', 'Update Right')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_update_left')"><span>${t('ctx.sync_update_left', 'Update Left')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_mirror_right')"><span>${t('ctx.sync_mirror_right', 'Mirror Right')}</span></div>
-          <div class="context-menu-item" onclick="contextAction('sync_mirror_left')"><span>${t('ctx.sync_mirror_left', 'Mirror Left')}</span></div>
+          ${ctxItem('sync_update_right', 'dc-icon-copy-right-yellow', t('ctx.sync_update_right', 'Update Right'))}
+          ${ctxItem('sync_update_left', 'dc-icon-copy-left-yellow', t('ctx.sync_update_left', 'Update Left'))}
+          ${ctxItem('sync_mirror_right', 'dc-icon-swap', t('ctx.sync_mirror_right', 'Mirror Right'))}
+          ${ctxItem('sync_mirror_left', 'dc-icon-swap', t('ctx.sync_mirror_left', 'Mirror Left'))}
         </div>
       </div>
     `;
@@ -4823,10 +4786,31 @@ async function contextAction(action) {
       openHexCompareView(leftPath, rightPath, item.name);
       break;
     }
-    case 'open_with_text': {
+    case 'open_with_text':
+    case 'open_with_patch':
+    case 'open_with_text_compare':
+    case 'open_with_merge': {
       const leftPath = item.left ? item.left.fullPath : '';
       const rightPath = item.right ? item.right.fullPath : '';
       openTextCompare(leftPath, rightPath, item.name, true);
+      break;
+    }
+    case 'open_with_picture': {
+      const leftPath = item.left ? item.left.fullPath : '';
+      const rightPath = item.right ? item.right.fullPath : '';
+      openPictureCompare(leftPath, rightPath, item.name);
+      break;
+    }
+    case 'open_with_table': {
+      const leftPath = item.left ? item.left.fullPath : '';
+      const rightPath = item.right ? item.right.fullPath : '';
+      openTableCompare(leftPath, rightPath, item.name);
+      break;
+    }
+    case 'open_with_media': {
+      const leftPath = item.left ? item.left.fullPath : '';
+      const rightPath = item.right ? item.right.fullPath : '';
+      openMediaCompare(leftPath, rightPath, item.name);
       break;
     }
     case 'quick_compare':
@@ -12065,20 +12049,32 @@ function updateSaveButtonStatusAfterHistory() {
   const saveBtnL = document.getElementById('btnSaveLeft');
   const saveBtnR = document.getElementById('btnSaveRight');
   const file = appState.currentTextFile;
-  if (!file) return;
+  if (!file) {
+    if (saveBtnL) { saveBtnL.disabled = true; saveBtnL.classList.remove('dirty'); saveBtnL.style.boxShadow = ''; }
+    if (saveBtnR) { saveBtnR.disabled = true; saveBtnR.classList.remove('dirty'); saveBtnR.style.boxShadow = ''; }
+    return;
+  }
 
   if (saveBtnL) {
-    if (file.leftContent !== file.originalLeftContent) {
-      saveBtnL.style.boxShadow = '0 0 10px #388bfd';
+    const isDirtyL = file.leftContent !== file.originalLeftContent;
+    saveBtnL.classList.toggle('dirty', isDirtyL);
+    saveBtnL.disabled = !isDirtyL;
+    if (isDirtyL) {
+      saveBtnL.title = 'Guardar cambios en archivo izquierdo (Ctrl+S / ⌘S)';
     } else {
+      saveBtnL.title = 'Sin cambios para guardar en archivo izquierdo';
       saveBtnL.style.boxShadow = '';
     }
   }
 
   if (saveBtnR) {
-    if (file.rightContent !== file.originalRightContent) {
-      saveBtnR.style.boxShadow = '0 0 10px #388bfd';
+    const isDirtyR = file.rightContent !== file.originalRightContent;
+    saveBtnR.classList.toggle('dirty', isDirtyR);
+    saveBtnR.disabled = !isDirtyR;
+    if (isDirtyR) {
+      saveBtnR.title = 'Guardar cambios en archivo derecho';
     } else {
+      saveBtnR.title = 'Sin cambios para guardar en archivo derecho';
       saveBtnR.style.boxShadow = '';
     }
   }
@@ -12700,11 +12696,12 @@ async function copyDiffSection(sectionIndex, direction) {
 
     const saveBtn = document.getElementById('btnSaveLeft');
     if (saveBtn) {
-      saveBtn.style.boxShadow = '0 0 10px #388bfd';
+      saveBtn.classList.add('dirty');
+      saveBtn.disabled = false;
     }
     const msgL = window.i18n
       ? window.i18n.t('toast.copied_section_left', { idx: sectionIndex + 1, lines: sec.rightLineCount })
-      : `Copied section ${sectionIndex + 1} (${sec.rightLineCount} lines) to Left. Click '💾 Save Left' to write.`;
+      : `Copied section ${sectionIndex + 1} (${sec.rightLineCount} lines) to Left. Click '💾' to write.`;
     showToast(msgL, 'success');
   } else if (direction === 'to_right') {
     let rightLines = appState.currentTextFile.rightContent ? appState.currentTextFile.rightContent.split(/\r\n|\r|\n/) : [];
@@ -12716,11 +12713,12 @@ async function copyDiffSection(sectionIndex, direction) {
 
     const saveBtn = document.getElementById('btnSaveRight');
     if (saveBtn) {
-      saveBtn.style.boxShadow = '0 0 10px #388bfd';
+      saveBtn.classList.add('dirty');
+      saveBtn.disabled = false;
     }
     const msgR = window.i18n
       ? window.i18n.t('toast.copied_section_right', { idx: sectionIndex + 1, lines: sec.leftLineCount })
-      : `Copied section ${sectionIndex + 1} (${sec.leftLineCount} lines) to Right. Click '💾 Save Right' to write.`;
+      : `Copied section ${sectionIndex + 1} (${sec.leftLineCount} lines) to Right. Click '💾' to write.`;
     showToast(msgR, 'success');
   }
 
@@ -12732,6 +12730,7 @@ async function copyDiffSection(sectionIndex, direction) {
   appState.currentTextFile.diffResult = updatedDiff;
   renderTextDiff(updatedDiff);
   updateUndoRedoButtons();
+  updateSaveButtonStatusAfterHistory();
 
   const opts = appState.diffOptions || DEFAULT_DIFF_OPTIONS;
   if (opts.nextDiffAfterCopy && updatedDiff && updatedDiff.sections && updatedDiff.sections.length > 0) {
@@ -12796,7 +12795,12 @@ async function saveTextFile(side) {
       else file.originalRightContent = content;
     }
 
-    if (saveBtn) saveBtn.style.boxShadow = '';
+    if (saveBtn) {
+      saveBtn.classList.remove('dirty');
+      saveBtn.disabled = true;
+      saveBtn.style.boxShadow = '';
+    }
+    updateSaveButtonStatusAfterHistory();
     appendLog(`Saved ${side} file: ${path}`);
     showToast(`Saved ${side} file successfully!`, 'success');
     updateTextTabTitle();
