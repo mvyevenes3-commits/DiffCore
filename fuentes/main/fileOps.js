@@ -21,9 +21,12 @@ function copyItem(srcPath, destPath) {
 
     const stat = fs.statSync(srcPath);
     if (stat.isDirectory()) {
-      fs.cpSync(srcPath, destPath, { recursive: true, force: true });
+      fs.cpSync(srcPath, destPath, { recursive: true, force: true, preserveTimestamps: true });
     } else {
       fs.copyFileSync(srcPath, destPath);
+      try {
+        fs.utimesSync(destPath, stat.atime, stat.mtime);
+      } catch {}
     }
     return { success: true };
   } catch (err) {

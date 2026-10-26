@@ -125,6 +125,7 @@ let appState = {
   exclusions: loadExclusionsConfig(),
   tableSearchQuery: '',
   contextItem: null,
+  deepCompareCache: new Map(),
   
   // Text Compare State
   currentTextFile: {
@@ -3361,6 +3362,12 @@ async function runFolderComparison(preserveOpenState = false) {
   appState.lastComparedLeft = left;
   appState.lastComparedRight = right;
 
+  // Save current scroll position to restore when preserving state
+  const leftPane = document.getElementById('leftPaneScroll');
+  const rightPane = document.getElementById('rightPaneScroll');
+  const savedScrollTop = leftPane ? leftPane.scrollTop : (rightPane ? rightPane.scrollTop : 0);
+  const savedScrollLeft = leftPane ? leftPane.scrollLeft : 0;
+
   // Clear folder open state and selection unless preserving open state
   if (!preserveOpenState) {
     appState.folderOpenState.clear();
@@ -3368,6 +3375,7 @@ async function runFolderComparison(preserveOpenState = false) {
     appState.selectedPaths.clear();
     appState.selectedIndex = -1;
     appState.lastClickedIndex = -1;
+    if (appState.deepCompareCache) appState.deepCompareCache.clear();
   }
 
   appendLog(`Running comparison: ${left} <=> ${right}`);
@@ -3380,10 +3388,37 @@ async function runFolderComparison(preserveOpenState = false) {
   }
 
   if (result.success) {
+    // Re-apply cached deep comparison (content) results for files that have not changed on disk
+    if (appState.deepCompareCache && appState.deepCompareCache.size > 0) {
+      result.items.forEach(it => {
+        const cached = appState.deepCompareCache.get(it.relativePath);
+        if (cached && it.left && it.right) {
+          const leftSame = it.left.size === cached.leftSize && it.left.modified === cached.leftModified;
+          const rightSame = it.right.size === cached.rightSize && it.right.modified === cached.rightModified;
+          if (leftSame && rightSame) {
+            it.status = cached.status;
+          }
+        }
+      });
+    }
+
     appState.comparisonItems = result.items;
     appState.treeRoot = buildComparisonTree(result.items);
     applyFilterAndRender();
     updateStatusBar();
+
+    // Restore exact scroll position when preserving open state
+    if (preserveOpenState) {
+      requestAnimationFrame(() => {
+        if (leftPane) {
+          leftPane.scrollTop = savedScrollTop;
+          leftPane.scrollLeft = savedScrollLeft;
+        }
+        if (rightPane) {
+          rightPane.scrollTop = savedScrollTop;
+        }
+      });
+    }
 
     // Auto-save folder comparison session to history
     if (left && right) {
@@ -3910,7 +3945,12 @@ function copySelectedToRight() {
   if (appState.selectedIndex >= 0 && appState.filteredItems[appState.selectedIndex]) {
     const item = appState.filteredItems[appState.selectedIndex];
     appState.contextItem = item;
-    const side = appState.selectedSide || 'left';
+    let side = appState.selectedSide || appState.lastClickedSide || 'left';
+    if (item.hasRight && !item.hasLeft) {
+      side = 'right';
+    } else if (item.hasLeft && !item.hasRight) {
+      side = 'left';
+    }
     copyItemToSide(item, side);
   }
 }
@@ -4095,7 +4135,8 @@ function renderVisibleWindow(force = false) {
       if (item.hasLeft) {
         const leftSizeText = isDir ? formatTreeSize(item.leftSize) : (item.left ? formatTreeSize(item.left.size) : '');
         const leftDateText = isDir ? formatTreeDate(item.leftMtime) : (item.left ? formatTreeDate(item.left.modified) : '');
-        const leftLabelClass = isOrphanLeft ? 'text-orphan' : '';
+        const leftLabelClass = isDiff ? 'text-diff' : (isOrphanLeft ? 'text-orphan' : '');
+        const leftMetaClass = isDiff ? 'text-diff' : '';
 
         leftRowsHtml += `
           <tr class="diff-row ${zebraClass} ${leftSelectedClass}" data-index="${index}">
@@ -4107,8 +4148,8 @@ function renderVisibleWindow(force = false) {
                 <span class="tree-label ${leftLabelClass}">${escapeHtml(item.name)}</span>
               </div>
             </td>
-            <td style="text-align: right; color: ${isDir ? '#888' : 'inherit'};">${leftSizeText}</td>
-            <td style="color: ${isDir ? '#888' : 'inherit'};">${leftDateText}</td>
+            <td style="text-align: right;" class="${leftMetaClass}">${leftSizeText}</td>
+            <td class="${leftMetaClass}">${leftDateText}</td>
             <td class="diff-marker-cell">${diffMarkerBox}</td>
           </tr>`;
       } else {
@@ -4973,18 +5014,265 @@ async function performQuickCompare(item) {
     );
     if (res && res.updatedItems && res.updatedItems[0]) {
       const updated = res.updatedItems[0];
-      if (updated.status === 'same') {
+      if (updated.status === 'same' || updated.status === 'identical') {
+        item.status = 'identical';
+        if (appState.deepCompareCache) {
+          appState.deepCompareCache.set(item.relativePath, {
+            status: 'identical',
+            leftSize: item.left ? item.left.size : null,
+            rightSize: item.right ? item.right.size : null,
+            leftModified: item.left ? item.left.modified : null,
+            rightModified: item.right ? item.right.modified : null
+          });
+        }
         showToast(`Quick Compare: Binary identical CRC (${formatTreeSize(item.left.size)})`, 'success');
+        refreshTreeAfterLocalOperation();
       } else {
+        item.status = 'different';
         showToast(`Quick Compare: CRC Mismatch - Files are different`, 'warning');
+        refreshTreeAfterLocalOperation();
       }
-      runFolderComparison();
     } else {
       showToast(`Quick Compare: Content differs`, 'warning');
     }
   } catch (err) {
     showToast(`Quick Compare: ${err.message}`, 'error');
   }
+}
+
+// --- IN-MEMORY TREE UPDATE HELPERS (0ms latency, zero re-scan, preserves folder state & scroll) ---
+function updateItemAfterCopy(it, clickedSide) {
+  if (!it) return;
+  const destBase = (clickedSide === 'left') ? appState.rightPath : appState.leftPath;
+
+  if (clickedSide === 'left' && it.left) {
+    it.right = {
+      name: it.left.name,
+      size: it.left.size,
+      modified: it.left.modified,
+      mode: it.left.mode,
+      uid: it.left.uid,
+      gid: it.left.gid,
+      fullPath: `${destBase}/${it.relativePath}`
+    };
+    it.hasRight = true;
+    it.status = 'identical';
+  } else if (clickedSide === 'right' && it.right) {
+    it.left = {
+      name: it.right.name,
+      size: it.right.size,
+      modified: it.right.modified,
+      mode: it.right.mode,
+      uid: it.right.uid,
+      gid: it.right.gid,
+      fullPath: `${destBase}/${it.relativePath}`
+    };
+    it.hasLeft = true;
+    it.status = 'identical';
+  }
+
+  if (appState.deepCompareCache) {
+    appState.deepCompareCache.set(it.relativePath, {
+      status: 'identical',
+      leftSize: it.left ? it.left.size : null,
+      rightSize: it.right ? it.right.size : null,
+      leftModified: it.left ? it.left.modified : null,
+      rightModified: it.right ? it.right.modified : null
+    });
+  }
+
+  if (it.isDirectory) {
+    const prefix = `${it.relativePath}/`;
+    appState.comparisonItems.forEach(child => {
+      if (child.relativePath && child.relativePath.startsWith(prefix)) {
+        if (clickedSide === 'left' && child.left) {
+          child.right = {
+            name: child.left.name,
+            size: child.left.size,
+            modified: child.left.modified,
+            mode: child.left.mode,
+            uid: child.left.uid,
+            gid: child.left.gid,
+            fullPath: `${destBase}/${child.relativePath}`
+          };
+          child.hasRight = true;
+          child.status = 'identical';
+        } else if (clickedSide === 'right' && child.right) {
+          child.left = {
+            name: child.right.name,
+            size: child.right.size,
+            modified: child.right.modified,
+            mode: child.right.mode,
+            uid: child.right.uid,
+            gid: child.right.gid,
+            fullPath: `${destBase}/${child.relativePath}`
+          };
+          child.hasLeft = true;
+          child.status = 'identical';
+        }
+        if (appState.deepCompareCache) {
+          appState.deepCompareCache.set(child.relativePath, {
+            status: 'identical',
+            leftSize: child.left ? child.left.size : null,
+            rightSize: child.right ? child.right.size : null,
+            leftModified: child.left ? child.left.modified : null,
+            rightModified: child.right ? child.right.modified : null
+          });
+        }
+      }
+    });
+  }
+}
+
+function updateItemAfterMove(it, clickedSide) {
+  if (!it) return;
+  const destBase = (clickedSide === 'left') ? appState.rightPath : appState.leftPath;
+
+  if (clickedSide === 'left' && it.left) {
+    it.right = {
+      name: it.left.name,
+      size: it.left.size,
+      modified: it.left.modified,
+      mode: it.left.mode,
+      uid: it.left.uid,
+      gid: it.left.gid,
+      fullPath: `${destBase}/${it.relativePath}`
+    };
+    it.hasRight = true;
+    it.left = null;
+    it.hasLeft = false;
+    it.status = 'orphan_right';
+  } else if (clickedSide === 'right' && it.right) {
+    it.left = {
+      name: it.right.name,
+      size: it.right.size,
+      modified: it.right.modified,
+      mode: it.right.mode,
+      uid: it.right.uid,
+      gid: it.right.gid,
+      fullPath: `${destBase}/${it.relativePath}`
+    };
+    it.hasLeft = true;
+    it.right = null;
+    it.hasRight = false;
+    it.status = 'orphan_left';
+  }
+
+  if (appState.deepCompareCache) {
+    appState.deepCompareCache.delete(it.relativePath);
+  }
+
+  if (it.isDirectory) {
+    const prefix = `${it.relativePath}/`;
+    appState.comparisonItems.forEach(child => {
+      if (child.relativePath && child.relativePath.startsWith(prefix)) {
+        if (clickedSide === 'left' && child.left) {
+          child.right = {
+            name: child.left.name,
+            size: child.left.size,
+            modified: child.left.modified,
+            mode: child.left.mode,
+            uid: child.left.uid,
+            gid: child.left.gid,
+            fullPath: `${destBase}/${child.relativePath}`
+          };
+          child.hasRight = true;
+          child.left = null;
+          child.hasLeft = false;
+          child.status = 'orphan_right';
+        } else if (clickedSide === 'right' && child.right) {
+          child.left = {
+            name: child.right.name,
+            size: child.right.size,
+            modified: child.right.modified,
+            mode: child.right.mode,
+            uid: child.right.uid,
+            gid: child.right.gid,
+            fullPath: `${destBase}/${child.relativePath}`
+          };
+          child.hasLeft = true;
+          child.right = null;
+          child.hasRight = false;
+          child.status = 'orphan_left';
+        }
+        if (appState.deepCompareCache) {
+          appState.deepCompareCache.delete(child.relativePath);
+        }
+      }
+    });
+  }
+}
+
+function updateItemAfterDelete(it, clickedSide) {
+  if (!it) return;
+  if (clickedSide === 'left') {
+    it.left = null;
+    it.hasLeft = false;
+    it.status = it.right ? 'orphan_right' : 'deleted';
+  } else if (clickedSide === 'right') {
+    it.right = null;
+    it.hasRight = false;
+    it.status = it.left ? 'orphan_left' : 'deleted';
+  } else {
+    it.left = null;
+    it.right = null;
+    it.hasLeft = false;
+    it.hasRight = false;
+    it.status = 'deleted';
+  }
+
+  if (appState.deepCompareCache) {
+    appState.deepCompareCache.delete(it.relativePath);
+  }
+
+  if (it.isDirectory) {
+    const prefix = `${it.relativePath}/`;
+    appState.comparisonItems.forEach(child => {
+      if (child.relativePath && child.relativePath.startsWith(prefix)) {
+        if (clickedSide === 'left') {
+          child.left = null;
+          child.hasLeft = false;
+          child.status = child.right ? 'orphan_right' : 'deleted';
+        } else if (clickedSide === 'right') {
+          child.right = null;
+          child.hasRight = false;
+          child.status = child.left ? 'orphan_left' : 'deleted';
+        } else {
+          child.left = null;
+          child.right = null;
+          child.hasLeft = false;
+          child.hasRight = false;
+          child.status = 'deleted';
+        }
+        if (appState.deepCompareCache) {
+          appState.deepCompareCache.delete(child.relativePath);
+        }
+      }
+    });
+  }
+}
+
+function refreshTreeAfterLocalOperation() {
+  appState.comparisonItems = appState.comparisonItems.filter(it => it.status !== 'deleted' && (it.hasLeft || it.hasRight));
+
+  const leftPane = document.getElementById('leftPaneScroll');
+  const rightPane = document.getElementById('rightPaneScroll');
+  const savedScrollTop = leftPane ? leftPane.scrollTop : (rightPane ? rightPane.scrollTop : 0);
+  const savedScrollLeft = leftPane ? leftPane.scrollLeft : 0;
+
+  appState.treeRoot = buildComparisonTree(appState.comparisonItems);
+  applyFilterAndRender();
+  updateStatusBar();
+
+  requestAnimationFrame(() => {
+    if (leftPane) {
+      leftPane.scrollTop = savedScrollTop;
+      leftPane.scrollLeft = savedScrollLeft;
+    }
+    if (rightPane) {
+      rightPane.scrollTop = savedScrollTop;
+    }
+  });
 }
 
 async function copyItemToSide(item, clickedSide) {
@@ -5012,12 +5300,15 @@ async function copyItemToSide(item, clickedSide) {
     const destPath = `${destBase}/${it.relativePath}`;
     appendLog(`Copying to ${sideName}: ${it.relativePath}`);
     const res = await window.api.copyItem(srcPath, destPath);
-    if (res && res.success) successCount++;
+    if (res && res.success) {
+      successCount++;
+      updateItemAfterCopy(it, clickedSide);
+    }
   }
 
   if (successCount > 0) {
     showToast(targetItems.length > 1 ? `Copied ${successCount} items to ${sideName}` : `Copied "${item.name}" to ${sideName}`, 'success');
-    runFolderComparison();
+    refreshTreeAfterLocalOperation();
   }
 }
 
@@ -5052,11 +5343,14 @@ async function moveItemToSide(item, clickedSide) {
       const destPath = `${destBase}/${it.relativePath}`;
       appendLog(`Moving to ${sideName}: ${it.relativePath}`);
       const res = await window.api.moveItem(srcPath, destPath);
-      if (res && res.success) successCount++;
+      if (res && res.success) {
+        successCount++;
+        updateItemAfterMove(it, clickedSide);
+      }
     }
     if (successCount > 0) {
       showToast(targetItems.length > 1 ? `Moved ${successCount} items to ${sideName}` : `Moved "${item.name}" to ${sideName}`, 'success');
-      runFolderComparison();
+      refreshTreeAfterLocalOperation();
     }
   }
 }
@@ -5131,9 +5425,10 @@ async function deleteContextItem(item, clickedSide) {
         if (it.left) await window.api.deleteItem(it.left.fullPath);
         if (it.right) await window.api.deleteItem(it.right.fullPath);
       }
+      updateItemAfterDelete(it, clickedSide);
     }
     showToast(targetItems.length > 1 ? `Eliminado(s) de ${sideLabel}` : `Deleted "${item.name}"`, 'info');
-    runFolderComparison();
+    refreshTreeAfterLocalOperation();
   }
 }
 
@@ -5160,7 +5455,7 @@ async function renameContextItem(item, clickedSide) {
 
   if (renamedAny) {
     showToast(`Renamed to "${newName}"`, 'success');
-    runFolderComparison();
+    runFolderComparison(true);
   } else {
     showToast(`Rename failed`, 'error');
   }
@@ -5214,7 +5509,7 @@ async function touchContextItem(item) {
   }
   if (touched) {
     showToast(`Touched: "${item.name}" (Timestamp updated)`, 'success');
-    runFolderComparison();
+    runFolderComparison(true);
   }
 }
 
@@ -12772,6 +13067,7 @@ async function executeDeepCompare() {
 
   // Update table statuses based on deep results
   if (res && res.results) {
+    if (!appState.deepCompareCache) appState.deepCompareCache = new Map();
     const resultMap = new Map(res.results.map(r => [r.relativePath, r]));
     appState.comparisonItems.forEach(it => {
       const match = resultMap.get(it.relativePath);
@@ -12781,6 +13077,13 @@ async function executeDeepCompare() {
         } else {
           it.status = match.match ? 'identical' : 'different';
         }
+        appState.deepCompareCache.set(it.relativePath, {
+          status: it.status,
+          leftSize: it.left ? it.left.size : null,
+          rightSize: it.right ? it.right.size : null,
+          leftModified: it.left ? it.left.modified : null,
+          rightModified: it.right ? it.right.modified : null
+        });
       }
     });
     // Re-build hierarchy tree so difference propagation bubbles up to folders
