@@ -3402,6 +3402,24 @@ async function runFolderComparison(preserveOpenState = false) {
       });
     }
 
+    const currentDiffOpts = appState.diffOptions || loadDiffOptions();
+    if (currentDiffOpts && currentDiffOpts.autoCompareOnFolderLoad) {
+      if (!appState.deepCompareCache) appState.deepCompareCache = new Map();
+      result.items.forEach(it => {
+        if (it.left && it.right && !it.isDirectory) {
+          appState.deepCompareCache.set(it.relativePath, {
+            status: it.status,
+            leftSize: it.left.size,
+            rightSize: it.right.size,
+            leftModified: it.left.modified,
+            rightModified: it.right.modified
+          });
+        }
+      });
+      const methodLabel = { rules: 'reglas', binary: 'binario', crc: 'CRC' }[currentDiffOpts.autoCompareMethod] || currentDiffOpts.autoCompareMethod;
+      appendLog(`Auto-comparación de contenido en inicio completada (${methodLabel}).`);
+    }
+
     appState.comparisonItems = result.items;
     appState.treeRoot = buildComparisonTree(result.items);
     applyFilterAndRender();
@@ -10865,13 +10883,16 @@ function jumpToSection(sectionIndex) {
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
 }
 
-// --- DIFFCORE OPTIONS (NEXT DIFFERENCE) CONTROLLER ---
+// --- DIFFCORE OPTIONS (NEXT DIFFERENCE & STARTUP) CONTROLLER ---
 const DEFAULT_DIFF_OPTIONS = {
   goToFirstDiffOnLoad: false,
   nextDiffAfterCopy: false,
   limitNextDiffToFolder: false,
   wrapAroundDiffs: false,
-  showMessagePanel: true
+  showMessagePanel: true,
+  autoCompareOnFolderLoad: false,
+  autoCompareMethod: 'rules', // 'rules', 'binary', 'crc'
+  autoCompareSkipBinary: true
 };
 
 function loadDiffOptions() {
@@ -10966,6 +10987,17 @@ function openNextDiffOptionsModal(initialTab = 'text_editing') {
   if (chkWrap) chkWrap.checked = !!opts.wrapAroundDiffs;
   if (chkMsg) chkMsg.checked = !!opts.showMessagePanel;
 
+  // Startup Folder Comparison Options (media_1793113516607_e9e46395)
+  const chkAutoComp = document.getElementById('chkAutoCompareOnFolderLoad');
+  if (chkAutoComp) chkAutoComp.checked = !!opts.autoCompareOnFolderLoad;
+
+  const methodVal = opts.autoCompareMethod || 'rules';
+  const rdoMethod = document.querySelector(`input[name="startupCompareMethod"][value="${methodVal}"]`);
+  if (rdoMethod) rdoMethod.checked = true;
+
+  const chkSkipBin = document.getElementById('chkStartupSkipBinary');
+  if (chkSkipBin) chkSkipBin.checked = (opts.autoCompareSkipBinary !== false);
+
   // Initialize Font Size inputs and preview
   const numInput = document.getElementById('numEditorFontSize');
   if (numInput) numInput.value = textEditorFontSize;
@@ -11014,6 +11046,13 @@ function resetNextDiffOptionsToDefaults() {
   if (chkWrap) chkWrap.checked = DEFAULT_DIFF_OPTIONS.wrapAroundDiffs;
   if (chkMsg) chkMsg.checked = DEFAULT_DIFF_OPTIONS.showMessagePanel;
 
+  const chkAutoComp = document.getElementById('chkAutoCompareOnFolderLoad');
+  if (chkAutoComp) chkAutoComp.checked = DEFAULT_DIFF_OPTIONS.autoCompareOnFolderLoad;
+  const rdoMethod = document.querySelector(`input[name="startupCompareMethod"][value="${DEFAULT_DIFF_OPTIONS.autoCompareMethod}"]`);
+  if (rdoMethod) rdoMethod.checked = true;
+  const chkSkipBin = document.getElementById('chkStartupSkipBinary');
+  if (chkSkipBin) chkSkipBin.checked = DEFAULT_DIFF_OPTIONS.autoCompareSkipBinary;
+
   resetEditorFontSize();
 }
 
@@ -11024,17 +11063,24 @@ function saveNextDiffOptionsFromModal() {
   const chkWrap = document.getElementById('chkWrapAroundDiffs');
   const chkMsg = document.getElementById('chkShowMessagePanel');
 
+  const chkAutoComp = document.getElementById('chkAutoCompareOnFolderLoad');
+  const selMethod = document.querySelector('input[name="startupCompareMethod"]:checked');
+  const chkSkipBin = document.getElementById('chkStartupSkipBinary');
+
   appState.diffOptions = {
     goToFirstDiffOnLoad: chkFirst ? Boolean(chkFirst.checked) : false,
     nextDiffAfterCopy: chkNext ? Boolean(chkNext.checked) : false,
     limitNextDiffToFolder: chkLimit ? Boolean(chkLimit.checked) : false,
     wrapAroundDiffs: chkWrap ? Boolean(chkWrap.checked) : false,
-    showMessagePanel: chkMsg ? Boolean(chkMsg.checked) : false
+    showMessagePanel: chkMsg ? Boolean(chkMsg.checked) : false,
+    autoCompareOnFolderLoad: chkAutoComp ? Boolean(chkAutoComp.checked) : false,
+    autoCompareMethod: selMethod ? selMethod.value : 'rules',
+    autoCompareSkipBinary: chkSkipBin ? Boolean(chkSkipBin.checked) : true
   };
 
   saveDiffOptionsConfig();
   closeNextDiffOptionsModal();
-  showToast(window.i18n ? window.i18n.t('toast.options_saved') : 'Next Difference options updated', 'info');
+  showToast(window.i18n ? window.i18n.t('toast.options_saved') : 'Options saved successfully', 'info');
 }
 
 window.openNextDiffOptionsModal = openNextDiffOptionsModal;
@@ -12048,15 +12094,24 @@ function updateUndoRedoButtons() {
 function updateSaveButtonStatusAfterHistory() {
   const saveBtnL = document.getElementById('btnSaveLeft');
   const saveBtnR = document.getElementById('btnSaveRight');
+  const tbSaveBtn = document.getElementById('btnTextSave');
+  const indL = document.getElementById('textLeftDirtyIndicator');
+  const indR = document.getElementById('textRightDirtyIndicator');
+
   const file = appState.currentTextFile;
   if (!file) {
     if (saveBtnL) { saveBtnL.disabled = true; saveBtnL.classList.remove('dirty'); saveBtnL.style.boxShadow = ''; }
     if (saveBtnR) { saveBtnR.disabled = true; saveBtnR.classList.remove('dirty'); saveBtnR.style.boxShadow = ''; }
+    if (tbSaveBtn) { tbSaveBtn.disabled = true; tbSaveBtn.classList.remove('dirty'); }
+    if (indL) indL.style.display = 'none';
+    if (indR) indR.style.display = 'none';
     return;
   }
 
+  const isDirtyL = file.leftContent !== file.originalLeftContent;
+  const isDirtyR = file.rightContent !== file.originalRightContent;
+
   if (saveBtnL) {
-    const isDirtyL = file.leftContent !== file.originalLeftContent;
     saveBtnL.classList.toggle('dirty', isDirtyL);
     saveBtnL.disabled = !isDirtyL;
     if (isDirtyL) {
@@ -12068,17 +12123,51 @@ function updateSaveButtonStatusAfterHistory() {
   }
 
   if (saveBtnR) {
-    const isDirtyR = file.rightContent !== file.originalRightContent;
     saveBtnR.classList.toggle('dirty', isDirtyR);
     saveBtnR.disabled = !isDirtyR;
     if (isDirtyR) {
-      saveBtnR.title = 'Guardar cambios en archivo derecho';
+      saveBtnR.title = 'Guardar cambios en archivo derecho (Ctrl+S / ⌘S)';
     } else {
       saveBtnR.title = 'Sin cambios para guardar en archivo derecho';
       saveBtnR.style.boxShadow = '';
     }
   }
+
+  if (tbSaveBtn) {
+    const isAnyDirty = isDirtyL || isDirtyR;
+    tbSaveBtn.disabled = !isAnyDirty;
+    tbSaveBtn.classList.toggle('dirty', isAnyDirty);
+    if (isAnyDirty) {
+      tbSaveBtn.title = 'Guardar archivos modificados (Ctrl+S / ⌘S)';
+    } else {
+      tbSaveBtn.title = 'Sin cambios para guardar';
+    }
+  }
+
+  if (indL) indL.style.display = isDirtyL ? 'inline-flex' : 'none';
+  if (indR) indR.style.display = isDirtyR ? 'inline-flex' : 'none';
 }
+
+async function saveCurrentOrModifiedTextFile() {
+  const file = appState.currentTextFile;
+  if (!file) return;
+
+  const isDirtyL = file.leftContent !== file.originalLeftContent;
+  const isDirtyR = file.rightContent !== file.originalRightContent;
+
+  if (isDirtyL && !isDirtyR) {
+    await saveTextFile('left');
+  } else if (!isDirtyL && isDirtyR) {
+    await saveTextFile('right');
+  } else if (isDirtyL && isDirtyR) {
+    // Both sides dirty: save both sequentially
+    await saveTextFile('left');
+    await saveTextFile('right');
+  } else {
+    showToast(window.i18n ? window.i18n.t('toast.no_changes_to_save', 'No hay cambios pendientes para guardar.') : 'No hay cambios pendientes para guardar.', 'info');
+  }
+}
+window.saveCurrentOrModifiedTextFile = saveCurrentOrModifiedTextFile;
 
 let lastUndoTime = 0;
 let lastRedoTime = 0;
@@ -12242,10 +12331,10 @@ function setupTextKeyboardNavigation() {
       }
     }
 
-    // Save File: Cmd+S / Ctrl+S
+    // Save File: Cmd+S / Ctrl+S (Smart Save: saves modified side or active side)
     if (isMod && (event.key === 's' || event.key === 'S')) {
       event.preventDefault();
-      saveTextFile(appState.activeTextSide || 'left');
+      saveCurrentOrModifiedTextFile();
       return;
     }
 
@@ -12909,18 +12998,29 @@ const DEFAULT_FOLDER_RULES = {
 };
 
 function getActiveFolderRules() {
+  let baseRules = null;
   if (appState.folderRules) {
-    return appState.folderRules;
+    baseRules = { ...appState.folderRules };
+  } else {
+    try {
+      const saved = localStorage.getItem('diffcore_folder_rules_defaults');
+      if (saved) {
+        baseRules = { ...DEFAULT_FOLDER_RULES, ...JSON.parse(saved) };
+      }
+    } catch {}
   }
-  try {
-    const saved = localStorage.getItem('diffcore_folder_rules_defaults');
-    if (saved) {
-      appState.folderRules = { ...DEFAULT_FOLDER_RULES, ...JSON.parse(saved) };
-      return appState.folderRules;
-    }
-  } catch {}
 
-  appState.folderRules = { ...DEFAULT_FOLDER_RULES };
+  if (!baseRules) baseRules = { ...DEFAULT_FOLDER_RULES };
+
+  // Overlay startup auto-comparison preference from Options (media_1793113516607_e9e46395)
+  const diffOpts = appState.diffOptions || loadDiffOptions();
+  if (diffOpts && diffOpts.autoCompareOnFolderLoad) {
+    baseRules.compareContents = true;
+    baseRules.contentMethod = diffOpts.autoCompareMethod || 'rules';
+    baseRules.skipBinary = (diffOpts.autoCompareSkipBinary !== false);
+  }
+
+  appState.folderRules = baseRules;
   return appState.folderRules;
 }
 

@@ -694,6 +694,10 @@
           <span class="icon"><span class="dc-icon dc-icon-redo"></span></span>
           <span class="label" data-i18n="toolbar.redo">Redo</span>
         </button>
+        <button class="tb-btn" id="btnTextSave" title="Guardar cambios (Ctrl+S / ⌘S)" data-i18n-title="common.save" onclick="saveCurrentOrModifiedTextFile()" disabled>
+          <span class="icon"><span class="dc-icon dc-icon-save"></span></span>
+          <span class="label" data-i18n="common.save">Guardar</span>
+        </button>
         <button class="tb-btn" title="Swap Sides (⇄)" data-i18n-title="toolbar.swap_tip" onclick="swapSidesText()">
           <span class="icon">⇄</span>
           <span class="label" data-i18n="toolbar.swap">Swap</span>
@@ -754,10 +758,12 @@
             <button class="text-address-btn" id="btnCopyEntireLeft" title="Copiar documento izquierdo completo al portapapeles" onclick="copyEntireDocument('left')">📋</button>
             <button class="text-address-btn" title="Browse for Left File" onclick="browseTextFile('left')">📁▾</button>
             <button class="text-address-btn text-address-save-btn" id="btnSaveLeft" title="Guardar archivo izquierdo (Ctrl+S / ⌘S)" onclick="saveTextFile('left')" disabled>
-              <span class="dc-icon dc-icon-save dc-icon-sm"></span>▾
+              <span class="dc-icon dc-icon-save"></span>
+              <span class="save-btn-text" data-i18n="common.save">Guardar</span>
             </button>
           </div>
           <div class="text-address-sub-row" id="textLeftSubRow">
+            <span class="text-sub-item text-sub-dirty" id="textLeftDirtyIndicator" style="display: none; color: #f59e0b; font-weight: 700;">● Modificado</span>
             <span class="text-sub-item text-sub-date" id="textLeftDate"></span>
             <span class="text-sub-item text-sub-size" id="textLeftSize"></span>
             <span class="text-format-badge" id="textLeftFormatBadge">Everything Else ▾</span>
@@ -799,11 +805,13 @@
             <input type="text" id="textRightPathInput" class="text-path-input" placeholder="Enter filename here" onkeydown="handlePathInputKeydown(event, 'right')" onblur="handlePathInputBlur('right')" spellcheck="false">
             <button class="text-address-btn" id="btnCopyEntireRight" title="Copiar documento derecho completo al portapapeles" onclick="copyEntireDocument('right')">📋</button>
             <button class="text-address-btn" title="Browse for Right File" onclick="browseTextFile('right')">📁▾</button>
-            <button class="text-address-btn text-address-save-btn" id="btnSaveRight" title="Guardar archivo derecho" onclick="saveTextFile('right')" disabled>
-              <span class="dc-icon dc-icon-save dc-icon-sm"></span>▾
+            <button class="text-address-btn text-address-save-btn" id="btnSaveRight" title="Guardar archivo derecho (Ctrl+S / ⌘S)" onclick="saveTextFile('right')" disabled>
+              <span class="dc-icon dc-icon-save"></span>
+              <span class="save-btn-text" data-i18n="common.save">Guardar</span>
             </button>
           </div>
           <div class="text-address-sub-row" id="textRightSubRow">
+            <span class="text-sub-item text-sub-dirty" id="textRightDirtyIndicator" style="display: none; color: #f59e0b; font-weight: 700;">● Modificado</span>
             <span class="text-sub-item text-sub-date" id="textRightDate"></span>
             <span class="text-sub-item text-sub-size" id="textRightSize"></span>
             <span class="text-format-badge" id="textRightFormatBadge">Everything Else ▾</span>
@@ -1866,6 +1874,47 @@
 
         <!-- Right Settings Panel -->
         <main class="bc-options-content">
+          <!-- PANEL 0: STARTUP (INICIO) -->
+          <div class="bc-options-panel" id="optPanel_startup" style="display: none;">
+            <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;" data-i18n="modal.opt_cat_startup">Startup</h3>
+
+            <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #ddd;" data-i18n="options.startup_compare_title">Folder Comparison on Startup</div>
+            <div style="font-size: 11px; color: #888; margin-bottom: 14px;" data-i18n="options.startup_compare_desc">Automatically execute a deep content comparison when loading both folders (left and right).</div>
+
+            <div style="background: #1c1c1c; padding: 14px 16px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px;">
+              <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; color: #f1f5f9;">
+                <input type="checkbox" id="chkAutoCompareOnFolderLoad">
+                <span data-i18n="options.chk_auto_compare">Automatically compare contents when loading both folders</span>
+              </label>
+
+              <div id="startupCompareMethodsWrapper" style="padding-left: 24px; display: flex; flex-direction: column; gap: 10px; border-left: 2px solid rgba(255,255,255,0.08); margin-left: 8px;">
+                <div style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="modal.method">Comparison method</div>
+
+                <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="startupCompareMethod" value="rules" checked>
+                  <span data-i18n="modal.rules">Rules-based comparison</span>
+                </label>
+
+                <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="startupCompareMethod" value="binary">
+                  <span data-i18n="modal.binary">Binary comparison</span>
+                </label>
+
+                <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="startupCompareMethod" value="crc">
+                  <span data-i18n="modal.crc">CRC comparison</span>
+                </label>
+
+                <div style="height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0;"></div>
+
+                <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="chkStartupSkipBinary" checked>
+                  <span data-i18n="modal.skip_binary">Skip binary files</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
           <!-- PANEL 1: TEXT EDITING (media_1792570193627_fe1f07be) -->
           <div class="bc-options-panel" id="optPanel_text_editing">
             <h3 style="font-size: 14px; margin: 0 0 16px 0; font-weight: 600; color: #fff;" data-i18n="modal.opt_cat_text_editing">Text Editing</h3>
