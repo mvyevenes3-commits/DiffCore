@@ -4510,8 +4510,33 @@ function setupFolderKeyboardNavigation() {
       return;
     }
 
+    if (event.key === ' ' || event.code === 'Space') {
+      event.preventDefault();
+      const selectedDirs = appState.selectedIndices && appState.selectedIndices.size > 0
+        ? Array.from(appState.selectedIndices).map(i => appState.filteredItems[i]).filter(it => it && it.isDirectory)
+        : [];
+      if (selectedDirs.length > 1) {
+        const paths = selectedDirs.map(d => d.relativePath);
+        const anyClosed = paths.some(p => !appState.folderOpenState.get(p));
+        setFolderOpenState(paths, anyClosed);
+      } else if (appState.selectedIndex >= 0 && appState.filteredItems[appState.selectedIndex]) {
+        const item = appState.filteredItems[appState.selectedIndex];
+        if (item.isDirectory) {
+          toggleFolder(item.relativePath);
+        }
+      }
+      return;
+    }
+
     if (event.key === 'Enter') {
-      if (appState.selectedIndex >= 0 && appState.filteredItems[appState.selectedIndex]) {
+      const selectedDirs = appState.selectedIndices && appState.selectedIndices.size > 0
+        ? Array.from(appState.selectedIndices).map(i => appState.filteredItems[i]).filter(it => it && it.isDirectory)
+        : [];
+      if (selectedDirs.length > 1) {
+        const paths = selectedDirs.map(d => d.relativePath);
+        const anyClosed = paths.some(p => !appState.folderOpenState.get(p));
+        setFolderOpenState(paths, anyClosed);
+      } else if (appState.selectedIndex >= 0 && appState.filteredItems[appState.selectedIndex]) {
         const item = appState.filteredItems[appState.selectedIndex];
         if (item.isDirectory) {
           toggleFolder(item.relativePath);
@@ -4571,7 +4596,8 @@ function handleTableContextMenu(event, side) {
   const clickedSide = isLeft ? 'left' : 'right';
 
   const sideSet = (clickedSide === 'left') ? appState.selectedLeftIndices : appState.selectedRightIndices;
-  if (!sideSet || !sideSet.has(index)) {
+  const isAlreadySelected = (sideSet && sideSet.has(index)) || (appState.selectedIndices && appState.selectedIndices.has(index));
+  if (!isAlreadySelected) {
     selectTableRow(index, event, clickedSide);
   }
   const item = appState.filteredItems[index];
@@ -4754,21 +4780,41 @@ async function contextAction(action) {
 
   if (!item) return;
 
+  const sideSet = (side === 'left') ? appState.selectedLeftIndices : appState.selectedRightIndices;
+  const itemIndex = appState.filteredItems.indexOf(item);
+  let targetItems = [];
+
+  if (sideSet && sideSet.size > 1 && itemIndex >= 0 && sideSet.has(itemIndex)) {
+    targetItems = Array.from(sideSet).map(idx => appState.filteredItems[idx]).filter(Boolean);
+  } else if (appState.selectedIndices && appState.selectedIndices.size > 1 && itemIndex >= 0 && appState.selectedIndices.has(itemIndex)) {
+    targetItems = Array.from(appState.selectedIndices).map(idx => appState.filteredItems[idx]).filter(Boolean);
+  } else {
+    targetItems = [item];
+  }
+
+  const dirItems = targetItems.filter(it => it && it.isDirectory);
+  const dirPaths = dirItems.map(it => it.relativePath);
+
   switch (action) {
     case 'close_folder':
-      setFolderOpenState(item.relativePath, false);
+      setFolderOpenState(dirPaths.length > 0 ? dirPaths : item.relativePath, false);
       break;
     case 'open_folder':
-      setFolderOpenState(item.relativePath, true);
+      setFolderOpenState(dirPaths.length > 0 ? dirPaths : item.relativePath, true);
       break;
     case 'toggle_folder':
-      toggleFolder(item.relativePath);
+      if (dirPaths.length > 1) {
+        const anyClosed = dirPaths.some(p => !appState.folderOpenState.get(p));
+        setFolderOpenState(dirPaths, anyClosed);
+      } else {
+        toggleFolder(item.relativePath);
+      }
       break;
     case 'open_subfolders':
-      openSubfolders(item.relativePath);
+      openSubfolders(dirPaths.length > 0 ? dirPaths : item.relativePath);
       break;
     case 'close_subfolders':
-      closeSubfolders(item.relativePath);
+      closeSubfolders(dirPaths.length > 0 ? dirPaths : item.relativePath);
       break;
     case 'set_base_folders':
     case 'open_in_new_view':
@@ -4907,21 +4953,34 @@ async function contextAction(action) {
   }
 }
 
-function setFolderOpenState(relPath, isOpen) {
-  if (!relPath || !appState.treeNodeMap) return;
-  const node = appState.treeNodeMap.get(relPath);
-  appState.folderOpenState.set(relPath, isOpen);
-  if (node) {
-    node.isOpen = isOpen;
+function setFolderOpenState(relPathOrPaths, isOpen) {
+  if (!relPathOrPaths || !appState.treeNodeMap) return;
+  const paths = Array.isArray(relPathOrPaths) ? relPathOrPaths : [relPathOrPaths];
+  if (paths.length === 0) return;
+
+  let count = 0;
+  for (const p of paths) {
+    const node = appState.treeNodeMap.get(p);
+    appState.folderOpenState.set(p, isOpen);
+    if (node) {
+      node.isOpen = isOpen;
+      count++;
+    }
   }
+
   applyFilterAndRender();
-  showToast(`${isOpen ? 'Opened' : 'Closed'} folder "${node ? node.name : relPath}"`, 'info');
+  if (count > 1) {
+    showToast(`${isOpen ? 'Se abrieron' : 'Se cerraron'} ${count} carpetas seleccionadas`, 'info');
+  } else if (count === 1) {
+    const node = appState.treeNodeMap.get(paths[0]);
+    showToast(`${isOpen ? 'Opened' : 'Closed'} folder "${node ? node.name : paths[0]}"`, 'info');
+  }
 }
 
-function openSubfolders(relPath) {
-  if (!relPath || !appState.treeNodeMap) return;
-  const targetNode = appState.treeNodeMap.get(relPath);
-  if (!targetNode) return;
+function openSubfolders(relPathOrPaths) {
+  if (!relPathOrPaths || !appState.treeNodeMap) return;
+  const paths = Array.isArray(relPathOrPaths) ? relPathOrPaths : [relPathOrPaths];
+  if (paths.length === 0) return;
 
   function recurseOpen(node) {
     if (node.isDirectory) {
@@ -4935,15 +4994,28 @@ function openSubfolders(relPath) {
     }
   }
 
-  recurseOpen(targetNode);
+  let count = 0;
+  for (const p of paths) {
+    const targetNode = appState.treeNodeMap.get(p);
+    if (targetNode) {
+      recurseOpen(targetNode);
+      count++;
+    }
+  }
+
   applyFilterAndRender();
-  showToast(`Opened all subfolders in "${targetNode.name}"`, 'info');
+  if (count > 1) {
+    showToast(`Se abrieron las subcarpetas de ${count} carpetas seleccionadas`, 'info');
+  } else if (count === 1) {
+    const targetNode = appState.treeNodeMap.get(paths[0]);
+    showToast(`Opened all subfolders in "${targetNode ? targetNode.name : paths[0]}"`, 'info');
+  }
 }
 
-function closeSubfolders(relPath) {
-  if (!relPath || !appState.treeNodeMap) return;
-  const targetNode = appState.treeNodeMap.get(relPath);
-  if (!targetNode) return;
+function closeSubfolders(relPathOrPaths) {
+  if (!relPathOrPaths || !appState.treeNodeMap) return;
+  const paths = Array.isArray(relPathOrPaths) ? relPathOrPaths : [relPathOrPaths];
+  if (paths.length === 0) return;
 
   function recurseClose(node) {
     if (node.children) {
@@ -4958,9 +5030,22 @@ function closeSubfolders(relPath) {
     }
   }
 
-  recurseClose(targetNode);
+  let count = 0;
+  for (const p of paths) {
+    const targetNode = appState.treeNodeMap.get(p);
+    if (targetNode) {
+      recurseClose(targetNode);
+      count++;
+    }
+  }
+
   applyFilterAndRender();
-  showToast(`Closed all subfolders in "${targetNode.name}"`, 'info');
+  if (count > 1) {
+    showToast(`Se cerraron las subcarpetas de ${count} carpetas seleccionadas`, 'info');
+  } else if (count === 1) {
+    const targetNode = appState.treeNodeMap.get(paths[0]);
+    showToast(`Closed all subfolders in "${targetNode ? targetNode.name : paths[0]}"`, 'info');
+  }
 }
 
 function setAsBaseFolders(item) {
