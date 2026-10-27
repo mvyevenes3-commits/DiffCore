@@ -14,7 +14,7 @@
     "start": "electron .",
     "build:mac": "electron-builder --mac dmg --x64 --arm64",
     "build:dir": "electron-builder --dir",
-    "build:linux": "electron-builder --linux deb AppImage tar.gz && node scripts/build-rpm.js",
+    "build:linux": "electron-builder --linux deb AppImage tar.gz --x64 --arm64 && node scripts/build-rpm.js",
     "build:rpm": "node scripts/build-rpm.js",
     "build:win": "electron-builder --win nsis",
     "build:all": "npm run build:mac && npm run build:win && npm run build:linux",

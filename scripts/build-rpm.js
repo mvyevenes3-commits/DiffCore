@@ -2,7 +2,7 @@
 /**
  * DiffCore RPM Packaging Script for Fedora / RHEL / openSUSE
  * Uses @goreleaser/nfpm to generate clean, native .rpm packages
- * without external host dependencies (zero Darwin rpmbuild crashes).
+ * for both x86_64 and aarch64 (ARM64) architectures.
  */
 
 const { execSync } = require('child_process');
@@ -11,49 +11,22 @@ const path = require('path');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DIST_DIR = path.join(ROOT_DIR, 'empaquetado', 'dist');
-const LINUX_UNPACKED = path.join(DIST_DIR, 'linux-unpacked');
-const TARGET_RPM = path.join(DIST_DIR, 'diffcore-1.0.0.x86_64.rpm');
 
 function run(cmd) {
   console.log(`\n▶ [RPM]: ${cmd}`);
   execSync(cmd, { cwd: ROOT_DIR, stdio: 'inherit' });
 }
 
-function main() {
-  console.log('========================================================');
-  console.log('📦 Empaquetado Fedora / RedHat / openSUSE (.rpm)');
-  console.log('========================================================');
-
-  if (!fs.existsSync(DIST_DIR)) {
-    fs.mkdirSync(DIST_DIR, { recursive: true });
+function buildRpmForArch(arch, unpackedDir, targetRpm, configFile) {
+  if (!fs.existsSync(unpackedDir)) {
+    console.log(`Generando binarios Linux desempacados para ${arch} (${path.basename(unpackedDir)})...`);
+    const electronArch = (arch === 'aarch64') ? 'arm64' : 'x64';
+    run(`npx electron-builder --linux dir --${electronArch}`);
   }
 
-  // 1. Ensure linux-unpacked exists
-  if (!fs.existsSync(LINUX_UNPACKED)) {
-    console.log('Generando binarios Linux desempacados (linux-unpacked)...');
-    run('npx electron-builder --linux dir');
-  }
-
-  // 2. Ensure diffcore.desktop exists
-  const desktopFile = path.join(ROOT_DIR, 'empaquetado', 'resources', 'diffcore.desktop');
-  if (!fs.existsSync(desktopFile)) {
-    fs.mkdirSync(path.dirname(desktopFile), { recursive: true });
-    fs.writeFileSync(desktopFile, `[Desktop Entry]
-Name=DiffCore
-Exec=/opt/DiffCore/diffcore %U
-Terminal=false
-Type=Application
-Icon=diffcore
-StartupWMClass=diffcore
-Comment=DiffCore - High-Performance Cross-Platform Diff Suite
-Categories=Development;
-`);
-  }
-
-  // 3. Build nfpm configuration
-  const nfpmConfigPath = path.join(ROOT_DIR, 'empaquetado', 'nfpm.yaml');
+  const nfpmConfigPath = path.join(ROOT_DIR, 'empaquetado', configFile);
   const nfpmYaml = `name: "diffcore"
-arch: "x86_64"
+arch: "${arch}"
 platform: "linux"
 version: "1.0.0"
 release: "1"
@@ -64,7 +37,7 @@ vendor: "DiffCore"
 homepage: "https://github.com/miguelvergara/diffcore"
 license: "MIT"
 contents:
-  - src: ./empaquetado/dist/linux-unpacked/
+  - src: ./empaquetado/dist/${path.basename(unpackedDir)}/
     dst: /opt/DiffCore
   - src: /opt/DiffCore/diffcore
     dst: /usr/bin/diffcore
@@ -89,18 +62,48 @@ contents:
 
   fs.writeFileSync(nfpmConfigPath, nfpmYaml, 'utf8');
 
-  // 4. Run nfpm packager
-  console.log(`Compilando paquete RPM en: ${TARGET_RPM}...`);
-  run(`npx -y @goreleaser/nfpm package --packager rpm --config "${nfpmConfigPath}" --target "${TARGET_RPM}"`);
+  console.log(`Compilando paquete RPM (${arch}) en: ${targetRpm}...`);
+  run(`npx -y @goreleaser/nfpm package --packager rpm --config "${nfpmConfigPath}" --target "${targetRpm}"`);
 
-  if (fs.existsSync(TARGET_RPM)) {
-    const stats = fs.statSync(TARGET_RPM);
+  if (fs.existsSync(targetRpm)) {
+    const stats = fs.statSync(targetRpm);
     const sizeMb = (stats.size / (1024 * 1024)).toFixed(1);
-    console.log(`\n✅ Paquete RPM generado con éxito: diffcore-1.0.0.x86_64.rpm (${sizeMb} MB)`);
+    console.log(`✅ Paquete RPM ${arch} generado con éxito: ${path.basename(targetRpm)} (${sizeMb} MB)`);
   } else {
-    console.error('\n❌ Error: No se encontró el archivo RPM generado.');
-    process.exit(1);
+    console.error(`❌ Error: No se encontró el archivo RPM generado para ${arch}.`);
   }
+}
+
+function main() {
+  console.log('========================================================');
+  console.log('📦 Empaquetado Fedora / RedHat / openSUSE (.rpm) [x86_64 y aarch64]');
+  console.log('========================================================');
+
+  if (!fs.existsSync(DIST_DIR)) {
+    fs.mkdirSync(DIST_DIR, { recursive: true });
+  }
+
+  // 1. Ensure diffcore.desktop exists
+  const desktopFile = path.join(ROOT_DIR, 'empaquetado', 'resources', 'diffcore.desktop');
+  if (!fs.existsSync(desktopFile)) {
+    fs.mkdirSync(path.dirname(desktopFile), { recursive: true });
+    fs.writeFileSync(desktopFile, `[Desktop Entry]
+Name=DiffCore
+Exec=/opt/DiffCore/diffcore %U
+Terminal=false
+Type=Application
+Icon=diffcore
+StartupWMClass=diffcore
+Comment=DiffCore - High-Performance Cross-Platform Diff Suite
+Categories=Development;
+`);
+  }
+
+  // 2. Build x86_64 RPM
+  buildRpmForArch('x86_64', path.join(DIST_DIR, 'linux-unpacked'), path.join(DIST_DIR, 'diffcore-1.0.0.x86_64.rpm'), 'nfpm.yaml');
+
+  // 3. Build aarch64 RPM
+  buildRpmForArch('aarch64', path.join(DIST_DIR, 'linux-arm64-unpacked'), path.join(DIST_DIR, 'diffcore-1.0.0.aarch64.rpm'), 'nfpm-arm64.yaml');
 }
 
 if (require.main === module) {

@@ -165,10 +165,10 @@ async function main() {
     console.log('\n[2/5] Compilando instalador Windows (.exe x64)...');
     runCommand('npx electron-builder --win nsis');
 
-    console.log('\n[3/5] Compilando paquetes Linux (.deb, AppImage, tar.gz)...');
-    runCommand('npx electron-builder --linux deb AppImage tar.gz');
+    console.log('\n[3/5] Compilando paquetes Linux (.deb, AppImage, tar.gz para x64 + arm64)...');
+    runCommand('npx electron-builder --linux deb AppImage tar.gz --x64 --arm64');
 
-    console.log('\n[4/5] Compilando paquete Fedora / RedHat / openSUSE (.rpm)...');
+    console.log('\n[4/5] Compilando paquete Fedora / RedHat / openSUSE (.rpm para x86_64 y aarch64)...');
     runCommand('node scripts/build-rpm.js');
   } else {
     console.log('Saltando compilación (--upload-only activado).');
@@ -193,14 +193,22 @@ async function main() {
   const macPkgX64 = allFiles.find(f => f.endsWith('.pkg') && (f.includes('x64') || (!f.includes('arm64') && !f.includes('arm')) && f !== macPkgArm64));
   // Find Windows exe
   const winExe = allFiles.find(f => f.endsWith('.exe') && !f.includes('uninstaller') && !f.includes('elevate'));
-  // Find Linux deb
-  const linuxDeb = allFiles.find(f => f.endsWith('.deb'));
-  // Find Linux rpm
-  const linuxRpm = allFiles.find(f => f.endsWith('.rpm'));
-  // Find Linux AppImage
-  const linuxAppImage = allFiles.find(f => f.endsWith('.AppImage'));
-  // Find Linux tar.gz
-  const linuxTar = allFiles.find(f => f.endsWith('.tar.gz') && f.includes('diffcore'));
+  
+  // Find Linux deb (x64 and arm64)
+  const linuxDebAmd64 = allFiles.find(f => f.endsWith('.deb') && (f.includes('amd64') || f.includes('x86_64')));
+  const linuxDebArm64 = allFiles.find(f => f.endsWith('.deb') && (f.includes('arm64') || f.includes('aarch64')));
+  
+  // Find Linux rpm (x86_64 and aarch64)
+  const linuxRpmX64 = allFiles.find(f => f.endsWith('.rpm') && (f.includes('x86_64') || f.includes('amd64')));
+  const linuxRpmArm64 = allFiles.find(f => f.endsWith('.rpm') && (f.includes('aarch64') || f.includes('arm64')));
+  
+  // Find Linux AppImage (x64 and arm64)
+  const linuxAppImageX64 = allFiles.find(f => f.endsWith('.AppImage') && !f.includes('arm64') && !f.includes('aarch64'));
+  const linuxAppImageArm64 = allFiles.find(f => f.endsWith('.AppImage') && (f.includes('arm64') || f.includes('aarch64')));
+  
+  // Find Linux tar.gz (x64 and arm64)
+  const linuxTarX64 = allFiles.find(f => f.endsWith('.tar.gz') && f.includes('diffcore') && !f.includes('arm64') && !f.includes('aarch64'));
+  const linuxTarArm64 = allFiles.find(f => f.endsWith('.tar.gz') && f.includes('diffcore') && (f.includes('arm64') || f.includes('aarch64')));
 
   const filesToUpload = [];
 
@@ -245,35 +253,69 @@ async function main() {
     });
   }
 
-  if (linuxDeb) {
+  // Linux x64
+  if (linuxDebAmd64) {
     filesToUpload.push({
-      path: path.join(DIST_DIR, linuxDeb),
-      name: linuxDeb,
-      label: 'DiffCore 1.0.0 Linux (Debian / Ubuntu / Mint .deb)'
+      path: path.join(DIST_DIR, linuxDebAmd64),
+      name: linuxDebAmd64,
+      label: 'DiffCore 1.0.0 Linux (Debian / Ubuntu / Mint .deb x64)'
     });
   }
 
-  if (linuxRpm) {
+  if (linuxRpmX64) {
     filesToUpload.push({
-      path: path.join(DIST_DIR, linuxRpm),
-      name: linuxRpm,
-      label: 'DiffCore 1.0.0 Linux (Fedora / RHEL / openSUSE .rpm)'
+      path: path.join(DIST_DIR, linuxRpmX64),
+      name: linuxRpmX64,
+      label: 'DiffCore 1.0.0 Linux (Fedora / RHEL / openSUSE .rpm x86_64)'
     });
   }
 
-  if (linuxAppImage) {
+  if (linuxAppImageX64) {
     filesToUpload.push({
-      path: path.join(DIST_DIR, linuxAppImage),
-      name: linuxAppImage,
-      label: 'DiffCore 1.0.0 Linux (Universal AppImage - Fedora / Arch / SUSE / all)'
+      path: path.join(DIST_DIR, linuxAppImageX64),
+      name: linuxAppImageX64,
+      label: 'DiffCore 1.0.0 Linux (Universal AppImage x64)'
     });
   }
 
-  if (linuxTar) {
+  if (linuxTarX64) {
     filesToUpload.push({
-      path: path.join(DIST_DIR, linuxTar),
-      name: linuxTar,
-      label: 'DiffCore 1.0.0 Linux (Generic Portable Tarball .tar.gz)'
+      path: path.join(DIST_DIR, linuxTarX64),
+      name: linuxTarX64,
+      label: 'DiffCore 1.0.0 Linux (Generic Portable Tarball .tar.gz x64)'
+    });
+  }
+
+  // Linux arm64
+  if (linuxDebArm64) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, linuxDebArm64),
+      name: linuxDebArm64,
+      label: 'DiffCore 1.0.0 Linux (Debian / Ubuntu / Mint .deb arm64)'
+    });
+  }
+
+  if (linuxRpmArm64) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, linuxRpmArm64),
+      name: linuxRpmArm64,
+      label: 'DiffCore 1.0.0 Linux (Fedora / RHEL / openSUSE .rpm aarch64)'
+    });
+  }
+
+  if (linuxAppImageArm64) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, linuxAppImageArm64),
+      name: linuxAppImageArm64,
+      label: 'DiffCore 1.0.0 Linux (Universal AppImage arm64)'
+    });
+  }
+
+  if (linuxTarArm64) {
+    filesToUpload.push({
+      path: path.join(DIST_DIR, linuxTarArm64),
+      name: linuxTarArm64,
+      label: 'DiffCore 1.0.0 Linux (Generic Portable Tarball .tar.gz arm64)'
     });
   }
 
