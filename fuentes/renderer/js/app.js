@@ -872,6 +872,7 @@ function setupSplitterResizers() {
     divider: '#textCenterGutterWrapper',
     storageKey: 'diffcore_split_text',
     onResize: () => {
+      if (typeof syncCenterGutterHeaderHeight === 'function') syncCenterGutterHeaderHeight();
       if (typeof syncHorizontalScrollWidths === 'function') syncHorizontalScrollWidths();
       if (typeof renderVisibleTextWindow === 'function') renderVisibleTextWindow();
     }
@@ -10300,8 +10301,21 @@ let virtualTextState = {
   cacheR: new Map()
 };
 
+function syncCenterGutterHeaderHeight() {
+  const addressBar = document.getElementById('textLeftAddressBar') || document.querySelector('.text-address-bar');
+  const gutterHeader = document.querySelector('.text-center-gutter-header');
+  if (addressBar && gutterHeader) {
+    const h = addressBar.offsetHeight;
+    if (h > 0) {
+      gutterHeader.style.height = `${h}px`;
+    }
+  }
+}
+
 function renderTextDiff(diffResult) {
   if (!diffResult) return;
+
+  syncCenterGutterHeaderHeight();
 
   const containerL = document.getElementById('textLeftLines');
   const containerR = document.getElementById('textRightLines');
@@ -10472,6 +10486,8 @@ function renderTextDiff(diffResult) {
 function renderVisibleTextWindow(force = false) {
   const diffResult = virtualTextState.currentDiffResult;
   if (!diffResult || !diffResult.totalRows) return;
+
+  syncCenterGutterHeaderHeight();
 
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
@@ -11262,11 +11278,22 @@ function updateOverviewViewport() {
   const viewH = activeScroll.clientHeight || 400;
   const scrollY = activeScroll.scrollTop || 0;
 
-  const topPct = (scrollY / totalHeight) * 100;
-  const heightPct = Math.max(4, (viewH / totalHeight) * 100);
+  const rail = document.getElementById('textOverviewRail');
+  const railH = (rail && rail.clientHeight > 0) ? rail.clientHeight : 400;
+  const maxScroll = Math.max(0, totalHeight - viewH);
 
-  thumb.style.top = `${topPct}%`;
-  thumb.style.height = `${heightPct}%`;
+  // Beyond Compare style: compact indicator thumb (30-36px) that never blows up to fill the whole rail
+  const rawHeightPx = (viewH / totalHeight) * railH;
+  const thumbHeightPx = Math.max(22, Math.min(36, rawHeightPx));
+
+  let topPx = 0;
+  if (maxScroll > 0) {
+    topPx = (scrollY / maxScroll) * Math.max(0, railH - thumbHeightPx);
+  }
+  topPx = Math.max(0, Math.min(railH - thumbHeightPx, topPx));
+
+  thumb.style.top = `${topPx}px`;
+  thumb.style.height = `${thumbHeightPx}px`;
 }
 
 // DiffCore Rock-Solid Synchronized Text Scrolling Controller
@@ -11364,6 +11391,7 @@ function setupTextSyncScroll() {
   }
 
   window.addEventListener('resize', () => {
+    if (typeof syncCenterGutterHeaderHeight === 'function') syncCenterGutterHeaderHeight();
     syncHorizontalScrollWidths();
     renderVisibleTextWindow(true);
     if (textSyncScrollbar) textSyncScrollbar.update();

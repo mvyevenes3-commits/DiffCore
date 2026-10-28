@@ -3046,10 +3046,11 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   background: #232730 !important;
 }
 .text-center-gutter-header {
-  height: 29px;
+  height: 52px;
   background: #25282e;
   border-bottom: 1px solid #333842;
   cursor: col-resize;
+  box-sizing: border-box;
 }
 .text-center-gutter-scroll {
   flex: 1;
