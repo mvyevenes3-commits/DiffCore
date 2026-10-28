@@ -10493,7 +10493,7 @@ function renderOverviewMarkers(diffResult, trackH) {
     const sec = sections[sIdx];
     const secStartPct = sec.startRow / totalRows;
     const secSpan = Math.max(1, sec.endRow - sec.startRow + 1);
-    const markerH = Math.max(2, Math.round((secSpan / totalRows) * trackH));
+    const markerH = Math.max(3, Math.round((secSpan / totalRows) * trackH));
     let topPx = Math.round(secStartPct * trackH);
     if (topPx + markerH > trackH) {
       topPx = Math.max(0, trackH - markerH);
@@ -10740,7 +10740,7 @@ function findSectionAtRailY(clientY) {
   const rect = track.getBoundingClientRect();
   const clickY = clientY - rect.top;
   const trackH = rect.height;
-  if (trackH <= 0 || clickY < -4 || clickY > trackH + 4) return null;
+  if (trackH <= 0 || clickY < -8 || clickY > trackH + 8) return null;
 
   const totalRows = diffResult.totalRows;
   const sections = diffResult.sections;
@@ -10748,19 +10748,19 @@ function findSectionAtRailY(clientY) {
   let bestSec = null;
   let minDistance = Infinity;
 
-  // 1. Check visually rendered marker boundaries on the track (with 5px tolerance)
+  // 1. Check visually rendered marker boundaries on the track (generous 8px tolerance for easy clicking)
   for (let i = 0; i < sections.length; i++) {
     const sec = sections[i];
     const secStartPct = sec.startRow / totalRows;
     const secSpan = Math.max(1, sec.endRow - sec.startRow + 1);
-    const markerH = Math.max(2, Math.round((secSpan / totalRows) * trackH));
+    const markerH = Math.max(3, Math.round((secSpan / totalRows) * trackH));
     let topPx = Math.round(secStartPct * trackH);
     if (topPx + markerH > trackH) topPx = Math.max(0, trackH - markerH);
     if (sec.endRow >= totalRows - 1) topPx = trackH - markerH;
     const bottomPx = topPx + markerH;
     const centerPx = (topPx + bottomPx) / 2;
 
-    if (clickY >= topPx - 5 && clickY <= bottomPx + 5) {
+    if (clickY >= topPx - 8 && clickY <= bottomPx + 8) {
       const dist = Math.abs(clickY - centerPx);
       if (dist < minDistance) {
         minDistance = dist;
@@ -10771,12 +10771,12 @@ function findSectionAtRailY(clientY) {
 
   if (bestSec) return bestSec;
 
-  // 2. Secondary check: row proximity within ±3 rows
+  // 2. Secondary check: row proximity within ±5 rows
   const pct = Math.max(0, Math.min(1, clickY / trackH));
   const clickedRow = pct * totalRows;
   for (let i = 0; i < sections.length; i++) {
     const sec = sections[i];
-    if (clickedRow >= sec.startRow - 3 && clickedRow <= sec.endRow + 3) {
+    if (clickedRow >= sec.startRow - 5 && clickedRow <= sec.endRow + 5) {
       return sec;
     }
   }
