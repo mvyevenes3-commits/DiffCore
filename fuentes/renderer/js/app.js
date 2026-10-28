@@ -8221,6 +8221,12 @@ function setupSyncScroll() {
     }
   });
 
+  // Trackpad Scroll Axis Locking for folder compare
+  let folderWheelLockAxis = null;
+  let folderWheelAccumX = 0;
+  let folderWheelAccumY = 0;
+  let folderWheelLockTimer = null;
+
   // Zero-lag simultaneous wheel scrolling across the entire dual container
   if (diffPanes) {
     diffPanes.addEventListener('wheel', (e) => {
@@ -8231,6 +8237,48 @@ function setupSyncScroll() {
         folderScrollDriver = null;
       }, 80);
 
+      // Trackpad Scroll Axis Locking (prevents accidental diagonal drift)
+      clearTimeout(folderWheelLockTimer);
+      folderWheelLockTimer = setTimeout(() => {
+        folderWheelLockAxis = null;
+        folderWheelAccumX = 0;
+        folderWheelAccumY = 0;
+      }, 90);
+
+      let rawDeltaX = e.deltaX;
+      let rawDeltaY = e.deltaY;
+
+      if (e.shiftKey) {
+        folderWheelLockAxis = 'horizontal';
+        rawDeltaX = rawDeltaX !== 0 ? rawDeltaX : rawDeltaY;
+        rawDeltaY = 0;
+      } else {
+        if (!folderWheelLockAxis) {
+          folderWheelAccumX += Math.abs(rawDeltaX);
+          folderWheelAccumY += Math.abs(rawDeltaY);
+          if (folderWheelAccumX + folderWheelAccumY >= 5) {
+            folderWheelLockAxis = (folderWheelAccumX > folderWheelAccumY * 1.1) ? 'horizontal' : 'vertical';
+          }
+        }
+      }
+
+      let deltaY = 0;
+      let deltaX = 0;
+
+      if (folderWheelLockAxis === 'horizontal') {
+        deltaX = rawDeltaX;
+        deltaY = 0;
+      } else if (folderWheelLockAxis === 'vertical') {
+        deltaY = rawDeltaY;
+        deltaX = 0;
+      } else {
+        if (Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1) {
+          deltaX = rawDeltaX;
+        } else {
+          deltaY = rawDeltaY;
+        }
+      }
+
       const isFolderRightOnly = !appState.leftPath && !!appState.rightPath;
       const isFolderLeftOnly = !!appState.leftPath && !appState.rightPath;
       const scrollSource = isFolderRightOnly ? rightPane : leftPane;
@@ -8239,8 +8287,8 @@ function setupSyncScroll() {
         0,
         Math.max(leftPane.scrollHeight, rightPane.scrollHeight) - scrollSource.clientHeight
       );
-      const newTop = Math.max(0, Math.min(maxScroll, scrollSource.scrollTop + e.deltaY));
-      const newLeft = Math.max(0, scrollSource.scrollLeft + e.deltaX);
+      const newTop = Math.max(0, Math.min(maxScroll, scrollSource.scrollTop + deltaY));
+      const newLeft = Math.max(0, scrollSource.scrollLeft + deltaX);
 
       if (isFolderRightOnly) {
         rightPane.scrollTop = newTop;
@@ -11395,6 +11443,12 @@ function setupTextSyncScroll() {
     }
   });
 
+  // Trackpad Scroll Axis Locking for text compare
+  let textWheelLockAxis = null;
+  let textWheelAccumX = 0;
+  let textWheelAccumY = 0;
+  let textWheelLockTimer = null;
+
   // Zero-lag simultaneous wheel/trackpad scrolling across text compare panes
   if (panes) {
     panes.addEventListener('wheel', (e) => {
@@ -11416,6 +11470,48 @@ function setupTextSyncScroll() {
         activeTextScrollSource = null;
       }, 80);
 
+      // Trackpad Scroll Axis Locking (prevents accidental diagonal drift)
+      clearTimeout(textWheelLockTimer);
+      textWheelLockTimer = setTimeout(() => {
+        textWheelLockAxis = null;
+        textWheelAccumX = 0;
+        textWheelAccumY = 0;
+      }, 90);
+
+      let rawDeltaX = e.deltaX;
+      let rawDeltaY = e.deltaY;
+
+      if (e.shiftKey) {
+        textWheelLockAxis = 'horizontal';
+        rawDeltaX = rawDeltaX !== 0 ? rawDeltaX : rawDeltaY;
+        rawDeltaY = 0;
+      } else {
+        if (!textWheelLockAxis) {
+          textWheelAccumX += Math.abs(rawDeltaX);
+          textWheelAccumY += Math.abs(rawDeltaY);
+          if (textWheelAccumX + textWheelAccumY >= 5) {
+            textWheelLockAxis = (textWheelAccumX > textWheelAccumY * 1.1) ? 'horizontal' : 'vertical';
+          }
+        }
+      }
+
+      let deltaY = 0;
+      let deltaX = 0;
+
+      if (textWheelLockAxis === 'horizontal') {
+        deltaX = rawDeltaX;
+        deltaY = 0;
+      } else if (textWheelLockAxis === 'vertical') {
+        deltaY = rawDeltaY;
+        deltaX = 0;
+      } else {
+        if (Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1) {
+          deltaX = rawDeltaX;
+        } else {
+          deltaY = rawDeltaY;
+        }
+      }
+
       const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
       const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
       const isLeftOnly = diffResult && diffResult.isSingleSide === 'left';
@@ -11424,14 +11520,12 @@ function setupTextSyncScroll() {
       const scrollH = Math.max(scrollL.scrollHeight, scrollR.scrollHeight);
       const clientH = activeScroll ? activeScroll.clientHeight : scrollL.clientHeight;
       const maxScrollY = Math.max(0, scrollH - clientH);
-      const deltaY = e.shiftKey ? 0 : e.deltaY;
       const currentTop = activeScroll ? activeScroll.scrollTop : 0;
       const newTop = Math.max(0, Math.min(maxScrollY, currentTop + deltaY));
 
       const scrollW = Math.max(scrollL.scrollWidth, scrollR.scrollWidth);
       const clientW = activeScroll ? activeScroll.clientWidth : scrollL.clientWidth;
       const maxScrollX = Math.max(0, scrollW - clientW);
-      const deltaX = Math.abs(e.deltaX) > 0 ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
       const currentLeft = activeScroll ? activeScroll.scrollLeft : 0;
       const newLeft = Math.max(0, Math.min(maxScrollX, currentLeft + deltaX));
 
