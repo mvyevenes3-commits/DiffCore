@@ -10435,7 +10435,7 @@ function renderTextDiff(diffResult) {
         const sec = sections[sIdx];
         const rawTopPct = (sec.startRow / totalRows) * 100;
         const rowSpan = Math.max(1, sec.endRow - sec.startRow + 1);
-        const heightPct = Math.max(2.2, (rowSpan / totalRows) * 100);
+        const heightPct = (rowSpan / totalRows) * 100;
         let safeTopPct = rawTopPct;
         if (safeTopPct + heightPct > 100) {
           safeTopPct = Math.max(0, 100 - heightPct);
@@ -10699,14 +10699,14 @@ function findSectionAtRailY(clientY) {
     const sec = sections[i];
     const rawTopPct = (sec.startRow / totalRows) * 100;
     const rowSpan = Math.max(1, sec.endRow - sec.startRow + 1);
-    const heightPct = Math.max(2.2, (rowSpan / totalRows) * 100);
+    const heightPct = (rowSpan / totalRows) * 100;
     let safeTopPct = rawTopPct;
     if (safeTopPct + heightPct > 100) {
       safeTopPct = Math.max(0, 100 - heightPct);
     }
 
     let topPx = (safeTopPct / 100) * railH;
-    let heightPx = (heightPct / 100) * railH;
+    let heightPx = Math.max(2, (heightPct / 100) * railH);
     if (sec.endRow >= totalRows - 2) {
       topPx = railH - heightPx - 1;
     }

@@ -2958,22 +2958,20 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
 
 .overview-marker {
   position: absolute;
-  left: 2px;
-  right: 2px;
-  background: #e52828;
-  border: 1px solid #ff5959;
-  border-radius: 2px;
-  min-height: 12px;
+  left: 1px;
+  right: 1px;
+  background: #e81123;
+  border: none;
+  border-radius: 0;
+  min-height: 2px;
   cursor: pointer;
-  box-shadow: 0 0 6px rgba(255, 40, 40, 0.85);
+  box-shadow: none;
   pointer-events: auto;
   z-index: 5;
-  transition: transform 0.1s ease, background 0.1s ease;
+  transition: background 0.1s ease;
 }
 .overview-marker:hover {
   background: #ff4747;
-  transform: scaleX(1.15);
-  box-shadow: 0 0 10px rgba(255, 70, 70, 1);
 }
 
 /* Action arrow buttons rendered directly inside the line gutter (DiffCore) */
@@ -3016,9 +3014,9 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   position: absolute;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.12);
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-sizing: border-box;
   pointer-events: none;
   z-index: 2;
   transition: top 0.05s linear;
@@ -3876,8 +3874,13 @@ body.theme-light .text-line-content[contenteditable="plaintext-only"] *::selecti
 }
 
 .overview-marker.marker-whitespace {
-  background: #3b82f6 !important;
-  box-shadow: 0 0 4px rgba(59, 130, 246, 0.8) !important;
+  background: #0078d4 !important;
+  border: none !important;
+  box-shadow: none !important;
+  min-height: 2px !important;
+}
+.overview-marker.marker-whitespace:hover {
+  background: #2b88d8 !important;
 }
 
 /* --- VS CODE SYNTAX HIGHLIGHTING (Dark+ & Light+) --- */
