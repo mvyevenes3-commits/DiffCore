@@ -11278,22 +11278,17 @@ function updateOverviewViewport() {
   const viewH = activeScroll.clientHeight || 400;
   const scrollY = activeScroll.scrollTop || 0;
 
-  const rail = document.getElementById('textOverviewRail');
-  const railH = (rail && rail.clientHeight > 0) ? rail.clientHeight : 400;
-  const maxScroll = Math.max(0, totalHeight - viewH);
+  // Direct 1:1 geometric projection matching document lines to the overview rail
+  const topPct = (scrollY / totalHeight) * 100;
+  const heightPct = Math.min(100, Math.max(3, (viewH / totalHeight) * 100));
 
-  // Beyond Compare style: compact indicator thumb (30-36px) that never blows up to fill the whole rail
-  const rawHeightPx = (viewH / totalHeight) * railH;
-  const thumbHeightPx = Math.max(22, Math.min(36, rawHeightPx));
-
-  let topPx = 0;
-  if (maxScroll > 0) {
-    topPx = (scrollY / maxScroll) * Math.max(0, railH - thumbHeightPx);
+  let safeTopPct = topPct;
+  if (safeTopPct + heightPct > 100) {
+    safeTopPct = Math.max(0, 100 - heightPct);
   }
-  topPx = Math.max(0, Math.min(railH - thumbHeightPx, topPx));
 
-  thumb.style.top = `${topPx}px`;
-  thumb.style.height = `${thumbHeightPx}px`;
+  thumb.style.top = `${safeTopPct}%`;
+  thumb.style.height = `${heightPct}%`;
 }
 
 // DiffCore Rock-Solid Synchronized Text Scrolling Controller
