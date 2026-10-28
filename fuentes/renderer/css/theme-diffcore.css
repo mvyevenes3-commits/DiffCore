@@ -365,7 +365,7 @@ body.theme-light .app-tabs-center-title {
   align-items: center;
   gap: 6px;
   padding: 0 10px;
-  background: transparent;
+  background: #202020;
   color: var(--text-dim);
   border: none;
   border-right: 1px solid var(--border-color);

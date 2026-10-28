@@ -2367,6 +2367,17 @@ function updateAppHeader() {
 
   if (titleEl) {
     titleEl.textContent = title;
+
+    // Hide center title when compare tabs are open to avoid visual overlap (Image 3)
+    const tabsList = document.getElementById('appTabsList');
+    const visibleTabs = tabsList ? Array.from(tabsList.querySelectorAll('.tab-btn'))
+      .filter(btn => btn.style.display !== 'none' && window.getComputedStyle(btn).display !== 'none') : [];
+
+    if (appState.activeView === 'home' || visibleTabs.length === 0) {
+      titleEl.style.display = '';
+    } else {
+      titleEl.style.display = 'none';
+    }
   }
   document.title = `${title} - DiffCore`;
 
@@ -11277,18 +11288,45 @@ function updateOverviewViewport() {
 
   const rail = document.getElementById('textOverviewRail');
   const railH = (rail && rail.clientHeight > 0) ? rail.clientHeight : 400;
+  const viewH = activeScroll.clientHeight || 400;
   const scrollY = activeScroll.scrollTop || 0;
+  const maxScroll = Math.max(0, totalHeight - viewH);
 
-  // Beyond Compare style: compact indicator thumb (~30-34px) matching the changes, NOT ballooning to 80% scroll height
-  const thumbHeightPx = 32;
-
-  let topPx = (scrollY / totalHeight) * railH;
-  if (topPx + thumbHeightPx > railH) {
-    topPx = Math.max(0, railH - thumbHeightPx);
+  // If the whole file fits on screen without scrolling: thumb covers full rail
+  if (maxScroll <= 0) {
+    thumb.style.top = '0px';
+    thumb.style.height = `${railH}px`;
+    return;
   }
 
+  // Calculate visible rows in the viewport
+  const firstVis = Math.floor(scrollY / TEXT_ROW_HEIGHT);
+  const lastVis = Math.min(diffResult.totalRows, Math.ceil((scrollY + viewH) / TEXT_ROW_HEIGHT));
+
+  let topPx = (firstVis / diffResult.totalRows) * railH;
+  let bottomPx = (lastVis / diffResult.totalRows) * railH;
+
+  // Minimum thumb height of 24px so it's always easily visible in large files
+  const minThumbH = 24;
+  if (bottomPx - topPx < minThumbH) {
+    const center = (topPx + bottomPx) / 2;
+    topPx = Math.max(0, center - minThumbH / 2);
+    bottomPx = Math.min(railH, topPx + minThumbH);
+  }
+
+  // When scrolled to the very bottom, guarantee the thumb reaches the bottom of the rail (fixes Image 4)
+  if (scrollY >= maxScroll - 2) {
+    topPx = Math.max(0, railH - (bottomPx - topPx));
+    bottomPx = railH;
+  }
+  // When scrolled to the very top, guarantee the thumb touches the top
+  if (scrollY <= 2) {
+    topPx = 0;
+  }
+
+  const thumbH = Math.max(minThumbH, bottomPx - topPx);
   thumb.style.top = `${topPx}px`;
-  thumb.style.height = `${thumbHeightPx}px`;
+  thumb.style.height = `${thumbH}px`;
 }
 
 // DiffCore Rock-Solid Synchronized Text Scrolling Controller
