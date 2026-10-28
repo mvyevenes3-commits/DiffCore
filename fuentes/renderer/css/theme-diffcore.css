@@ -2932,34 +2932,51 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
   min-width: 0;
 }
 
-/* Overview Rail Beside Line Numbers (Image 1) */
+/* Overview Rail Beside Line Numbers (Beyond Compare Emulation) */
 .text-overview-rail {
   width: 14px;
-  background: #14161a;
-  border-right: 1px solid #282c35;
+  background: transparent;
+  border: none;
   position: relative;
   cursor: pointer;
   flex-shrink: 0;
   user-select: none;
   height: 100%;
 }
-.text-overview-rail:hover {
-  background: #191c22;
+
+.overview-track {
+  position: absolute;
+  top: 2px;
+  left: 1px;
+  right: 1px;
+  height: 0px;
+  background: #14161a;
+  border: 1px solid #3c4048;
+  border-radius: 2px;
+  box-sizing: border-box;
+  overflow: hidden;
+  cursor: pointer;
+  display: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.overview-track:hover {
+  background: #181a20;
+  border-color: #505664;
 }
 
 #overviewMarkersContainer {
   position: absolute;
-  top: 2px;
+  top: 0;
   left: 0;
   right: 0;
-  bottom: 12px; /* Aligns exactly above the 12px horizontal scrollbar */
+  bottom: 0;
   pointer-events: none;
 }
 
 .overview-marker {
   position: absolute;
-  left: 1px;
-  right: 1px;
+  left: 0;
+  right: 0;
   background: #e81123;
   border: none;
   border-radius: 0;
@@ -2972,6 +2989,19 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
 }
 .overview-marker:hover {
   background: #ff4747;
+}
+
+.overview-viewport-thumb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 1px;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 10;
+  display: none;
 }
 
 /* Action arrow buttons rendered directly inside the line gutter (DiffCore) */
@@ -3008,18 +3038,6 @@ body.theme-light .bc-tree-row:hover .bc-tree-label:not(.selected) {
 }
 .line-gutter-action.to-left {
   left: 3px;
-}
-
-.overview-viewport-thumb {
-  position: absolute;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-sizing: border-box;
-  pointer-events: none;
-  z-index: 2;
-  transition: top 0.05s linear;
 }
 
 .text-center-gutter-wrapper {
@@ -5427,6 +5445,20 @@ body.theme-light .quick-picker-row .col-date {
 body.theme-light .quick-picker-footer {
   background: #f8fafc;
   border-top-color: #e2e8f0;
+}
+
+body.theme-light .overview-track {
+  background: #f0f2f5;
+  border-color: #c4c7cf;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+body.theme-light .overview-track:hover {
+  background: #e4e7ec;
+  border-color: #9aa0a6;
+}
+body.theme-light .overview-viewport-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.45);
 }
 
 

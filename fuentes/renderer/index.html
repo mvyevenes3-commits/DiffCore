@@ -774,8 +774,10 @@
         <div class="text-pane-body">
           <!-- Differences Overview Rail beside line numbers  -->
           <div class="text-overview-rail" id="textOverviewRail" title="Click to jump directly to differences" onclick="handleOverviewRailClick(event)">
-            <div class="overview-viewport-thumb" id="overviewViewportThumb"></div>
-            <div id="overviewMarkersContainer"></div>
+            <div class="overview-track" id="overviewTrack">
+              <div class="overview-viewport-thumb" id="overviewViewportThumb"></div>
+              <div id="overviewMarkersContainer"></div>
+            </div>
           </div>
           <!-- Left Action Gutter (DiffCore Yellow Arrows) -->
           <div class="text-left-gutter-scroll" id="textLeftGutterScroll">

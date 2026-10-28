@@ -1787,13 +1787,19 @@ function clearTextCompareDOM() {
   const metaL = document.getElementById('textLeftMeta');
   const metaR = document.getElementById('textRightMeta');
   const rail = document.getElementById('textOverviewRail');
+  const track = document.getElementById('overviewTrack');
   const markersContainer = document.getElementById('overviewMarkersContainer') || rail;
   const thumb = document.getElementById('overviewViewportThumb');
 
+  if (track) {
+    track.style.display = 'none';
+    track.style.height = '0px';
+  }
   if (markersContainer) markersContainer.innerHTML = '';
   if (thumb) {
-    thumb.style.top = '0%';
-    thumb.style.height = '0%';
+    thumb.style.top = '0px';
+    thumb.style.height = '0px';
+    thumb.style.display = 'none';
   }
   if (gutter) gutter.innerHTML = '';
   if (leftGutter) leftGutter.innerHTML = '';
@@ -10333,6 +10339,7 @@ function renderTextDiff(diffResult) {
   const gutter = document.getElementById('textCenterGutter');
   const leftGutter = document.getElementById('textLeftGutter');
   const rail = document.getElementById('textOverviewRail');
+  const track = document.getElementById('overviewTrack');
   const markersContainer = document.getElementById('overviewMarkersContainer') || rail;
   const badge = document.getElementById('textDiffBadge');
 
@@ -10452,46 +10459,66 @@ function renderTextDiff(diffResult) {
   // Render initial visible window instantly (< 5ms)
   renderVisibleTextWindow(true);
 
-  // Render Overview Rail (Differences minimap strip beside line numbers)
-  if (markersContainer) {
-    markersContainer.innerHTML = '';
+  // Render Overview Rail (Beyond Compare Emulation)
+  if (track && markersContainer) {
     if (totalRows > 0 && !diffResult.isSingleSide) {
-      for (let sIdx = 0; sIdx < sections.length; sIdx++) {
-        const sec = sections[sIdx];
-        const rawTopPct = (sec.startRow / totalRows) * 100;
-        const rowSpan = Math.max(1, sec.endRow - sec.startRow + 1);
-        const heightPct = (rowSpan / totalRows) * 100;
-        let safeTopPct = rawTopPct;
-        if (safeTopPct + heightPct > 100) {
-          safeTopPct = Math.max(0, 100 - heightPct);
-        }
+      const isRightOnly = diffResult.isSingleSide === 'right';
+      const activeScroll = isRightOnly ? (containerR.parentElement || containerR) : (containerL.parentElement || containerL);
+      const viewH = (activeScroll && activeScroll.clientHeight > 0) ? activeScroll.clientHeight : 400;
+      const maxAvailableH = Math.max(40, viewH - 8);
+      // Beyond Compare scales roughly 0.55px per row, min 30px, max viewport height
+      const trackH = Math.min(maxAvailableH, Math.max(30, Math.round(totalRows * 0.55)));
 
-        const marker = document.createElement('div');
-        marker.className = sec.isWhitespaceDiff ? 'overview-marker marker-whitespace' : 'overview-marker';
-        marker.style.top = `${safeTopPct}%`;
-        marker.style.height = `${heightPct}%`;
-        marker.dataset.sectionIndex = sec.index;
-        if (sec.endRow >= totalRows - 2) {
-          marker.style.top = 'auto';
-          marker.style.bottom = '1px';
-        }
-        marker.title = `Difference section ${sec.index + 1} (${rowSpan} lines) - Click to jump directly`;
-        marker.onpointerdown = (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          jumpToSection(sec.index);
-        };
-        marker.onclick = (e) => {
-          e.stopPropagation();
-          jumpToSection(sec.index);
-        };
-        markersContainer.appendChild(marker);
-      }
+      track.style.display = 'block';
+      track.style.height = `${trackH}px`;
+      renderOverviewMarkers(diffResult, trackH);
+    } else {
+      track.style.display = 'none';
+      markersContainer.innerHTML = '';
     }
   }
 
   updateOverviewViewport();
   if (typeof textSyncScrollbar !== 'undefined' && textSyncScrollbar) textSyncScrollbar.update();
+}
+
+function renderOverviewMarkers(diffResult, trackH) {
+  const markersContainer = document.getElementById('overviewMarkersContainer');
+  if (!markersContainer || !diffResult || !diffResult.totalRows) return;
+  markersContainer.innerHTML = '';
+  const totalRows = diffResult.totalRows;
+  const sections = diffResult.sections || [];
+
+  for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+    const sec = sections[sIdx];
+    const secStartPct = sec.startRow / totalRows;
+    const secSpan = Math.max(1, sec.endRow - sec.startRow + 1);
+    const markerH = Math.max(2, Math.round((secSpan / totalRows) * trackH));
+    let topPx = Math.round(secStartPct * trackH);
+    if (topPx + markerH > trackH) {
+      topPx = Math.max(0, trackH - markerH);
+    }
+    if (sec.endRow >= totalRows - 1) {
+      topPx = trackH - markerH;
+    }
+
+    const marker = document.createElement('div');
+    marker.className = sec.isWhitespaceDiff ? 'overview-marker marker-whitespace' : 'overview-marker';
+    marker.style.top = `${topPx}px`;
+    marker.style.height = `${markerH}px`;
+    marker.dataset.sectionIndex = sec.index;
+    marker.title = `Difference section ${sec.index + 1} (${secSpan} lines) - Click to jump directly`;
+    marker.onpointerdown = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      jumpToSection(sec.index);
+    };
+    marker.onclick = (e) => {
+      e.stopPropagation();
+      jumpToSection(sec.index);
+    };
+    markersContainer.appendChild(marker);
+  }
 }
 
 function renderVisibleTextWindow(force = false) {
@@ -10705,15 +10732,15 @@ function renderVisibleTextWindow(force = false) {
 }
 
 function findSectionAtRailY(clientY) {
-  const rail = document.getElementById('textOverviewRail');
-  if (!rail) return null;
+  const track = document.getElementById('overviewTrack');
+  if (!track || track.style.display === 'none') return null;
   const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
   if (!diffResult || !diffResult.sections || diffResult.sections.length === 0 || !diffResult.totalRows) return null;
 
-  const rect = rail.getBoundingClientRect();
+  const rect = track.getBoundingClientRect();
   const clickY = clientY - rect.top;
-  const railH = rect.height;
-  if (railH <= 0) return null;
+  const trackH = rect.height;
+  if (trackH <= 0 || clickY < -4 || clickY > trackH + 4) return null;
 
   const totalRows = diffResult.totalRows;
   const sections = diffResult.sections;
@@ -10721,26 +10748,19 @@ function findSectionAtRailY(clientY) {
   let bestSec = null;
   let minDistance = Infinity;
 
-  // 1. Check visually rendered marker boundaries on the rail (with generous 6px tolerance)
+  // 1. Check visually rendered marker boundaries on the track (with 5px tolerance)
   for (let i = 0; i < sections.length; i++) {
     const sec = sections[i];
-    const rawTopPct = (sec.startRow / totalRows) * 100;
-    const rowSpan = Math.max(1, sec.endRow - sec.startRow + 1);
-    const heightPct = (rowSpan / totalRows) * 100;
-    let safeTopPct = rawTopPct;
-    if (safeTopPct + heightPct > 100) {
-      safeTopPct = Math.max(0, 100 - heightPct);
-    }
-
-    let topPx = (safeTopPct / 100) * railH;
-    let heightPx = Math.max(2, (heightPct / 100) * railH);
-    if (sec.endRow >= totalRows - 2) {
-      topPx = railH - heightPx - 1;
-    }
-    const bottomPx = topPx + heightPx;
+    const secStartPct = sec.startRow / totalRows;
+    const secSpan = Math.max(1, sec.endRow - sec.startRow + 1);
+    const markerH = Math.max(2, Math.round((secSpan / totalRows) * trackH));
+    let topPx = Math.round(secStartPct * trackH);
+    if (topPx + markerH > trackH) topPx = Math.max(0, trackH - markerH);
+    if (sec.endRow >= totalRows - 1) topPx = trackH - markerH;
+    const bottomPx = topPx + markerH;
     const centerPx = (topPx + bottomPx) / 2;
 
-    if (clickY >= topPx - 6 && clickY <= bottomPx + 6) {
+    if (clickY >= topPx - 5 && clickY <= bottomPx + 5) {
       const dist = Math.abs(clickY - centerPx);
       if (dist < minDistance) {
         minDistance = dist;
@@ -10751,12 +10771,12 @@ function findSectionAtRailY(clientY) {
 
   if (bestSec) return bestSec;
 
-  // 2. Secondary check: row proximity within ±4 rows
-  const pct = Math.max(0, Math.min(1, clickY / railH));
+  // 2. Secondary check: row proximity within ±3 rows
+  const pct = Math.max(0, Math.min(1, clickY / trackH));
   const clickedRow = pct * totalRows;
   for (let i = 0; i < sections.length; i++) {
     const sec = sections[i];
-    if (clickedRow >= sec.startRow - 4 && clickedRow <= sec.endRow + 4) {
+    if (clickedRow >= sec.startRow - 3 && clickedRow <= sec.endRow + 3) {
       return sec;
     }
   }
@@ -10780,10 +10800,14 @@ function handleOverviewRailClick(event) {
     return;
   }
 
-  const rail = document.getElementById('textOverviewRail');
-  if (!rail) return;
-  const rect = rail.getBoundingClientRect();
+  const track = document.getElementById('overviewTrack');
+  if (!track || track.style.display === 'none') return;
+  const rect = track.getBoundingClientRect();
   const clickY = event.clientY - rect.top;
+  if (clickY < 0 || clickY > rect.height) {
+    return;
+  }
+
   const pct = Math.max(0, Math.min(1, clickY / rect.height));
   const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
   if (!diffResult || !diffResult.totalRows) return;
@@ -10799,7 +10823,8 @@ function handleOverviewRailClick(event) {
   const activeScroll = isRightOnly ? scrollR : scrollL;
 
   const clientH = activeScroll ? activeScroll.clientHeight : 400;
-  const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
+  const totalHeight = diffResult.totalRows * TEXT_ROW_HEIGHT;
+  const maxScroll = Math.max(0, totalHeight - clientH);
   const halfView = clientH / 2;
   let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView);
   targetTop = Math.min(maxScroll, targetTop);
@@ -10834,7 +10859,9 @@ function setupOverviewRailDrag() {
   let isDraggingRail = false;
 
   function scrollToPos(clientY) {
-    const rect = rail.getBoundingClientRect();
+    const track = document.getElementById('overviewTrack');
+    if (!track || track.style.display === 'none') return;
+    const rect = track.getBoundingClientRect();
     const clickY = clientY - rect.top;
     const pct = Math.max(0, Math.min(1, clickY / rect.height));
     const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
@@ -10851,7 +10878,8 @@ function setupOverviewRailDrag() {
     const activeScroll = isRightOnly ? scrollR : scrollL;
 
     const clientH = activeScroll ? activeScroll.clientHeight : 400;
-    const maxScroll = Math.max(0, Math.max(scrollL ? scrollL.scrollHeight : 0, scrollR ? scrollR.scrollHeight : 0) - clientH);
+    const totalHeight = diffResult.totalRows * TEXT_ROW_HEIGHT;
+    const maxScroll = Math.max(0, totalHeight - clientH);
     const halfView = clientH / 2;
     let targetTop = Math.max(0, targetRow * TEXT_ROW_HEIGHT - halfView);
     targetTop = Math.min(maxScroll, targetTop);
@@ -10878,6 +10906,11 @@ function setupOverviewRailDrag() {
 
   rail.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
+
+    const track = document.getElementById('overviewTrack');
+    if (!track || track.style.display === 'none') return;
+    const trackRect = track.getBoundingClientRect();
+    if (e.clientY < trackRect.top - 4 || e.clientY > trackRect.bottom + 4) return;
 
     // Check if clicked on a marker or near a difference section
     const markerEl = e.target ? e.target.closest('.overview-marker') : null;
@@ -11273,59 +11306,62 @@ function navDiff(direction) {
 }
 
 function updateOverviewViewport() {
+  const track = document.getElementById('overviewTrack');
+  const thumb = document.getElementById('overviewViewportThumb');
   const scrollL = document.getElementById('textLeftScroll');
   const scrollR = document.getElementById('textRightScroll');
-  const thumb = document.getElementById('overviewViewportThumb');
   const diffResult = (typeof appState !== 'undefined' && appState.currentTextFile) ? appState.currentTextFile.diffResult : null;
-  if (!thumb || !diffResult || !diffResult.totalRows) return;
+
+  if (!track || !thumb || !diffResult || !diffResult.totalRows) {
+    if (track) track.style.display = 'none';
+    if (thumb) thumb.style.display = 'none';
+    return;
+  }
+
+  const totalRows = diffResult.totalRows;
+  if (totalRows <= 0 || diffResult.isSingleSide) {
+    track.style.display = 'none';
+    thumb.style.display = 'none';
+    return;
+  }
 
   const isRightOnly = diffResult && diffResult.isSingleSide === 'right';
   const activeScroll = isRightOnly ? scrollR : scrollL;
   if (!activeScroll) return;
 
-  const totalHeight = diffResult.totalRows * TEXT_ROW_HEIGHT;
-  if (totalHeight <= 0) return;
-
-  const rail = document.getElementById('textOverviewRail');
-  const railH = (rail && rail.clientHeight > 0) ? rail.clientHeight : 400;
   const viewH = activeScroll.clientHeight || 400;
+  const totalHeight = totalRows * TEXT_ROW_HEIGHT;
+  const maxAvailableH = Math.max(40, viewH - 8);
+  const trackH = Math.min(maxAvailableH, Math.max(30, Math.round(totalRows * 0.55)));
+
+  track.style.display = 'block';
+  if (track.style.height !== `${trackH}px`) {
+    track.style.height = `${trackH}px`;
+    renderOverviewMarkers(diffResult, trackH);
+  }
+
   const scrollY = activeScroll.scrollTop || 0;
   const maxScroll = Math.max(0, totalHeight - viewH);
 
-  // If the whole file fits on screen without scrolling: thumb covers full rail
+  // If the whole file fits on screen without scrolling (like Beyond Compare with pom.xml 55 lines):
+  // Beyond Compare shows the track box without an internal sliding thumb, because the entire track is visible
   if (maxScroll <= 0) {
-    thumb.style.top = '0px';
-    thumb.style.height = `${railH}px`;
+    thumb.style.display = 'none';
     return;
   }
 
-  // Calculate visible rows in the viewport
-  const firstVis = Math.floor(scrollY / TEXT_ROW_HEIGHT);
-  const lastVis = Math.min(diffResult.totalRows, Math.ceil((scrollY + viewH) / TEXT_ROW_HEIGHT));
+  thumb.style.display = 'block';
 
-  let topPx = (firstVis / diffResult.totalRows) * railH;
-  let bottomPx = (lastVis / diffResult.totalRows) * railH;
+  // Visible fraction of file
+  const visFraction = Math.min(1, viewH / totalHeight);
+  const minThumbH = 14;
+  const thumbH = Math.max(minThumbH, Math.min(trackH, Math.round(visFraction * trackH)));
 
-  // Minimum thumb height of 24px so it's always easily visible in large files
-  const minThumbH = 24;
-  if (bottomPx - topPx < minThumbH) {
-    const center = (topPx + bottomPx) / 2;
-    topPx = Math.max(0, center - minThumbH / 2);
-    bottomPx = Math.min(railH, topPx + minThumbH);
-  }
+  // Scroll ratio from 0 to 1
+  const scrollRatio = Math.max(0, Math.min(1, scrollY / maxScroll));
+  const thumbTop = Math.round(scrollRatio * (trackH - thumbH));
 
-  // When scrolled to the very bottom, guarantee the thumb reaches the bottom of the rail (fixes Image 4)
-  if (scrollY >= maxScroll - 2) {
-    topPx = Math.max(0, railH - (bottomPx - topPx));
-    bottomPx = railH;
-  }
-  // When scrolled to the very top, guarantee the thumb touches the top
-  if (scrollY <= 2) {
-    topPx = 0;
-  }
-
-  const thumbH = Math.max(minThumbH, bottomPx - topPx);
-  thumb.style.top = `${topPx}px`;
+  thumb.style.top = `${thumbTop}px`;
   thumb.style.height = `${thumbH}px`;
 }
 
@@ -11427,6 +11463,7 @@ function setupTextSyncScroll() {
     if (typeof syncCenterGutterHeaderHeight === 'function') syncCenterGutterHeaderHeight();
     syncHorizontalScrollWidths();
     renderVisibleTextWindow(true);
+    updateOverviewViewport();
     if (textSyncScrollbar) textSyncScrollbar.update();
   });
 
