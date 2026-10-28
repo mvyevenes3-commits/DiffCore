@@ -2388,6 +2388,35 @@ function updateAppHeader() {
   document.title = `${title} - DiffCore`;
 
   updateTabsNavState();
+  updateActiveSessionsState();
+}
+
+function hasActiveComparisons() {
+  const tabsList = document.getElementById('appTabsList');
+  if (tabsList) {
+    const visibleTabs = Array.from(tabsList.querySelectorAll('.tab-btn'))
+      .filter(btn => btn.style.display !== 'none' && window.getComputedStyle(btn).display !== 'none');
+    if (visibleTabs.length > 0) return true;
+  }
+  if (appState.activeView && appState.activeView !== 'home') {
+    return true;
+  }
+  if (appState.textSessions && appState.textSessions.length > 0) {
+    return true;
+  }
+  if (appState.folderSessions && appState.folderSessions.length > 0) {
+    return true;
+  }
+  if (appState.activeFolderSession || appState.activeTextSessionId) {
+    return true;
+  }
+  return false;
+}
+
+function updateActiveSessionsState() {
+  if (window.api && typeof window.api.notifyActiveSessionsState === 'function') {
+    window.api.notifyActiveSessionsState(hasActiveComparisons());
+  }
 }
 
 function updateTabsNavState() {
@@ -10513,9 +10542,9 @@ function renderTextDiff(diffResult) {
       const isRightOnly = diffResult.isSingleSide === 'right';
       const activeScroll = isRightOnly ? (containerR.parentElement || containerR) : (containerL.parentElement || containerL);
       const viewH = (activeScroll && activeScroll.clientHeight > 0) ? activeScroll.clientHeight : 400;
-      const maxAvailableH = Math.max(40, viewH - 8);
-      // Beyond Compare scales roughly 0.55px per row, min 30px, max viewport height
-      const trackH = Math.min(maxAvailableH, Math.max(30, Math.round(totalRows * 0.55)));
+      const maxAvailableH = Math.max(80, viewH - 8);
+      // Beyond Compare scales ~2.45px per row, min 80px, max viewport height
+      const trackH = Math.min(maxAvailableH, Math.max(80, Math.round(totalRows * 2.45)));
 
       track.style.display = 'block';
       track.style.height = `${trackH}px`;
@@ -11379,8 +11408,8 @@ function updateOverviewViewport() {
 
   const viewH = activeScroll.clientHeight || 400;
   const totalHeight = totalRows * TEXT_ROW_HEIGHT;
-  const maxAvailableH = Math.max(40, viewH - 8);
-  const trackH = Math.min(maxAvailableH, Math.max(30, Math.round(totalRows * 0.55)));
+  const maxAvailableH = Math.max(80, viewH - 8);
+  const trackH = Math.min(maxAvailableH, Math.max(80, Math.round(totalRows * 2.45)));
 
   track.style.display = 'block';
   if (track.style.height !== `${trackH}px`) {

@@ -82,6 +82,7 @@ contextBridge.exposeInMainWorld('api', {
   // Application Menu Integration
   setMenuLanguage: (lang) => ipcRenderer.invoke('menu:setLanguage', lang),
   setActiveView: (viewName) => ipcRenderer.invoke('menu:setActiveView', viewName),
+  notifyActiveSessionsState: (hasActive) => ipcRenderer.send('app:activeSessionsState', hasActive),
   
   // Listeners
   onLogMessage: (callback) => ipcRenderer.on('log:message', (_event, msg) => callback(msg)),

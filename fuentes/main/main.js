@@ -27,6 +27,48 @@ if (process.platform === 'darwin') {
 }
 
 let mainWindow;
+let currentAppLang = 'es';
+let hasActiveSessions = false;
+let isClosingConfirmed = false;
+
+const CLOSE_DIALOG_TEXTS = {
+  es: {
+    title: 'Cerrar DiffCore',
+    message: '¿Deseas cerrar DiffCore?',
+    detail: 'Hay sesiones de comparación activas. ¿Estás seguro de que deseas salir?',
+    buttons: ['Cancelar', 'Cerrar']
+  },
+  en: {
+    title: 'Close DiffCore',
+    message: 'Do you want to close DiffCore?',
+    detail: 'There are active comparison sessions. Are you sure you want to exit?',
+    buttons: ['Cancel', 'Close']
+  },
+  pt: {
+    title: 'Fechar DiffCore',
+    message: 'Deseja fechar o DiffCore?',
+    detail: 'Existem sessões de comparação ativas. Tem certeza de que deseja sair?',
+    buttons: ['Cancelar', 'Fechar']
+  },
+  fr: {
+    title: 'Fermer DiffCore',
+    message: 'Voulez-vous fermer DiffCore ?',
+    detail: 'Il y a des sessions de comparaison actives. Êtes-vous sûr de vouloir quitter ?',
+    buttons: ['Annuler', 'Fermer']
+  },
+  it: {
+    title: 'Chiudi DiffCore',
+    message: 'Vuoi chiudere DiffCore?',
+    detail: 'Ci sono sessioni di confronto attive. Sei sicuro di voler uscire?',
+    buttons: ['Annulla', 'Chiudi']
+  },
+  ru: {
+    title: 'Закрыть DiffCore',
+    message: 'Вы хотите закрыть DiffCore?',
+    detail: 'Есть активные сессии сравнения. Вы уверены, что хотите выйти?',
+    buttons: ['Отмена', 'Закрыть']
+  }
+};
 
 function getAppIcon() {
   try {
@@ -84,6 +126,29 @@ function createWindow() {
   }
 
   trackWindowState(mainWindow, windowState);
+
+  // Close confirmation if active comparison sessions are running
+  mainWindow.on('close', (e) => {
+    if (hasActiveSessions && !isClosingConfirmed) {
+      e.preventDefault();
+      const texts = CLOSE_DIALOG_TEXTS[currentAppLang] || CLOSE_DIALOG_TEXTS.es;
+      const choice = dialog.showMessageBoxSync(mainWindow, {
+        type: 'question',
+        buttons: texts.buttons,
+        defaultId: 1,
+        cancelId: 0,
+        title: texts.title,
+        message: texts.message,
+        detail: texts.detail,
+        noLink: true
+      });
+
+      if (choice === 1) {
+        isClosingConfirmed = true;
+        mainWindow.close();
+      }
+    }
+  });
 
   if (appIcon && process.platform !== 'darwin') {
     mainWindow.setIcon(appIcon);
@@ -181,8 +246,14 @@ app.on('window-all-closed', () => {
 
 // --- IPC HANDLERS ---
 
+// Active Sessions Notification (for exit confirmation dialog)
+ipcMain.on('app:activeSessionsState', (_event, hasActive) => {
+  hasActiveSessions = Boolean(hasActive);
+});
+
 // Menu Language Update
 ipcMain.handle('menu:setLanguage', async (_event, lang) => {
+  currentAppLang = lang || 'es';
   updateMenuLanguage(mainWindow, lang);
   return true;
 });
